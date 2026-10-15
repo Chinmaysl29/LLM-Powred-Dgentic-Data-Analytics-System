@@ -48,6 +48,7 @@ class AIMemoryLayer:
         self._load_all_persisted()
 
     def _get_workspace_path(self, workspace_id: str) -> Path:
+        self._validate_component(workspace_id)
         ws_dir = self.storage_dir / workspace_id
         ws_dir.mkdir(parents=True, exist_ok=True)
         return ws_dir
@@ -69,6 +70,8 @@ class AIMemoryLayer:
 
     def _persist_session(self, workspace_id: str, session_id: str) -> None:
         """Atomically persist a session's multi-tier memory to disk."""
+        self._validate_component(workspace_id)
+        self._validate_component(session_id)
         if workspace_id not in self._cache or session_id not in self._cache[workspace_id]:
             return
         ws_dir = self._get_workspace_path(workspace_id)
@@ -81,6 +84,8 @@ class AIMemoryLayer:
 
     def _ensure_session(self, workspace_id: str, session_id: str) -> dict[str, Any]:
         """Ensure session memory structure exists in memory."""
+        self._validate_component(workspace_id)
+        self._validate_component(session_id)
         if workspace_id not in self._cache:
             self._cache[workspace_id] = {}
         if session_id not in self._cache[workspace_id]:
@@ -95,6 +100,11 @@ class AIMemoryLayer:
                 "datasets": {},
             }
         return self._cache[workspace_id][session_id]
+
+    @staticmethod
+    def _validate_component(value: str) -> None:
+        if not isinstance(value, str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,128}', value):
+            raise ValueError('Invalid memory storage identifier')
 
     # -------------------------------------------------------------------------
     # 1. Conversation Memory

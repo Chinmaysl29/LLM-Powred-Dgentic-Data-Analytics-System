@@ -1,0 +1,22 @@
+{
+  "dataset_id": "0449d077-07e1-46a3-97a7-4275c875e6d2",
+  "dataset_name": "company_budgets",
+  "columns": [
+    "dept",
+    "budget"
+  ],
+  "records": [
+    {
+      "dept": "Finance",
+      "budget": 1200
+    },
+    {
+      "dept": "Engineering",
+      "budget": 2500
+    },
+    {
+      "dept": "HR",
+      "budget": 800
+    }
+  ]
+}

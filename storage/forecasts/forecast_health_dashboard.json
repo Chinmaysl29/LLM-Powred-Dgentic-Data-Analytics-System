@@ -1,0 +1,47 @@
+[
+  {
+    "run_id": "82dc388f-b5ce-4dac-bd26-02fc1bfab89f",
+    "timestamp": "2026-10-11T18:09:53Z",
+    "best_model": "prophet",
+    "target": "sales",
+    "horizon": 12,
+    "frequency": "monthly",
+    "mae": 8206.52,
+    "rmse": 9285.8,
+    "mape": 5.92,
+    "smape": 6.1,
+    "r2": -1.0,
+    "confidence_score": 0.5645,
+    "models_evaluated": [
+      "prophet"
+    ],
+    "models_skipped": [
+      "xgboost",
+      "lstm"
+    ],
+    "model_metrics": [
+      {
+        "model": "prophet",
+        "rank": 1,
+        "mae": 8206.5173,
+        "rmse": 9285.7969,
+        "mape": 5.9208,
+        "smape": 6.1026,
+        "r2": -1.0,
+        "confidence": 0.5645,
+        "is_best": true
+      },
+      {
+        "model": "arima",
+        "rank": 2,
+        "mae": 9999.0,
+        "rmse": 9999.0,
+        "mape": 999.0,
+        "smape": 200.0,
+        "r2": -1.0,
+        "confidence": 0.1,
+        "is_best": false
+      }
+    ]
+  }
+]

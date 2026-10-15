@@ -1,0 +1,15 @@
+{
+  "dataset_id": "91959091-cd3c-4b37-9391-8be84e8c92f2",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "71adf389-932f-4bc6-a766-bf6f97fdd7b5",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-10-15 06:14:32.664536+00:00",
+      "author": "system",
+      "description": "Initial ingestion of tenant_a_data.csv"
+    }
+  ]
+}

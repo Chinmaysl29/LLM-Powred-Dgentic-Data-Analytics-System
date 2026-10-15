@@ -1,6 +1,10 @@
 """End-to-End RAG Pipeline Orchestrator (Phase 5.8)."""
 
-from typing import Any, Dict, List, Optional
+from hashlib import sha256
+import json
+from pathlib import Path
+
+from typing import Any, Callable, Dict, List, Optional
 
 from backend.app.schemas.context_builder import BuiltContext
 from backend.app.schemas.rag_pipeline import (
@@ -31,10 +35,11 @@ class RAGPipeline:
         embedding_model: Optional[BaseEmbedding] = None,
         vector_store: Optional[BaseVectorStore] = None,
         max_context_tokens: int = 3000,
+        sparse_index_path: str | Path | None = None,
     ) -> None:
         self._embedder = embedding_model or MiniLMEmbedding()
-        self._store = vector_store or InMemoryVectorStore()
-        self._bm25 = BM25Retriever()
+        self._store = vector_store if vector_store is not None else InMemoryVectorStore()
+        self._bm25 = BM25Retriever(storage_path=sparse_index_path)
         self._dense_retriever = VectorRetriever(self._embedder, self._store)
         self._hybrid_retriever = HybridRetriever(self._dense_retriever, self._bm25, alpha=0.7)
         self._context_builder = ContextBuilder(max_tokens=max_context_tokens)
@@ -42,8 +47,10 @@ class RAGPipeline:
         self._rewriter = QueryRewriter()
         self._validator = KnowledgeValidator()
 
-    def ingest(self, request: RAGIngestRequest) -> RAGIngestResponse:
+    def ingest(self, request: RAGIngestRequest, progress: Callable[[str], None] | None = None) -> RAGIngestResponse:
         """Chunk, embed, and index a document into the pipeline."""
+        if progress:
+            progress("CHUNKING")
         chunker = ChunkerFactory.get_chunker(
             strategy=request.chunking_strategy,
             chunk_size=request.chunk_size,
@@ -64,12 +71,28 @@ class RAGPipeline:
             )
 
         texts = [c.content for c in chunks]
-        chunk_ids = [c.chunk_id for c in chunks]
+        version = (request.metadata or {}).get("document_version") or sha256(request.content.encode("utf-8")).hexdigest()
+        fingerprint = json.dumps([request.document_id, str(version), request.chunking_strategy,
+                                  request.chunk_size, request.chunk_overlap], separators=(",", ":"))
+        chunk_ids = [sha256(f"{fingerprint}:{i}:{c.content}".encode("utf-8")).hexdigest()
+                     for i, c in enumerate(chunks)]
         doc_ids = [c.document_id for c in chunks]
-        metadatas = [c.metadata.model_dump() for c in chunks]
+        metadatas = []
+        for c in chunks:
+            meta = c.metadata.model_dump()
+            meta.update(meta.pop("extra", {}))
+            meta.update(document_id=request.document_id, document_version=version)
+            metadatas.append(meta)
 
         # Embed and index in vector store
+        if progress:
+            progress("EMBEDDING")
         embeddings = self._embedder.embed_documents(texts)
+        if progress:
+            progress("INDEXING")
+        # Upsert deterministic IDs; never remove the last valid document version.
+        # A durable job may retry after either index fails. Sparse publication is
+        # atomic and happens only after the dense batch has completed.
         self._store.add(
             chunk_ids=chunk_ids,
             document_ids=doc_ids,
@@ -162,3 +185,10 @@ class RAGPipeline:
     def validate_answer(self, answer: str, context_text: str, sources: Optional[list] = None):
         """Run knowledge validation on a generated answer."""
         return self._validator.validate(answer, context_text, sources)
+
+    def delete_document(self, document_id: str) -> None:
+        """Remove all chunks and indices for a specific document."""
+        self._store.delete(document_id=document_id)
+        if hasattr(self._bm25, "delete"):
+            self._bm25.delete(document_id=document_id)
+

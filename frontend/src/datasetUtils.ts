@@ -574,6 +574,7 @@ export function getMockLineage(dataset: Dataset): DatasetLineageNode[] {
 // ---------------------------------------------------------------------------
 
 export const STATUS_LABELS: Record<string, string> = {
+  ready:      'Ready',
   uploaded:   'Uploaded',
   validating: 'Validating',
   validated:  'Validated',

@@ -1,0 +1,127 @@
+{
+  "forecast": [
+    149173.69,
+    152526.09,
+    155495.42,
+    161311.97,
+    163302.16,
+    163111.46,
+    163599.39,
+    162581.98,
+    161991.71,
+    163406.17,
+    166774.0,
+    172152.79
+  ],
+  "mae": 8206.52,
+  "rmse": 9285.8,
+  "mape": 5.92,
+  "smape": 6.1,
+  "r2": -1.0,
+  "confidence_score": 0.5645,
+  "best_model": "prophet",
+  "target": "sales",
+  "horizon": 12,
+  "frequency": "monthly",
+  "model_rankings": [
+    {
+      "model": "prophet",
+      "rank": 1,
+      "mae": 8206.5173,
+      "rmse": 9285.7969,
+      "mape": 5.9208,
+      "smape": 6.1026,
+      "r2": -1.0,
+      "confidence_score": 0.5645,
+      "holdout_predictions": [
+        132668.72,
+        121975.9,
+        133049.14,
+        148261.11
+      ],
+      "is_best": true,
+      "error_message": null
+    },
+    {
+      "model": "arima",
+      "rank": 2,
+      "mae": 9999.0,
+      "rmse": 9999.0,
+      "mape": 999.0,
+      "smape": 200.0,
+      "r2": -1.0,
+      "confidence_score": 0.1,
+      "holdout_predictions": [],
+      "is_best": false,
+      "error_message": "ARIMA requires at least 30 historical data points; found 20."
+    }
+  ],
+  "models_skipped": [
+    "xgboost",
+    "lstm"
+  ],
+  "forecast_points": [
+    {
+      "period": 1,
+      "predicted_value": 149173.69,
+      "model": "prophet"
+    },
+    {
+      "period": 2,
+      "predicted_value": 152526.09,
+      "model": "prophet"
+    },
+    {
+      "period": 3,
+      "predicted_value": 155495.42,
+      "model": "prophet"
+    },
+    {
+      "period": 4,
+      "predicted_value": 161311.97,
+      "model": "prophet"
+    },
+    {
+      "period": 5,
+      "predicted_value": 163302.16,
+      "model": "prophet"
+    },
+    {
+      "period": 6,
+      "predicted_value": 163111.46,
+      "model": "prophet"
+    },
+    {
+      "period": 7,
+      "predicted_value": 163599.39,
+      "model": "prophet"
+    },
+    {
+      "period": 8,
+      "predicted_value": 162581.98,
+      "model": "prophet"
+    },
+    {
+      "period": 9,
+      "predicted_value": 161991.71,
+      "model": "prophet"
+    },
+    {
+      "period": 10,
+      "predicted_value": 163406.17,
+      "model": "prophet"
+    },
+    {
+      "period": 11,
+      "predicted_value": 166774.0,
+      "model": "prophet"
+    },
+    {
+      "period": 12,
+      "predicted_value": 172152.79,
+      "model": "prophet"
+    }
+  ],
+  "run_id": "82dc388f-b5ce-4dac-bd26-02fc1bfab89f",
+  "timestamp": "2026-10-11T18:09:53Z"
+}

@@ -51,6 +51,13 @@ class ProductionChecker:
 
         if not self.settings.redis_url:
             warnings.append("REDIS_URL not specified; fallback caching will be used")
+        elif self.settings.environment == "production":
+            has_redis_auth = bool(
+                self.settings.redis_password
+                and self.settings.redis_password.get_secret_value()
+            )
+            if not has_redis_auth:
+                warnings.append("Production Redis authentication credentials not configured")
 
         passed = len(missing) == 0
         return {

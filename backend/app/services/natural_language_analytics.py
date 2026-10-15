@@ -1,163 +1,361 @@
-"""Deterministic, explainable natural-language analytics over an uploaded dataset.
-
-This service deliberately executes dataframe operations rather than generated SQL.
-Text-to-SQL is a separate Phase 17.2 concern, keeping Phase 17.1 safe and
-useful for file-backed datasets.
-"""
-
+"""Validated deterministic analytics; uncertainty is a result, never a guessed sum."""
 from __future__ import annotations
 
 import asyncio
 import re
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, field
 from typing import Any
 
 import pandas as pd
-
 from backend.app.services.data_retrieval_service import DataRetrievalService
 
 
 @dataclass(frozen=True)
 class AnalyticsRequest:
     operation: str
-    metric: str | None
-    dimension: str | None
+    metric: str | None = None
+    dimension: str | None = None
     limit: int = 10
+    dimensions: list[str] = field(default_factory=list)
+    date_field: str | None = None
+    date_granularity: str | None = None
+    aggregation: str | None = None
+    clarification_required: bool = False
+    validation_errors: list[str] = field(default_factory=list)
+    metric_options: list[str] = field(default_factory=list)
+    dataset_id: str | None = None
+    dataset_version: int | None = None
+    filters: list[dict[str, Any]] = field(default_factory=list)
+    sort: str | None = None
 
 
 class NaturalLanguageAnalyticsService:
-    """Parse a constrained analytics language into safe pandas aggregations."""
-
     def __init__(self, data_retrieval: DataRetrievalService | None = None) -> None:
         self._data_retrieval = data_retrieval
 
     @staticmethod
     def is_analytics_query(message: str) -> bool:
-        words = {"show", "total", "sum", "average", "avg", "count", "top", "bottom", "highest", "lowest", "trend", "revenue", "sales", "profit", "by"}
-        return bool(words.intersection(re.findall(r"[a-z]+", message.lower())))
-
-    def parse(self, message: str, columns: list[str]) -> AnalyticsRequest:
-        normalized = message.lower()
-        operation = "sum"
-        if re.search(r"\b(count|how many|number of)\b", normalized):
-            operation = "count"
-        elif re.search(r"\b(average|avg|mean)\b", normalized):
-            operation = "average"
-        elif re.search(r"\b(minimum|min|lowest)\b", normalized):
-            operation = "min"
-        elif re.search(r"\b(maximum|max|highest)\b", normalized):
-            operation = "max"
-        elif re.search(r"\b(bottom|least|worst)\b", normalized):
-            operation = "bottom"
-        elif re.search(r"\b(top|best|leading)\b", normalized):
-            operation = "top"
-        elif re.search(r"\b(trend|over time|growth|decline)\b", normalized):
-            operation = "trend"
-
-        metric = self._match_column(normalized, columns, after=r"(?:of|by|total|sum|average|avg|max|min|highest|lowest|top|bottom)\s+")
-        dimension = self._match_column_after(normalized, columns, r"\bby\s+")
-        if dimension == metric:
-            dimension = None
-        limit_match = re.search(r"\b(?:top|bottom)\s+(\d+)\b", normalized)
-        return AnalyticsRequest(operation, metric, dimension, int(limit_match.group(1)) if limit_match else 10)
+        # Forecasts/correlation/distribution must reach their existing agents.
+        if re.search(r'\b(predict|forecast|correlation|correlate|distribution|histogram)\b', message, re.I):
+            return False
+        return bool(re.search(r'\b(total|sum|average|avg|mean|count|top|bottom|highest|lowest|trend|monthly|revenue|sales|profit|compare|which|chart|show)\b|\b(show|preview|describe|explain|summarize)\b.*\b(data|dataset|records|rows|columns)\b', message, re.I))
 
     @staticmethod
-    def _match_column(message: str, columns: list[str], after: str) -> str | None:
-        # Prefer column names following natural-language cues, then any clear
-        # word-boundary mention. Matching only known columns prevents arbitrary
-        # expression execution.
-        candidates = sorted(columns, key=len, reverse=True)
-        for column in candidates:
-            expression = re.escape(column.lower()).replace(r"\ ", r"[ _-]?")
-            if re.search(after + expression + r"\b", message) or re.search(r"\b" + expression + r"\b", message):
-                return column
-        return None
+    def _mentions(message: str, column: str) -> bool:
+        words = re.split(r'[ _-]+', column.lower())
+        expression = r'[ _-]+'.join(re.escape(w) for w in words)
+        return bool(re.search(r'(?<!\w)' + expression + r's?(?!\w)', message))
 
-    @staticmethod
-    def _match_column_after(message: str, columns: list[str], prefix: str) -> str | None:
-        for column in sorted(columns, key=len, reverse=True):
-            expression = re.escape(column.lower()).replace(r"\ ", r"[ _-]?")
-            if re.search(prefix + expression + r"\b", message):
-                return column
-        return None
+    def parse(
+        self,
+        message: str,
+        columns: list[str],
+        numeric_columns: list[str] | None = None,
+        date_columns: list[str] | None = None,
+        context: list[dict[str, str]] | None = None,
+    ) -> AnalyticsRequest:
+        q = message.lower().strip().rstrip('.?!')
+        numeric = numeric_columns if numeric_columns is not None else columns
+        dates = date_columns or []
+        errors: list[str] = []
 
-    async def analyze(self, message: str, dataset_id: str | None = None, dataframe: pd.DataFrame | None = None) -> dict[str, Any]:
+        if re.fullmatch(r'(?:please )?(?:show|preview)(?: me)?(?: the)? (?:data|dataset|records|rows)', q):
+            return AnalyticsRequest('preview')
+        if re.fullmatch(r'(?:please )?(?:describe|explain|summarize)(?: the)? (?:data|dataset)', q):
+            return AnalyticsRequest('description')
+        for pattern, intent in [(r'predict|forecast', 'forecast'), (r'correlat', 'correlation'), (r'distribution|histogram', 'distribution')]:
+            if re.search(pattern, q):
+                return AnalyticsRequest(intent, clarification_required=True, validation_errors=[f'Use the {intent} workflow; no aggregation was executed.'], metric_options=numeric)
+        if re.search(r'\b(where|filter|only|excluding|except|last|next|this|between|for)\b|[<>]=?', q):
+            errors.append('This request includes constraints that this deterministic workflow cannot safely resolve. Specify filters in the visualization workflow.')
+        if re.search(r'average order value|\baov\b', q):
+            errors.append('Average order value needs a verified order-grain definition and revenue mapping; no unrelated average was computed.')
+
+        mentioned = [c for c in columns if self._mentions(q, c)]
+        metrics = [c for c in mentioned if c in numeric and c not in dates and not re.search(r'(^|[_ -])(id|code|zip|phone|account)([_ -]|$)', c, re.I)]
+        
+        # Follow-up context extraction: if metric not mentioned, check context
+        if not metrics and context:
+            for past in reversed(context):
+                past_content = past.get('content', '').lower()
+                for num_col in numeric:
+                    if self._mentions(past_content, num_col) and num_col not in dates:
+                        metrics = [num_col]
+                        break
+                if metrics:
+                    break
+
+        metric = metrics[0] if len(metrics) == 1 else None
+        dimensions = [c for c in mentioned if c not in metrics and c not in dates]
+
+        # Follow-up context extraction: if dimension not mentioned, check context
+        if not dimensions and context:
+            for past in reversed(context):
+                past_content = past.get('content', '').lower()
+                for c in columns:
+                    if c not in numeric and c not in dates and (self._mentions(past_content, c) or any(w in c.lower() for w in ('company', 'category', 'dept', 'region', 'segment', 'product', 'brand'))):
+                        dimensions = [c]
+                        break
+                if dimensions:
+                    break
+
+        # Entity/category resolution for questions like "Which company has highest..."
+        if not dimensions:
+            for dim_candidate in columns:
+                if dim_candidate not in numeric and dim_candidate not in dates:
+                    cand_words = set(re.split(r'[^a-zA-Z0-9]+', dim_candidate.lower()))
+                    if cand_words.intersection({'company', 'name', 'title', 'category', 'region', 'segment', 'product', 'brand', 'type', 'dept', 'department'}):
+                        if any(re.search(r'\b' + re.escape(w) + r'\b', q) for w in ('company', 'which', 'who', 'highest', 'top', 'compare', 'second', 'rank')):
+                            dimensions = [dim_candidate]
+                            break
+
+        if not dimensions:
+            non_numeric = [c for c in columns if c not in numeric and c not in dates]
+            if len(non_numeric) == 1 and any(re.search(r'\b' + re.escape(w) + r'\b', q) for w in ('company', 'which', 'who', 'highest', 'top', 'compare', 'second')):
+                dimensions = [non_numeric[0]]
+
+        limit = 10
+        match = re.search(r'\b(?:top|bottom)\s+(\d+)\b', q)
+        if match:
+            limit = int(match.group(1))
+
+        # Check for specific question types
+        if re.search(r'\b(compare|second[- ]highest|second[- ]top)\b', q):
+            operation, aggregation = 'top', 'sum'
+            limit = 2
+            if not dimensions:
+                errors.append('Name the category to compare.')
+        elif re.search(r'\b(which|who)\b.*\b(highest|top|maximum|best)\b|\bhighest\b.*\b(which|who|company|entity)\b', q):
+            operation, aggregation = 'top', 'sum'
+            limit = 1
+            if not dimensions:
+                errors.append('Name the category to rank.')
+        elif re.search(r'\b(count|how many|number of)\b', q):
+            operation, aggregation = 'count', 'count'
+            if not re.search(r'\b(records|rows)\b', q):
+                errors.append('Specify count records by a dimension; distinct entity counts require a verified identifier.')
+        elif re.search(r'\b(average|avg|mean)\b', q):
+            operation, aggregation = 'average', 'mean'
+        elif re.search(r'\b(top|bottom)\b', q):
+            operation = 'bottom' if re.search(r'\bbottom\b', q) else 'top'
+            aggregation = 'sum'
+            if not dimensions:
+                errors.append('Name the category to rank.')
+        elif re.search(r'\b(minimum|min|lowest)\b', q):
+            operation, aggregation = 'min', 'min'
+        elif re.search(r'\b(maximum|max|highest)\b', q):
+            if dimensions:
+                operation, aggregation = 'top', 'sum'
+                limit = 1
+            else:
+                operation, aggregation = 'max', 'max'
+        elif re.search(r'\b(trend|monthly|over time)\b', q):
+            operation, aggregation = 'trend', 'sum'
+        elif re.search(r'\b(total|sum)\b', q):
+            operation, aggregation = 'sum', 'sum'
+        elif re.search(r'\b(chart|visualize|plot|graph)\b', q):
+            operation = 'top' if dimensions else 'preview'
+            aggregation = 'sum'
+            if re.search(r'\b(compare|comparison|second)\b', q):
+                limit = 2
+        elif metric and re.fullmatch(r'(?:total[ _-])?(revenue|sales|profit)(?:[ _-]amount)?', metric, re.I) and dimensions:
+            operation, aggregation = 'sum', 'sum'
+        else:
+            operation, aggregation = 'ambiguous', None
+            errors.append('Specify an operation such as total, average, or count records and name the metric.')
+
+        if operation != 'count' and not metric:
+            if re.search(r'\bprofit\b', q) and 'profit' not in columns:
+                perf_metrics = [c for c in numeric if re.search(r'(roe|roce|margin|revenue|income|value)', c, re.I)]
+                if perf_metrics:
+                    errors.append(f"The dataset does not contain a 'profit' column. Available performance metrics are: {', '.join(perf_metrics)}.")
+                else:
+                    errors.append(f"The dataset does not contain a 'profit' column. Available numeric fields: {', '.join(numeric)}.")
+            else:
+                errors.append('Name exactly one numeric measure from the available fields; no default metric is selected.')
+
+        if re.search(r'\bby\b', q) and not dimensions and operation not in {'top', 'bottom', 'trend'}:
+            errors.append('The requested grouping dimension could not be resolved.')
+
+        date_field = None
+        if operation == 'trend':
+            chosen = [c for c in dates if c in mentioned] or dates
+            if len(chosen) != 1:
+                errors.append('Name one unambiguous date column for the monthly trend.')
+            else:
+                date_field = chosen[0]
+
+        if not 1 <= limit <= 100:
+            errors.append('Ranking limit must be between 1 and 100.')
+
+        return AnalyticsRequest(
+            operation,
+            metric,
+            dimensions[0] if dimensions else None,
+            limit,
+            dimensions,
+            date_field,
+            'month' if operation == 'trend' else None,
+            aggregation,
+            bool(errors),
+            errors,
+            numeric,
+            sort='ascending' if operation == 'bottom' else 'descending',
+        )
+
+    async def analyze(
+        self,
+        message: str,
+        dataset_id: str | None = None,
+        dataframe: pd.DataFrame | None = None,
+        dataset_version: int | None = None,
+        context: list[dict[str, str]] | None = None,
+    ) -> dict[str, Any]:
         if dataframe is None:
             if not dataset_id or self._data_retrieval is None:
-                return {"answer": "Select a dataset before requesting an analysis.", "data": [], "explanation": "Analytics needs a dataset context.", "actionable": []}
-            dataframe, _ = await asyncio.to_thread(self._data_retrieval.load_dataframe, dataset_id)
-        return await asyncio.to_thread(self._execute, message, dataframe)
-
-    def _execute(self, message: str, dataframe: pd.DataFrame) -> dict[str, Any]:
-        if dataframe.empty:
-            return {"answer": "The selected dataset has no rows to analyze.", "data": [], "explanation": "No aggregation was run.", "actionable": []}
-        request = self.parse(message, list(dataframe.columns))
-        metric = request.metric or self._first_numeric(dataframe)
-        if request.operation != "count" and metric is None:
-            return {"answer": "I could not identify a numeric metric in the question or dataset.", "data": [], "explanation": "Try naming a numeric column such as revenue or sales.", "actionable": []}
-        if metric is not None and metric not in dataframe.columns:
-            return {"answer": f"I could not find the metric '{metric}' in this dataset.", "data": [], "explanation": "Use one of the dataset columns.", "actionable": []}
-
-        if request.operation == "trend":
-            return self._trend(dataframe, metric, request.dimension)
-        if request.operation in {"top", "bottom"}:
-            return self._ranking(dataframe, metric, request.dimension, request.operation, request.limit)
-        return self._aggregate(dataframe, metric, request.dimension, request.operation)
+                return self._clarify(AnalyticsRequest('ambiguous', clarification_required=True, validation_errors=['Select a dataset before requesting an analysis.']))
+            _, version, _, _, _ = await asyncio.to_thread(self._data_retrieval.discover, dataset_id, dataset_version)
+            dataset_version = version.version_number
+            # Pin the resolved version and disable automatic sampling for exact aggregates.
+            dataframe, sampled = await asyncio.to_thread(self._data_retrieval.load_dataframe, dataset_id, version_number=dataset_version, sample_size=0)
+            if sampled:
+                return self._clarify(AnalyticsRequest('ambiguous', clarification_required=True, validation_errors=['Exact analytics cannot run on an undeclared sample.']))
+        return await asyncio.to_thread(self._execute, message, dataframe, dataset_id, dataset_version, context)
 
     @staticmethod
-    def _first_numeric(dataframe: pd.DataFrame) -> str | None:
-        numeric = dataframe.select_dtypes(include="number").columns.tolist()
-        return numeric[0] if numeric else None
+    def _clarify(plan: AnalyticsRequest) -> dict[str, Any]:
+        return {
+            'status': 'clarification_required',
+            'answer': ' '.join(plan.validation_errors),
+            'data': [],
+            'explanation': 'No analytical calculation was executed.',
+            'actionable': [],
+            'plan': asdict(plan),
+            'kpis': {},
+            'chart': None,
+        }
 
-    def _aggregate(self, dataframe: pd.DataFrame, metric: str | None, dimension: str | None, operation: str) -> dict[str, Any]:
-        if operation == "count":
-            series = dataframe.groupby(dimension).size() if dimension else len(dataframe)
+    def _execute(
+        self,
+        message: str,
+        dataframe: pd.DataFrame,
+        dataset_id: str | None = None,
+        dataset_version: int | None = None,
+        context: list[dict[str, str]] | None = None,
+    ) -> dict[str, Any]:
+        numeric = dataframe.select_dtypes(include='number').columns.tolist()
+        dates = [c for c in dataframe if pd.api.types.is_datetime64_any_dtype(dataframe[c]) or re.search(r'(^|[_ -])(date|month|time|year)([_ -]|$)', c, re.I)]
+        plan = self.parse(message, list(dataframe.columns), numeric, dates, context)
+        plan = AnalyticsRequest(**{**asdict(plan), 'dataset_id': dataset_id, 'dataset_version': dataset_version})
+        if plan.clarification_required:
+            return self._clarify(plan)
+
+        kpis: dict[str, Any] = {}
+        chart: dict[str, Any] | None = None
+        actionable: list[str] = []
+
+        if plan.operation == 'preview':
+            rows = self._records(dataframe.head(100))
+            answer = f'Showing {len(rows)} of {len(dataframe)} records.'
+            explanation = 'Bounded snapshot of dataset observations.'
+        elif plan.operation == 'description':
+            rows = [{'column': str(c), 'type': str(dataframe[c].dtype), 'non_null_count': int(dataframe[c].count())} for c in dataframe]
+            answer = f'The dataset contains {len(dataframe)} rows and {len(dataframe.columns)} columns.'
+            explanation = 'Dataset structural profile and completeness summary.'
         else:
-            values = pd.to_numeric(dataframe[metric], errors="coerce")
-            operation_fn = {"sum": "sum", "average": "mean", "min": "min", "max": "max"}.get(operation, "sum")
-            series = values.groupby(dataframe[dimension]).agg(operation_fn) if dimension else getattr(values, operation_fn)()
-        label = "records" if operation == "count" else metric
-        if dimension:
-            rows = [{dimension: str(index), label: self._number(value)} for index, value in series.sort_values(ascending=False).items()]
-            answer = f"{operation.title()} {label} by {dimension}: " + "; ".join(f"{row[dimension]} = {row[label]}" for row in rows[:10]) + "."
-        else:
-            value = self._number(series)
-            rows, answer = [{label: value}], f"The {operation} {label} is {value}."
-        return {"answer": answer, "data": rows, "explanation": f"Calculated {operation} using {label}" + (f" grouped by {dimension}" if dimension else "") + ".", "actionable": []}
+            work = dataframe.copy()
+            groups = list(plan.dimensions)
+            if plan.operation == 'trend':
+                dates_parsed = pd.to_datetime(work[plan.date_field], errors='coerce')
+                if dates_parsed.isna().any():
+                    return self._clarify(AnalyticsRequest(**{**asdict(plan), 'clarification_required': True, 'validation_errors': ['The date field contains missing or invalid dates. Resolve them before trend analysis.']}))
+                work[plan.date_field] = dates_parsed.dt.to_period('M').astype(str)
+                groups = [plan.date_field, *groups]
 
-    def _ranking(self, dataframe: pd.DataFrame, metric: str | None, dimension: str | None, operation: str, limit: int) -> dict[str, Any]:
-        group = dimension or self._first_categorical(dataframe, exclude=metric)
-        if group is None:
-            return {"answer": "I need a category such as product, customer, or region to rank results.", "data": [], "explanation": "No grouping column was identified.", "actionable": []}
-        values = pd.to_numeric(dataframe[metric], errors="coerce") if metric else pd.Series(1, index=dataframe.index)
-        ranked = values.groupby(dataframe[group]).sum().sort_values(ascending=operation == "bottom").head(limit)
-        rows = [{group: str(index), metric or "count": self._number(value)} for index, value in ranked.items()]
-        answer = f"{operation.title()} {len(rows)} {group} by {metric or 'count'}: " + "; ".join(f"{row[group]} ({row[metric or 'count']})" for row in rows) + "."
-        return {"answer": answer, "data": rows, "explanation": f"Grouped records by {group}, summed {metric or 'records'}, and sorted {operation} first.", "actionable": [f"Focus on {rows[0][group]} first." ] if rows else []}
+            label = 'records' if plan.operation == 'count' else plan.metric
+            if plan.operation == 'count':
+                values = work.groupby(groups, dropna=False).size() if groups else len(work)
+            else:
+                if not work[plan.metric].dropna().map(lambda v: float('-inf') < v < float('inf')).all():
+                    return self._clarify(AnalyticsRequest(**{**asdict(plan), 'clarification_required': True, 'validation_errors': ['The metric contains non-finite values.']}))
+                values = work.groupby(groups, dropna=False)[plan.metric] if groups else work[plan.metric]
+                values = values.sum(min_count=1) if plan.aggregation == 'sum' else getattr(values, plan.aggregation)()
 
-    def _trend(self, dataframe: pd.DataFrame, metric: str | None, date_column: str | None) -> dict[str, Any]:
-        date_column = date_column or next((col for col in dataframe.columns if any(word in col.lower() for word in ("date", "month", "time", "year"))), None)
-        if date_column is None:
-            return {"answer": "I need a date or time column to analyze a trend.", "data": [], "explanation": "No temporal column was identified.", "actionable": []}
-        dates = pd.to_datetime(dataframe[date_column], errors="coerce")
-        values = pd.to_numeric(dataframe[metric], errors="coerce")
-        trend = values.groupby(dates.dt.to_period("M")).sum().dropna()
-        rows = [{date_column: str(index), metric: self._number(value)} for index, value in trend.items()]
-        direction = "increased" if len(trend) > 1 and trend.iloc[-1] > trend.iloc[0] else "decreased" if len(trend) > 1 else "was stable"
-        return {"answer": f"{metric.title()} {direction} across the available monthly periods.", "data": rows, "explanation": f"Aggregated {metric} by month from {date_column}.", "actionable": ["Review the latest period and investigate the main drivers."]}
+            if groups:
+                if plan.operation in {'top', 'bottom'}:
+                    values = values.sort_values(ascending=plan.operation == 'bottom').head(plan.limit)
+                elif plan.operation == 'trend':
+                    values = values.sort_index()
+                else:
+                    values = values.sort_values(ascending=False)
+                rows = self._records(values.rename(label).reset_index())
+            else:
+                rows = [{label: None if pd.isna(values) else self._number(values)}]
+
+            agg_name = plan.aggregation.title() if plan.aggregation else "Calculated"
+            answer = f"{agg_name} {label}" + (f" by {', '.join(groups)}" if groups else '') + ': ' + '; '.join(', '.join(f'{k} = {v}' for k, v in row.items()) for row in rows[:10]) + '.'
+            explanation = f'Executed validated {plan.operation} against the selected dataset version. Null grouping keys are retained.'
+
+            # Compute population KPIs for the analyzed metric
+            if plan.metric and plan.metric in dataframe.columns and pd.api.types.is_numeric_dtype(dataframe[plan.metric]):
+                metric_series = dataframe[plan.metric].dropna()
+                if not metric_series.empty:
+                    kpis = {
+                        "total": self._number(metric_series.sum()),
+                        "mean": round(float(metric_series.mean()), 2),
+                        "median": round(float(metric_series.median()), 2),
+                        "min": self._number(metric_series.min()),
+                        "max": self._number(metric_series.max()),
+                        "count": int(metric_series.count()),
+                    }
+
+            # Generate structured chart points
+            if groups and rows and len(rows) <= 50:
+                dim_col = groups[0]
+                chart_points = []
+                for r in rows:
+                    if dim_col in r and label in r and r[label] is not None:
+                        try:
+                            chart_points.append({"label": str(r[dim_col]), "value": float(r[label])})
+                        except (ValueError, TypeError):
+                            pass
+                if chart_points:
+                    chart = {
+                        "chart_type": "bar",
+                        "x_field": dim_col,
+                        "y_field": label,
+                        "points": chart_points,
+                        "chart_label": f"{agg_name} of {label}",
+                    }
+
+            # Generate actionable recommendations
+            if plan.metric:
+                actionable.append(f"Explore distributions or relationships for '{plan.metric}' in Visualization Studio.")
+            if groups:
+                actionable.append(f"Generate an Executive Report covering category-level performance across {', '.join(groups)}.")
+
+        return {
+            'status': 'complete',
+            'answer': answer,
+            'data': rows,
+            'explanation': explanation,
+            'actionable': actionable,
+            'plan': asdict(plan),
+            'kpis': kpis,
+            'chart': chart,
+        }
 
     @staticmethod
-    def _first_categorical(dataframe: pd.DataFrame, exclude: str | None = None) -> str | None:
-        columns = [col for col in dataframe.columns if col != exclude and not pd.api.types.is_numeric_dtype(dataframe[col])]
-        return columns[0] if columns else None
+    def _records(df: pd.DataFrame) -> list[dict[str, Any]]:
+        # JSON round-trip also safely represents timestamps and missing values.
+        import json
+        return json.loads(df.to_json(orient='records', date_format='iso'))
 
     @staticmethod
     def _number(value: Any) -> int | float:
         value = float(value)
-        return int(value) if value.is_integer() else round(value, 2)
+        return int(value) if value.is_integer() else value
 
 
 def get_natural_language_analytics_service() -> NaturalLanguageAnalyticsService:
-    # The route injects file-backed retrieval when a database session exists;
-    # this factory remains useful for dataframe-driven unit work.
     return NaturalLanguageAnalyticsService()

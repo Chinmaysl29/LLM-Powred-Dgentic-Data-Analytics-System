@@ -10,6 +10,7 @@ from fastapi import Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.api.v1.router import router as api_v1_router
+from backend.app.api.v1.routes.health import router as health_router
 from backend.app.core.config import get_settings
 from backend.app.core.exceptions import register_exception_handlers
 from backend.app.core.logging import configure_logging
@@ -35,6 +36,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.postgres = PostgresDatabase(settings)
     app.state.redis = RedisCache(settings)
     app.state.chroma = ChromaDatabase(settings)
+    app.state.schema_compatible = False
     logger.info("Application startup initiated environment=%s", settings.environment)
 
     for dependency_name, connector in (
@@ -49,7 +51,39 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         except Exception:
             logger.warning("%s is unavailable at startup; health checks will retry", dependency_name, exc_info=True)
 
+    schema_ok, schema_message = await app.state.postgres.schema_check()
+    app.state.schema_compatible = schema_ok
+    if not schema_ok:
+        logger.error("Database startup compatibility check failed: %s", schema_message)
+
+    worker_task = None
+    if app.state.schema_compatible and getattr(app.state.postgres, "_session_factory", None) is not None:
+        import asyncio
+        import socket
+        import uuid
+        from backend.jobs.manager import BackgroundJobManager
+        from backend.jobs.job_worker import JobWorker
+        from backend.app.services.document_indexing_service import DocumentIndexingService
+        from backend.app.services.analysis_run_service import execute_analysis_job
+
+        job_mgr = BackgroundJobManager(session_factory=app.state.postgres._session_factory)
+        job_mgr.register_durable('rag', DocumentIndexingService(app.state.postgres._session_factory).execute)
+        job_mgr.register_durable('analysis_pipeline', execute_analysis_job)
+        job_worker = JobWorker(job_mgr, concurrency=2)
+        app.state.job_worker = job_worker
+        worker_id = f"{socket.gethostname()}-{uuid.uuid4().hex[:8]}"
+        worker_task = asyncio.create_task(job_worker.run_persistent(worker_id))
+        logger.info("Durable background job worker launched worker_id=%s", worker_id)
+
     yield
+
+    if worker_task:
+        await app.state.job_worker.shutdown()
+        worker_task.cancel()
+        try:
+            await worker_task
+        except Exception:
+            pass
 
     await app.state.redis.close()
     await app.state.chroma.close()
@@ -63,13 +97,7 @@ def create_app() -> FastAPI:
     application = FastAPI(title=settings.app_name, version=settings.app_version, lifespan=lifespan)
     application.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            settings.frontend_url,
-            "http://localhost:5173",
-            "http://127.0.0.1:5173",
-            "http://localhost:3000",
-            "http://127.0.0.1:3000",
-        ],
+        allow_origins=settings.allowed_cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -80,6 +108,7 @@ def create_app() -> FastAPI:
     application.add_middleware(RequestLoggingMiddleware)
     application.add_middleware(RequestIDMiddleware)
     application.add_middleware(TracingMiddleware)
+    application.include_router(health_router)
     application.include_router(api_v1_router)
 
     @application.get("/metrics", include_in_schema=False)

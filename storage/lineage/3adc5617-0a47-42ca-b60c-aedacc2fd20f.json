@@ -1,0 +1,15 @@
+{
+  "dataset_id": "3adc5617-0a47-42ca-b60c-aedacc2fd20f",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "5f53a3f6-4d49-4dcb-b35d-af02d44036c2",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-10-13 14:41:05.856104+00:00",
+      "author": "system",
+      "description": "Initial ingestion of recovery_authorized_fixture_v2.csv"
+    }
+  ]
+}

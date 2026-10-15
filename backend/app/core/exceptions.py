@@ -60,6 +60,13 @@ class DomainError(Exception):
         super().__init__(message)
 
 
+class InvalidChunkingStrategyError(DomainError, ValueError):
+    """Raised when an unknown or invalid chunking strategy is requested."""
+
+    error_code = "INVALID_CHUNKING_STRATEGY"
+    status_code = status.HTTP_400_BAD_REQUEST
+
+
 class DatasetNotFoundError(DomainError, ValueError):
     """Raised when a dataset is not found in the database."""
 
@@ -92,7 +99,7 @@ class UnsupportedFileTypeError(StorageError, ValueError):
     """Raised when an uploaded file extension is not supported."""
 
     error_code = "UNSUPPORTED_FILE_TYPE"
-    status_code = status.HTTP_400_BAD_REQUEST
+    status_code = status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
 
 
 class FileSizeExceededError(StorageError, ValueError):
@@ -237,8 +244,10 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(HTTPException)
     async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
-        message = exc.detail if isinstance(exc.detail, str) else "Request failed"
-        return error_response(request, exc.status_code, message, "HTTP_ERROR")
+        detail = exc.detail
+        message = detail if isinstance(detail, str) else detail.get("message", "Request failed") if isinstance(detail, dict) else "Request failed"
+        code = detail.get("code", "HTTP_ERROR") if isinstance(detail, dict) else "HTTP_ERROR"
+        return error_response(request, exc.status_code, message, code)
 
     @app.exception_handler(DomainError)
     async def domain_error_handler(request: Request, exc: DomainError) -> JSONResponse:

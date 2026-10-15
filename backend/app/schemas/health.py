@@ -12,6 +12,22 @@ class DependencyHealth(BaseModel):
     message: str
 
 
+class LivenessResponse(BaseModel):
+    """Liveness probe response model."""
+
+    status: Literal["alive"]
+    message: str = "Process is responsive"
+
+
+class ReadinessResponse(BaseModel):
+    """Readiness probe response model."""
+
+    success: bool
+    status: Literal["ready", "unready"]
+    critical_dependencies: dict[str, DependencyHealth]
+    optional_dependencies: dict[str, DependencyHealth]
+
+
 class HealthResponse(BaseModel):
     """Detailed service readiness response."""
 

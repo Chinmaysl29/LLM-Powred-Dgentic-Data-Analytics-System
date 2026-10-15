@@ -1,34 +1,37 @@
-import { Navigate, Outlet, Routes, Route } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
+import { Navigate, Outlet, Routes, Route, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
+import AppErrorBoundary from './components/AppErrorBoundary';
+const LegalPage = lazy(() => import('./pages/LegalPage'));
 
-import AuthLayout from './layouts/AuthLayout';
-import AppLayout from './layouts/AppLayout';
+const AuthLayout = lazy(() => import('./layouts/AuthLayout'));
+const AppLayout = lazy(() => import('./layouts/AppLayout'));
 
-import LoginPage from './pages/auth/LoginPage';
-import SignupPage from './pages/auth/SignupPage';
-import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
+const SignupPage = lazy(() => import('./pages/auth/SignupPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage'));
 
-import DashboardPage from './pages/app/DashboardPage';
-import DatasetsPage from './pages/app/DatasetsPage';
-import DatasetDetailPage from './pages/app/DatasetDetailPage';
-import DatasetUploadPage from './pages/app/DatasetUploadPage';
-import ConnectionsPage from './pages/app/ConnectionsPage';
-import DataWarehousePage from './pages/app/DataWarehousePage';
-import ProfilePage from './pages/app/ProfilePage';
-import AnalysisPage from './pages/app/AnalysisPage';
-import VisualizationsPage from './pages/app/VisualizationsPage';
-import InsightsPage from './pages/app/InsightsPage';
-import ReportsPage from './pages/app/ReportsPage';
-import CreateReportPage from './pages/app/CreateReportPage';
-import ReportDetailPage from './pages/app/ReportDetailPage';
-import ReportBuilderPage from './pages/app/ReportBuilderPage';
-import SettingsPage from './pages/app/SettingsPage';
-import ForecastingWorkbenchPage from './pages/app/ForecastingWorkbenchPage';
-import AIMemoryExplorerPage from './pages/app/AIMemoryExplorerPage';
-import DashboardStudioPage from './pages/app/DashboardStudioPage';
+const DashboardPage = lazy(() => import('./pages/app/DashboardPage'));
+const DatasetsPage = lazy(() => import('./pages/app/DatasetsPage'));
+const DatasetDetailPage = lazy(() => import('./pages/app/DatasetDetailPage'));
+const DatasetUploadPage = lazy(() => import('./pages/app/DatasetUploadPage'));
+const ConnectionsPage = lazy(() => import('./pages/app/ConnectionsPage'));
+const DataWarehousePage = lazy(() => import('./pages/app/DataWarehousePage'));
+const ProfilePage = lazy(() => import('./pages/app/ProfilePage'));
+const AnalysisPage = lazy(() => import('./pages/app/AnalysisPage'));
+const VisualizationsPage = lazy(() => import('./pages/app/VisualizationsPage'));
+const InsightsPage = lazy(() => import('./pages/app/InsightsPage'));
+const ReportsPage = lazy(() => import('./pages/app/ReportsPage'));
+const CreateReportPage = lazy(() => import('./pages/app/CreateReportPage'));
+const ReportDetailPage = lazy(() => import('./pages/app/ReportDetailPage'));
+const ReportBuilderPage = lazy(() => import('./pages/app/ReportBuilderPage'));
+const SettingsPage = lazy(() => import('./pages/app/SettingsPage'));
+const ForecastingWorkbenchPage = lazy(() => import('./pages/app/ForecastingWorkbenchPage'));
+const AIMemoryExplorerPage = lazy(() => import('./pages/app/AIMemoryExplorerPage'));
+const DashboardStudioPage = lazy(() => import('./pages/app/DashboardStudioPage'));
+const EDAStudioPage = lazy(() => import('./pages/app/EDAStudioPage'));
 
-import LandingPage from './pages/LandingPage';
-import NotFoundPage from './pages/NotFoundPage';
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 // ---------------------------------------------------------------------------
 // RequireAuth — route guard for authenticated pages.
@@ -41,10 +44,13 @@ import NotFoundPage from './pages/NotFoundPage';
 // ---------------------------------------------------------------------------
 
 function RequireAuth() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading, sessionError, retrySession } = useAuth();
+  const location = useLocation();
+  if (isLoading) return <p role="status" className="page-container">Checking your session…</p>;
+  if (sessionError) return <div className="page-container" role="alert"><h1>Unable to check your session</h1><p>{sessionError}</p><button onClick={retrySession}>Retry</button></div>;
   if (!isAuthenticated) {
     // Redirect to login, preserving the intended URL for post-login redirect.
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location.pathname + location.search }} replace />;
   }
   return <Outlet />;
 }
@@ -55,12 +61,12 @@ function RequireAuth() {
 
 function App() {
   return (
-    <Routes>
-      {/* Landing page — no layout wrapper; fully self-contained */}
-      <Route path="/" element={<LandingPage />} />
-
-      {/* Public Routes (Auth) */}
+    <AppErrorBoundary><Suspense fallback={<p role="status" className="page-container">Loading page…</p>}><Routes>
+      <Route path="/privacy" element={<LegalPage kind="privacy" />} />
+      <Route path="/terms" element={<LegalPage kind="terms" />} />
+      {/* Public Routes (Approved Cinematic Experience) */}
       <Route element={<AuthLayout />}>
+        <Route path="/" element={<LoginPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -85,6 +91,7 @@ function App() {
           {/* Analytics */}
           <Route path="/analysis" element={<AnalysisPage />} />
           <Route path="/visualizations" element={<VisualizationsPage />} />
+          <Route path="/eda" element={<EDAStudioPage />} />
           <Route path="/insights" element={<InsightsPage />} />
           <Route path="/insights/what-if" element={<InsightsPage subView="what-if" />} />
 
@@ -107,7 +114,7 @@ function App() {
 
       {/* Fallback for unknown routes */}
       <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+    </Routes></Suspense></AppErrorBoundary>
   );
 }
 

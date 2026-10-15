@@ -1,0 +1,1865 @@
+{
+  "id": "dash-08de9edc1c",
+  "workspace_id": "ws-portfolio-demo",
+  "title": "Commercial Revenue & Regional Intelligence",
+  "prompt": "Executive Commercial Sales Intelligence",
+  "created_at": "2026-10-11T18:03:14.613739+00:00",
+  "updated_at": "2026-10-11T18:03:14.613739+00:00",
+  "kpis": [
+    {
+      "id": "kpi-1",
+      "label": "Total Quantity",
+      "value": 1410.0,
+      "formatted": "1,410",
+      "change_pct": 12.4,
+      "trend": "up"
+    },
+    {
+      "id": "kpi-2",
+      "label": "Avg Quantity",
+      "value": 7.05,
+      "formatted": "7.05",
+      "change_pct": 4.8,
+      "trend": "up"
+    },
+    {
+      "id": "kpi-3",
+      "label": "Total Unit Price",
+      "value": 746700.0,
+      "formatted": "746,700",
+      "change_pct": -2.1,
+      "trend": "down"
+    },
+    {
+      "id": "kpi-4",
+      "label": "Active Segments",
+      "value": 200,
+      "formatted": "200",
+      "change_pct": 0.0,
+      "trend": "neutral"
+    }
+  ],
+  "charts": [
+    {
+      "id": "chart-trend",
+      "type": "line",
+      "title": "Quantity Performance Trend",
+      "spec": {
+        "chart_type": "line_chart",
+        "data": [
+          {
+            "type": "scatter",
+            "mode": "lines+markers",
+            "name": "quantity",
+            "x": [
+              "2024-01-01",
+              "2024-01-02",
+              "2024-01-03",
+              "2024-01-04",
+              "2024-01-05",
+              "2024-01-06",
+              "2024-01-07",
+              "2024-01-08",
+              "2024-01-09",
+              "2024-01-10",
+              "2024-01-11",
+              "2024-01-12",
+              "2024-01-13",
+              "2024-01-14",
+              "2024-01-15",
+              "2024-01-16",
+              "2024-01-17",
+              "2024-01-18",
+              "2024-01-19",
+              "2024-01-20",
+              "2024-01-21",
+              "2024-01-22",
+              "2024-01-23",
+              "2024-01-24",
+              "2024-01-25",
+              "2024-01-26",
+              "2024-01-27",
+              "2024-01-28",
+              "2024-01-29",
+              "2024-01-30",
+              "2024-01-31",
+              "2024-02-01",
+              "2024-02-02",
+              "2024-02-03",
+              "2024-02-04",
+              "2024-02-05",
+              "2024-02-06",
+              "2024-02-07",
+              "2024-02-08",
+              "2024-02-09",
+              "2024-02-10",
+              "2024-02-11",
+              "2024-02-12",
+              "2024-02-13",
+              "2024-02-14",
+              "2024-02-15",
+              "2024-02-16",
+              "2024-02-17",
+              "2024-02-18",
+              "2024-02-19",
+              "2024-02-20",
+              "2024-02-21",
+              "2024-02-22",
+              "2024-02-23",
+              "2024-02-24",
+              "2024-02-25",
+              "2024-02-26",
+              "2024-02-27",
+              "2024-02-28",
+              "2024-02-29",
+              "2024-03-01",
+              "2024-03-02",
+              "2024-03-03",
+              "2024-03-04",
+              "2024-03-05",
+              "2024-03-06",
+              "2024-03-07",
+              "2024-03-08",
+              "2024-03-09",
+              "2024-03-10",
+              "2024-03-11",
+              "2024-03-12",
+              "2024-03-13",
+              "2024-03-14",
+              "2024-03-15",
+              "2024-03-16",
+              "2024-03-17",
+              "2024-03-18",
+              "2024-03-19",
+              "2024-03-20",
+              "2024-03-21",
+              "2024-03-22",
+              "2024-03-23",
+              "2024-03-24",
+              "2024-03-25",
+              "2024-03-26",
+              "2024-03-27",
+              "2024-03-28",
+              "2024-03-29",
+              "2024-03-30",
+              "2024-03-31",
+              "2024-04-01",
+              "2024-04-02",
+              "2024-04-03",
+              "2024-04-04",
+              "2024-04-05",
+              "2024-04-06",
+              "2024-04-07",
+              "2024-04-08",
+              "2024-04-09",
+              "2024-04-10",
+              "2024-04-11",
+              "2024-04-12",
+              "2024-04-13",
+              "2024-04-14",
+              "2024-04-15",
+              "2024-04-16",
+              "2024-04-17",
+              "2024-04-18",
+              "2024-04-19",
+              "2024-04-20",
+              "2024-04-21",
+              "2024-04-22",
+              "2024-04-23",
+              "2024-04-24",
+              "2024-04-25",
+              "2024-04-26",
+              "2024-04-27",
+              "2024-04-28",
+              "2024-04-29",
+              "2024-04-30",
+              "2024-05-01",
+              "2024-05-02",
+              "2024-05-03",
+              "2024-05-04",
+              "2024-05-05",
+              "2024-05-06",
+              "2024-05-07",
+              "2024-05-08",
+              "2024-05-09",
+              "2024-05-10",
+              "2024-05-11",
+              "2024-05-12",
+              "2024-05-13",
+              "2024-05-14",
+              "2024-05-15",
+              "2024-05-16",
+              "2024-05-17",
+              "2024-05-18",
+              "2024-05-19",
+              "2024-05-20",
+              "2024-05-21",
+              "2024-05-22",
+              "2024-05-23",
+              "2024-05-24",
+              "2024-05-25",
+              "2024-05-26",
+              "2024-05-27",
+              "2024-05-28",
+              "2024-05-29",
+              "2024-05-30",
+              "2024-05-31",
+              "2024-06-01",
+              "2024-06-02",
+              "2024-06-03",
+              "2024-06-04",
+              "2024-06-05",
+              "2024-06-06",
+              "2024-06-07",
+              "2024-06-08",
+              "2024-06-09",
+              "2024-06-10",
+              "2024-06-11",
+              "2024-06-12",
+              "2024-06-13",
+              "2024-06-14",
+              "2024-06-15",
+              "2024-06-16",
+              "2024-06-17",
+              "2024-06-18",
+              "2024-06-19",
+              "2024-06-20",
+              "2024-06-21",
+              "2024-06-22",
+              "2024-06-23",
+              "2024-06-24",
+              "2024-06-25",
+              "2024-06-26",
+              "2024-06-27",
+              "2024-06-28",
+              "2024-06-29",
+              "2024-06-30",
+              "2024-07-01",
+              "2024-07-02",
+              "2024-07-03",
+              "2024-07-04",
+              "2024-07-05",
+              "2024-07-06",
+              "2024-07-07",
+              "2024-07-08",
+              "2024-07-09",
+              "2024-07-10",
+              "2024-07-11",
+              "2024-07-12",
+              "2024-07-13",
+              "2024-07-14",
+              "2024-07-15",
+              "2024-07-16",
+              "2024-07-17",
+              "2024-07-18"
+            ],
+            "y": [
+              2,
+              6,
+              6,
+              11,
+              1,
+              9,
+              12,
+              11,
+              6,
+              13,
+              3,
+              4,
+              12,
+              11,
+              4,
+              3,
+              10,
+              3,
+              3,
+              4,
+              7,
+              4,
+              9,
+              1,
+              8,
+              7,
+              2,
+              8,
+              1,
+              11,
+              12,
+              9,
+              9,
+              2,
+              7,
+              14,
+              10,
+              3,
+              7,
+              12,
+              10,
+              9,
+              4,
+              12,
+              1,
+              2,
+              1,
+              14,
+              12,
+              5,
+              5,
+              11,
+              7,
+              9,
+              9,
+              3,
+              3,
+              3,
+              4,
+              8,
+              6,
+              8,
+              1,
+              8,
+              4,
+              11,
+              1,
+              8,
+              4,
+              6,
+              8,
+              4,
+              14,
+              3,
+              14,
+              9,
+              3,
+              9,
+              13,
+              2,
+              14,
+              2,
+              2,
+              6,
+              3,
+              13,
+              9,
+              4,
+              1,
+              4,
+              1,
+              14,
+              5,
+              4,
+              8,
+              8,
+              7,
+              3,
+              1,
+              1,
+              12,
+              11,
+              3,
+              6,
+              7,
+              6,
+              14,
+              14,
+              6,
+              6,
+              13,
+              3,
+              6,
+              8,
+              11,
+              11,
+              2,
+              5,
+              14,
+              1,
+              12,
+              1,
+              5,
+              12,
+              13,
+              3,
+              4,
+              3,
+              1,
+              1,
+              12,
+              12,
+              14,
+              13,
+              14,
+              5,
+              6,
+              3,
+              12,
+              9,
+              5,
+              8,
+              13,
+              1,
+              14,
+              5,
+              3,
+              12,
+              1,
+              4,
+              13,
+              5,
+              7,
+              1,
+              3,
+              2,
+              9,
+              10,
+              6,
+              10,
+              3,
+              8,
+              14,
+              8,
+              2,
+              6,
+              7,
+              2,
+              11,
+              10,
+              2,
+              10,
+              1,
+              8,
+              1,
+              9,
+              11,
+              6,
+              7,
+              13,
+              10,
+              7,
+              10,
+              3,
+              2,
+              9,
+              8,
+              13,
+              12,
+              10,
+              7,
+              9,
+              4,
+              13,
+              4,
+              1,
+              8,
+              14,
+              14,
+              12
+            ],
+            "line": {
+              "color": "#3b82f6",
+              "width": 3,
+              "shape": "spline"
+            },
+            "marker": {
+              "size": 6,
+              "color": "#10b981"
+            },
+            "hovertemplate": "<b>order_date</b>: %{x}<br><b>quantity</b>: %{y:,.2f}<extra></extra>"
+          }
+        ],
+        "layout": {
+          "title": {
+            "text": "Quantity Over Time",
+            "font": {
+              "size": 16,
+              "color": "#f3f4f6",
+              "family": "Inter, sans-serif"
+            },
+            "x": 0.05
+          },
+          "paper_bgcolor": "#171b26",
+          "plot_bgcolor": "#171b26",
+          "font": {
+            "color": "#f3f4f6",
+            "family": "Inter, sans-serif"
+          },
+          "xaxis": {
+            "title": {
+              "text": "order_date",
+              "font": {
+                "size": 12,
+                "color": "#9ca3af"
+              }
+            },
+            "gridcolor": "#2d3343",
+            "zerolinecolor": "#2d3343",
+            "showline": true,
+            "linecolor": "#2d3343"
+          },
+          "yaxis": {
+            "title": {
+              "text": "quantity",
+              "font": {
+                "size": 12,
+                "color": "#9ca3af"
+              }
+            },
+            "gridcolor": "#2d3343",
+            "zerolinecolor": "#2d3343",
+            "showline": true,
+            "linecolor": "#2d3343"
+          },
+          "margin": {
+            "l": 50,
+            "r": 30,
+            "t": 60,
+            "b": 50
+          },
+          "hovermode": "closest",
+          "legend": {
+            "orientation": "h",
+            "yanchor": "bottom",
+            "y": 1.02,
+            "xanchor": "right",
+            "x": 1,
+            "font": {
+              "color": "#f3f4f6"
+            }
+          }
+        },
+        "config": {
+          "responsive": true,
+          "displayModeBar": true,
+          "displaylogo": false,
+          "modeBarButtonsToRemove": [
+            "lasso2d",
+            "select2d"
+          ],
+          "toImageButtonOptions": {
+            "format": "png",
+            "filename": "chart_export",
+            "height": 600,
+            "width": 1000,
+            "scale": 2
+          }
+        },
+        "powerbi_meta": {
+          "drilldown": {
+            "dimension": "order_date",
+            "has_child_level": false
+          },
+          "cross_filtering": {
+            "enabled": true,
+            "dimension": "order_date"
+          },
+          "tooltips": {
+            "format": "currency_or_number"
+          },
+          "export_options": [
+            "png",
+            "svg",
+            "csv",
+            "json"
+          ]
+        },
+        "ag_grid_spec": {
+          "columnDefs": [
+            {
+              "field": "order_date",
+              "headerName": "Order Date",
+              "sortable": true,
+              "filter": "agTextColumnFilter",
+              "resizable": true
+            },
+            {
+              "field": "quantity",
+              "headerName": "Quantity",
+              "sortable": true,
+              "filter": "agNumberColumnFilter",
+              "resizable": true
+            }
+          ],
+          "rowData": [
+            {
+              "order_date": "2024-01-01",
+              "quantity": 2
+            },
+            {
+              "order_date": "2024-01-02",
+              "quantity": 6
+            },
+            {
+              "order_date": "2024-01-03",
+              "quantity": 6
+            },
+            {
+              "order_date": "2024-01-04",
+              "quantity": 11
+            },
+            {
+              "order_date": "2024-01-05",
+              "quantity": 1
+            },
+            {
+              "order_date": "2024-01-06",
+              "quantity": 9
+            },
+            {
+              "order_date": "2024-01-07",
+              "quantity": 12
+            },
+            {
+              "order_date": "2024-01-08",
+              "quantity": 11
+            },
+            {
+              "order_date": "2024-01-09",
+              "quantity": 6
+            },
+            {
+              "order_date": "2024-01-10",
+              "quantity": 13
+            },
+            {
+              "order_date": "2024-01-11",
+              "quantity": 3
+            },
+            {
+              "order_date": "2024-01-12",
+              "quantity": 4
+            },
+            {
+              "order_date": "2024-01-13",
+              "quantity": 12
+            },
+            {
+              "order_date": "2024-01-14",
+              "quantity": 11
+            },
+            {
+              "order_date": "2024-01-15",
+              "quantity": 4
+            },
+            {
+              "order_date": "2024-01-16",
+              "quantity": 3
+            },
+            {
+              "order_date": "2024-01-17",
+              "quantity": 10
+            },
+            {
+              "order_date": "2024-01-18",
+              "quantity": 3
+            },
+            {
+              "order_date": "2024-01-19",
+              "quantity": 3
+            },
+            {
+              "order_date": "2024-01-20",
+              "quantity": 4
+            },
+            {
+              "order_date": "2024-01-21",
+              "quantity": 7
+            },
+            {
+              "order_date": "2024-01-22",
+              "quantity": 4
+            },
+            {
+              "order_date": "2024-01-23",
+              "quantity": 9
+            },
+            {
+              "order_date": "2024-01-24",
+              "quantity": 1
+            },
+            {
+              "order_date": "2024-01-25",
+              "quantity": 8
+            },
+            {
+              "order_date": "2024-01-26",
+              "quantity": 7
+            },
+            {
+              "order_date": "2024-01-27",
+              "quantity": 2
+            },
+            {
+              "order_date": "2024-01-28",
+              "quantity": 8
+            },
+            {
+              "order_date": "2024-01-29",
+              "quantity": 1
+            },
+            {
+              "order_date": "2024-01-30",
+              "quantity": 11
+            },
+            {
+              "order_date": "2024-01-31",
+              "quantity": 12
+            },
+            {
+              "order_date": "2024-02-01",
+              "quantity": 9
+            },
+            {
+              "order_date": "2024-02-02",
+              "quantity": 9
+            },
+            {
+              "order_date": "2024-02-03",
+              "quantity": 2
+            },
+            {
+              "order_date": "2024-02-04",
+              "quantity": 7
+            },
+            {
+              "order_date": "2024-02-05",
+              "quantity": 14
+            },
+            {
+              "order_date": "2024-02-06",
+              "quantity": 10
+            },
+            {
+              "order_date": "2024-02-07",
+              "quantity": 3
+            },
+            {
+              "order_date": "2024-02-08",
+              "quantity": 7
+            },
+            {
+              "order_date": "2024-02-09",
+              "quantity": 12
+            },
+            {
+              "order_date": "2024-02-10",
+              "quantity": 10
+            },
+            {
+              "order_date": "2024-02-11",
+              "quantity": 9
+            },
+            {
+              "order_date": "2024-02-12",
+              "quantity": 4
+            },
+            {
+              "order_date": "2024-02-13",
+              "quantity": 12
+            },
+            {
+              "order_date": "2024-02-14",
+              "quantity": 1
+            },
+            {
+              "order_date": "2024-02-15",
+              "quantity": 2
+            },
+            {
+              "order_date": "2024-02-16",
+              "quantity": 1
+            },
+            {
+              "order_date": "2024-02-17",
+              "quantity": 14
+            },
+            {
+              "order_date": "2024-02-18",
+              "quantity": 12
+            },
+            {
+              "order_date": "2024-02-19",
+              "quantity": 5
+            },
+            {
+              "order_date": "2024-02-20",
+              "quantity": 5
+            },
+            {
+              "order_date": "2024-02-21",
+              "quantity": 11
+            },
+            {
+              "order_date": "2024-02-22",
+              "quantity": 7
+            },
+            {
+              "order_date": "2024-02-23",
+              "quantity": 9
+            },
+            {
+              "order_date": "2024-02-24",
+              "quantity": 9
+            },
+            {
+              "order_date": "2024-02-25",
+              "quantity": 3
+            },
+            {
+              "order_date": "2024-02-26",
+              "quantity": 3
+            },
+            {
+              "order_date": "2024-02-27",
+              "quantity": 3
+            },
+            {
+              "order_date": "2024-02-28",
+              "quantity": 4
+            },
+            {
+              "order_date": "2024-02-29",
+              "quantity": 8
+            },
+            {
+              "order_date": "2024-03-01",
+              "quantity": 6
+            },
+            {
+              "order_date": "2024-03-02",
+              "quantity": 8
+            },
+            {
+              "order_date": "2024-03-03",
+              "quantity": 1
+            },
+            {
+              "order_date": "2024-03-04",
+              "quantity": 8
+            },
+            {
+              "order_date": "2024-03-05",
+              "quantity": 4
+            },
+            {
+              "order_date": "2024-03-06",
+              "quantity": 11
+            },
+            {
+              "order_date": "2024-03-07",
+              "quantity": 1
+            },
+            {
+              "order_date": "2024-03-08",
+              "quantity": 8
+            },
+            {
+              "order_date": "2024-03-09",
+              "quantity": 4
+            },
+            {
+              "order_date": "2024-03-10",
+              "quantity": 6
+            },
+            {
+              "order_date": "2024-03-11",
+              "quantity": 8
+            },
+            {
+              "order_date": "2024-03-12",
+              "quantity": 4
+            },
+            {
+              "order_date": "2024-03-13",
+              "quantity": 14
+            },
+            {
+              "order_date": "2024-03-14",
+              "quantity": 3
+            },
+            {
+              "order_date": "2024-03-15",
+              "quantity": 14
+            },
+            {
+              "order_date": "2024-03-16",
+              "quantity": 9
+            },
+            {
+              "order_date": "2024-03-17",
+              "quantity": 3
+            },
+            {
+              "order_date": "2024-03-18",
+              "quantity": 9
+            },
+            {
+              "order_date": "2024-03-19",
+              "quantity": 13
+            },
+            {
+              "order_date": "2024-03-20",
+              "quantity": 2
+            },
+            {
+              "order_date": "2024-03-21",
+              "quantity": 14
+            },
+            {
+              "order_date": "2024-03-22",
+              "quantity": 2
+            },
+            {
+              "order_date": "2024-03-23",
+              "quantity": 2
+            },
+            {
+              "order_date": "2024-03-24",
+              "quantity": 6
+            },
+            {
+              "order_date": "2024-03-25",
+              "quantity": 3
+            },
+            {
+              "order_date": "2024-03-26",
+              "quantity": 13
+            },
+            {
+              "order_date": "2024-03-27",
+              "quantity": 9
+            },
+            {
+              "order_date": "2024-03-28",
+              "quantity": 4
+            },
+            {
+              "order_date": "2024-03-29",
+              "quantity": 1
+            },
+            {
+              "order_date": "2024-03-30",
+              "quantity": 4
+            },
+            {
+              "order_date": "2024-03-31",
+              "quantity": 1
+            },
+            {
+              "order_date": "2024-04-01",
+              "quantity": 14
+            },
+            {
+              "order_date": "2024-04-02",
+              "quantity": 5
+            },
+            {
+              "order_date": "2024-04-03",
+              "quantity": 4
+            },
+            {
+              "order_date": "2024-04-04",
+              "quantity": 8
+            },
+            {
+              "order_date": "2024-04-05",
+              "quantity": 8
+            },
+            {
+              "order_date": "2024-04-06",
+              "quantity": 7
+            },
+            {
+              "order_date": "2024-04-07",
+              "quantity": 3
+            },
+            {
+              "order_date": "2024-04-08",
+              "quantity": 1
+            },
+            {
+              "order_date": "2024-04-09",
+              "quantity": 1
+            },
+            {
+              "order_date": "2024-04-10",
+              "quantity": 12
+            },
+            {
+              "order_date": "2024-04-11",
+              "quantity": 11
+            },
+            {
+              "order_date": "2024-04-12",
+              "quantity": 3
+            },
+            {
+              "order_date": "2024-04-13",
+              "quantity": 6
+            },
+            {
+              "order_date": "2024-04-14",
+              "quantity": 7
+            },
+            {
+              "order_date": "2024-04-15",
+              "quantity": 6
+            },
+            {
+              "order_date": "2024-04-16",
+              "quantity": 14
+            },
+            {
+              "order_date": "2024-04-17",
+              "quantity": 14
+            },
+            {
+              "order_date": "2024-04-18",
+              "quantity": 6
+            },
+            {
+              "order_date": "2024-04-19",
+              "quantity": 6
+            },
+            {
+              "order_date": "2024-04-20",
+              "quantity": 13
+            },
+            {
+              "order_date": "2024-04-21",
+              "quantity": 3
+            },
+            {
+              "order_date": "2024-04-22",
+              "quantity": 6
+            },
+            {
+              "order_date": "2024-04-23",
+              "quantity": 8
+            },
+            {
+              "order_date": "2024-04-24",
+              "quantity": 11
+            },
+            {
+              "order_date": "2024-04-25",
+              "quantity": 11
+            },
+            {
+              "order_date": "2024-04-26",
+              "quantity": 2
+            },
+            {
+              "order_date": "2024-04-27",
+              "quantity": 5
+            },
+            {
+              "order_date": "2024-04-28",
+              "quantity": 14
+            },
+            {
+              "order_date": "2024-04-29",
+              "quantity": 1
+            },
+            {
+              "order_date": "2024-04-30",
+              "quantity": 12
+            },
+            {
+              "order_date": "2024-05-01",
+              "quantity": 1
+            },
+            {
+              "order_date": "2024-05-02",
+              "quantity": 5
+            },
+            {
+              "order_date": "2024-05-03",
+              "quantity": 12
+            },
+            {
+              "order_date": "2024-05-04",
+              "quantity": 13
+            },
+            {
+              "order_date": "2024-05-05",
+              "quantity": 3
+            },
+            {
+              "order_date": "2024-05-06",
+              "quantity": 4
+            },
+            {
+              "order_date": "2024-05-07",
+              "quantity": 3
+            },
+            {
+              "order_date": "2024-05-08",
+              "quantity": 1
+            },
+            {
+              "order_date": "2024-05-09",
+              "quantity": 1
+            },
+            {
+              "order_date": "2024-05-10",
+              "quantity": 12
+            },
+            {
+              "order_date": "2024-05-11",
+              "quantity": 12
+            },
+            {
+              "order_date": "2024-05-12",
+              "quantity": 14
+            },
+            {
+              "order_date": "2024-05-13",
+              "quantity": 13
+            },
+            {
+              "order_date": "2024-05-14",
+              "quantity": 14
+            },
+            {
+              "order_date": "2024-05-15",
+              "quantity": 5
+            },
+            {
+              "order_date": "2024-05-16",
+              "quantity": 6
+            },
+            {
+              "order_date": "2024-05-17",
+              "quantity": 3
+            },
+            {
+              "order_date": "2024-05-18",
+              "quantity": 12
+            },
+            {
+              "order_date": "2024-05-19",
+              "quantity": 9
+            },
+            {
+              "order_date": "2024-05-20",
+              "quantity": 5
+            },
+            {
+              "order_date": "2024-05-21",
+              "quantity": 8
+            },
+            {
+              "order_date": "2024-05-22",
+              "quantity": 13
+            },
+            {
+              "order_date": "2024-05-23",
+              "quantity": 1
+            },
+            {
+              "order_date": "2024-05-24",
+              "quantity": 14
+            },
+            {
+              "order_date": "2024-05-25",
+              "quantity": 5
+            },
+            {
+              "order_date": "2024-05-26",
+              "quantity": 3
+            },
+            {
+              "order_date": "2024-05-27",
+              "quantity": 12
+            },
+            {
+              "order_date": "2024-05-28",
+              "quantity": 1
+            },
+            {
+              "order_date": "2024-05-29",
+              "quantity": 4
+            },
+            {
+              "order_date": "2024-05-30",
+              "quantity": 13
+            },
+            {
+              "order_date": "2024-05-31",
+              "quantity": 5
+            },
+            {
+              "order_date": "2024-06-01",
+              "quantity": 7
+            },
+            {
+              "order_date": "2024-06-02",
+              "quantity": 1
+            },
+            {
+              "order_date": "2024-06-03",
+              "quantity": 3
+            },
+            {
+              "order_date": "2024-06-04",
+              "quantity": 2
+            },
+            {
+              "order_date": "2024-06-05",
+              "quantity": 9
+            },
+            {
+              "order_date": "2024-06-06",
+              "quantity": 10
+            },
+            {
+              "order_date": "2024-06-07",
+              "quantity": 6
+            },
+            {
+              "order_date": "2024-06-08",
+              "quantity": 10
+            },
+            {
+              "order_date": "2024-06-09",
+              "quantity": 3
+            },
+            {
+              "order_date": "2024-06-10",
+              "quantity": 8
+            },
+            {
+              "order_date": "2024-06-11",
+              "quantity": 14
+            },
+            {
+              "order_date": "2024-06-12",
+              "quantity": 8
+            },
+            {
+              "order_date": "2024-06-13",
+              "quantity": 2
+            },
+            {
+              "order_date": "2024-06-14",
+              "quantity": 6
+            },
+            {
+              "order_date": "2024-06-15",
+              "quantity": 7
+            },
+            {
+              "order_date": "2024-06-16",
+              "quantity": 2
+            },
+            {
+              "order_date": "2024-06-17",
+              "quantity": 11
+            },
+            {
+              "order_date": "2024-06-18",
+              "quantity": 10
+            },
+            {
+              "order_date": "2024-06-19",
+              "quantity": 2
+            },
+            {
+              "order_date": "2024-06-20",
+              "quantity": 10
+            },
+            {
+              "order_date": "2024-06-21",
+              "quantity": 1
+            },
+            {
+              "order_date": "2024-06-22",
+              "quantity": 8
+            },
+            {
+              "order_date": "2024-06-23",
+              "quantity": 1
+            },
+            {
+              "order_date": "2024-06-24",
+              "quantity": 9
+            },
+            {
+              "order_date": "2024-06-25",
+              "quantity": 11
+            },
+            {
+              "order_date": "2024-06-26",
+              "quantity": 6
+            },
+            {
+              "order_date": "2024-06-27",
+              "quantity": 7
+            },
+            {
+              "order_date": "2024-06-28",
+              "quantity": 13
+            },
+            {
+              "order_date": "2024-06-29",
+              "quantity": 10
+            },
+            {
+              "order_date": "2024-06-30",
+              "quantity": 7
+            },
+            {
+              "order_date": "2024-07-01",
+              "quantity": 10
+            },
+            {
+              "order_date": "2024-07-02",
+              "quantity": 3
+            },
+            {
+              "order_date": "2024-07-03",
+              "quantity": 2
+            },
+            {
+              "order_date": "2024-07-04",
+              "quantity": 9
+            },
+            {
+              "order_date": "2024-07-05",
+              "quantity": 8
+            },
+            {
+              "order_date": "2024-07-06",
+              "quantity": 13
+            },
+            {
+              "order_date": "2024-07-07",
+              "quantity": 12
+            },
+            {
+              "order_date": "2024-07-08",
+              "quantity": 10
+            },
+            {
+              "order_date": "2024-07-09",
+              "quantity": 7
+            },
+            {
+              "order_date": "2024-07-10",
+              "quantity": 9
+            },
+            {
+              "order_date": "2024-07-11",
+              "quantity": 4
+            },
+            {
+              "order_date": "2024-07-12",
+              "quantity": 13
+            },
+            {
+              "order_date": "2024-07-13",
+              "quantity": 4
+            },
+            {
+              "order_date": "2024-07-14",
+              "quantity": 1
+            },
+            {
+              "order_date": "2024-07-15",
+              "quantity": 8
+            },
+            {
+              "order_date": "2024-07-16",
+              "quantity": 14
+            },
+            {
+              "order_date": "2024-07-17",
+              "quantity": 14
+            },
+            {
+              "order_date": "2024-07-18",
+              "quantity": 12
+            }
+          ],
+          "pagination": {
+            "enabled": true,
+            "pageSize": 50,
+            "totalRows": 200,
+            "displayedRows": 200,
+            "is_paginated": true
+          }
+        }
+      }
+    },
+    {
+      "id": "chart-donut",
+      "type": "donut",
+      "title": "Distribution by Order Id",
+      "spec": {
+        "chart_type": "donut_chart",
+        "data": [
+          {
+            "type": "pie",
+            "hole": 0.55,
+            "labels": [
+              "SO-2024047",
+              "SO-2024035",
+              "SO-2024118",
+              "SO-2024132",
+              "SO-2024091",
+              "SO-2024080"
+            ],
+            "values": [
+              14,
+              14,
+              14,
+              14,
+              14,
+              14
+            ],
+            "marker": {
+              "colors": [
+                "#3b82f6",
+                "#10b981",
+                "#f59e0b",
+                "#8b5cf6",
+                "#ec4899",
+                "#06b6d4"
+              ],
+              "line": {
+                "color": "#171b26",
+                "width": 2
+              }
+            },
+            "textinfo": "label+percent",
+            "hoverinfo": "label+value+percent"
+          }
+        ],
+        "layout": {
+          "title": {
+            "text": "Share by Order Id",
+            "font": {
+              "size": 16,
+              "color": "#f3f4f6",
+              "family": "Inter, sans-serif"
+            },
+            "x": 0.05
+          },
+          "paper_bgcolor": "#171b26",
+          "plot_bgcolor": "#171b26",
+          "font": {
+            "color": "#f3f4f6",
+            "family": "Inter, sans-serif"
+          },
+          "xaxis": {
+            "title": {
+              "text": "",
+              "font": {
+                "size": 12,
+                "color": "#9ca3af"
+              }
+            },
+            "gridcolor": "#2d3343",
+            "zerolinecolor": "#2d3343",
+            "showline": true,
+            "linecolor": "#2d3343"
+          },
+          "yaxis": {
+            "title": {
+              "text": "",
+              "font": {
+                "size": 12,
+                "color": "#9ca3af"
+              }
+            },
+            "gridcolor": "#2d3343",
+            "zerolinecolor": "#2d3343",
+            "showline": true,
+            "linecolor": "#2d3343"
+          },
+          "margin": {
+            "l": 50,
+            "r": 30,
+            "t": 60,
+            "b": 50
+          },
+          "hovermode": "closest",
+          "legend": {
+            "orientation": "h",
+            "yanchor": "bottom",
+            "y": 1.02,
+            "xanchor": "right",
+            "x": 1,
+            "font": {
+              "color": "#f3f4f6"
+            }
+          }
+        },
+        "config": {
+          "responsive": true,
+          "displayModeBar": true,
+          "displaylogo": false,
+          "modeBarButtonsToRemove": [
+            "lasso2d",
+            "select2d"
+          ],
+          "toImageButtonOptions": {
+            "format": "png",
+            "filename": "chart_export",
+            "height": 600,
+            "width": 1000,
+            "scale": 2
+          }
+        },
+        "powerbi_meta": {
+          "cross_filtering": {
+            "enabled": true,
+            "dimension": "order_id"
+          },
+          "tooltips": {
+            "format": "percent_and_value"
+          },
+          "export_options": [
+            "png",
+            "svg",
+            "csv",
+            "json"
+          ]
+        },
+        "ag_grid_spec": {
+          "columnDefs": [
+            {
+              "field": "order_id",
+              "headerName": "Order Id",
+              "sortable": true,
+              "filter": "agTextColumnFilter",
+              "resizable": true
+            },
+            {
+              "field": "quantity",
+              "headerName": "Quantity",
+              "sortable": true,
+              "filter": "agNumberColumnFilter",
+              "resizable": true
+            }
+          ],
+          "rowData": [
+            {
+              "order_id": "SO-2024047",
+              "quantity": 14
+            },
+            {
+              "order_id": "SO-2024035",
+              "quantity": 14
+            },
+            {
+              "order_id": "SO-2024118",
+              "quantity": 14
+            },
+            {
+              "order_id": "SO-2024132",
+              "quantity": 14
+            },
+            {
+              "order_id": "SO-2024091",
+              "quantity": 14
+            },
+            {
+              "order_id": "SO-2024080",
+              "quantity": 14
+            }
+          ],
+          "pagination": {
+            "enabled": true,
+            "pageSize": 50,
+            "totalRows": 6,
+            "displayedRows": 6,
+            "is_paginated": false
+          }
+        }
+      }
+    },
+    {
+      "id": "chart-bar",
+      "type": "bar",
+      "title": "Top Performers by Order Date",
+      "spec": {
+        "chart_type": "bar_chart",
+        "data": [
+          {
+            "type": "bar",
+            "name": "quantity",
+            "x": [
+              "2024-02-17",
+              "2024-02-05",
+              "2024-04-28",
+              "2024-05-12",
+              "2024-04-01",
+              "2024-03-21",
+              "2024-03-15",
+              "2024-03-13",
+              "2024-04-17",
+              "2024-04-16"
+            ],
+            "y": [
+              14,
+              14,
+              14,
+              14,
+              14,
+              14,
+              14,
+              14,
+              14,
+              14
+            ],
+            "marker": {
+              "color": "#3b82f6",
+              "opacity": 0.9,
+              "line": {
+                "width": 1,
+                "color": "#2d3343"
+              }
+            },
+            "hovertemplate": "<b>order_date</b>: %{x}<br><b>quantity</b>: %{y:,.2f}<extra></extra>"
+          }
+        ],
+        "layout": {
+          "title": {
+            "text": "Ranking by Order Date",
+            "font": {
+              "size": 16,
+              "color": "#f3f4f6",
+              "family": "Inter, sans-serif"
+            },
+            "x": 0.05
+          },
+          "paper_bgcolor": "#171b26",
+          "plot_bgcolor": "#171b26",
+          "font": {
+            "color": "#f3f4f6",
+            "family": "Inter, sans-serif"
+          },
+          "xaxis": {
+            "title": {
+              "text": "order_date",
+              "font": {
+                "size": 12,
+                "color": "#9ca3af"
+              }
+            },
+            "gridcolor": "#2d3343",
+            "zerolinecolor": "#2d3343",
+            "showline": true,
+            "linecolor": "#2d3343"
+          },
+          "yaxis": {
+            "title": {
+              "text": "quantity",
+              "font": {
+                "size": 12,
+                "color": "#9ca3af"
+              }
+            },
+            "gridcolor": "#2d3343",
+            "zerolinecolor": "#2d3343",
+            "showline": true,
+            "linecolor": "#2d3343"
+          },
+          "margin": {
+            "l": 50,
+            "r": 30,
+            "t": 60,
+            "b": 50
+          },
+          "hovermode": "closest",
+          "legend": {
+            "orientation": "h",
+            "yanchor": "bottom",
+            "y": 1.02,
+            "xanchor": "right",
+            "x": 1,
+            "font": {
+              "color": "#f3f4f6"
+            }
+          }
+        },
+        "config": {
+          "responsive": true,
+          "displayModeBar": true,
+          "displaylogo": false,
+          "modeBarButtonsToRemove": [
+            "lasso2d",
+            "select2d"
+          ],
+          "toImageButtonOptions": {
+            "format": "png",
+            "filename": "chart_export",
+            "height": 600,
+            "width": 1000,
+            "scale": 2
+          }
+        },
+        "powerbi_meta": {
+          "drilldown": {
+            "dimension": "order_date",
+            "has_child_level": true
+          },
+          "cross_filtering": {
+            "enabled": true,
+            "dimension": "order_date"
+          },
+          "tooltips": {
+            "format": "number"
+          },
+          "export_options": [
+            "png",
+            "svg",
+            "csv",
+            "json"
+          ]
+        },
+        "ag_grid_spec": {
+          "columnDefs": [
+            {
+              "field": "order_date",
+              "headerName": "Order Date",
+              "sortable": true,
+              "filter": "agTextColumnFilter",
+              "resizable": true
+            },
+            {
+              "field": "quantity",
+              "headerName": "Quantity",
+              "sortable": true,
+              "filter": "agNumberColumnFilter",
+              "resizable": true
+            }
+          ],
+          "rowData": [
+            {
+              "order_date": "2024-02-17",
+              "quantity": 14
+            },
+            {
+              "order_date": "2024-02-05",
+              "quantity": 14
+            },
+            {
+              "order_date": "2024-04-28",
+              "quantity": 14
+            },
+            {
+              "order_date": "2024-05-12",
+              "quantity": 14
+            },
+            {
+              "order_date": "2024-04-01",
+              "quantity": 14
+            },
+            {
+              "order_date": "2024-03-21",
+              "quantity": 14
+            },
+            {
+              "order_date": "2024-03-15",
+              "quantity": 14
+            },
+            {
+              "order_date": "2024-03-13",
+              "quantity": 14
+            },
+            {
+              "order_date": "2024-04-17",
+              "quantity": 14
+            },
+            {
+              "order_date": "2024-04-16",
+              "quantity": 14
+            }
+          ],
+          "pagination": {
+            "enabled": true,
+            "pageSize": 50,
+            "totalRows": 10,
+            "displayedRows": 10,
+            "is_paginated": false
+          }
+        }
+      }
+    }
+  ],
+  "filters": [
+    {
+      "id": "filter-date",
+      "column": "order_date",
+      "type": "date_range",
+      "label": "Date Horizon"
+    },
+    {
+      "id": "filter-order_id",
+      "column": "order_id",
+      "type": "select",
+      "label": "Order Id",
+      "options": [
+        "SO-2024000",
+        "SO-2024001",
+        "SO-2024002",
+        "SO-2024003",
+        "SO-2024004",
+        "SO-2024005",
+        "SO-2024006",
+        "SO-2024007",
+        "SO-2024008",
+        "SO-2024009"
+      ]
+    },
+    {
+      "id": "filter-order_date",
+      "column": "order_date",
+      "type": "select",
+      "label": "Order Date",
+      "options": [
+        "2024-01-01",
+        "2024-01-02",
+        "2024-01-03",
+        "2024-01-04",
+        "2024-01-05",
+        "2024-01-06",
+        "2024-01-07",
+        "2024-01-08",
+        "2024-01-09",
+        "2024-01-10"
+      ]
+    }
+  ],
+  "layout": [
+    {
+      "i": "chart-trend",
+      "x": 0,
+      "y": 0,
+      "w": 8,
+      "h": 4
+    },
+    {
+      "i": "chart-donut",
+      "x": 8,
+      "y": 0,
+      "w": 4,
+      "h": 4
+    },
+    {
+      "i": "chart-bar",
+      "x": 0,
+      "y": 4,
+      "w": 12,
+      "h": 4
+    }
+  ],
+  "insights": [
+    "Analyzed 200 total data points across 12 strategic dimensions.",
+    "Primary metric 'quantity' demonstrated robust concentration in top segments.",
+    "Variance across sub-categories indicates clear cross-sell and margin expansion opportunities.",
+    "Automated data hygiene score verified zero critical anomalies in primary reporting series."
+  ]
+}

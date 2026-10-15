@@ -1,0 +1,26 @@
+{
+  "dataset_id": "a9b2a5a5-c9d2-4416-bee1-95ad5ad9c406",
+  "duplicate_rows": 0,
+  "duplicate_percentage": 0.0,
+  "missing_data_profile": {
+    "null_count": 9,
+    "null_percentage": 0.008064516129032258,
+    "columns_with_missing": [
+      "Unnamed: 1",
+      "Unnamed: 5",
+      "Unnamed: 6",
+      "Unnamed: 7",
+      "Unnamed: 8",
+      "Unnamed: 9",
+      "Unnamed: 10",
+      "Unnamed: 11"
+    ]
+  },
+  "cardinality_profile": {
+    "high_cardinality_columns": [],
+    "low_cardinality_columns": [
+      "Unnamed: 8"
+    ]
+  },
+  "numeric_columns_profile": {}
+}

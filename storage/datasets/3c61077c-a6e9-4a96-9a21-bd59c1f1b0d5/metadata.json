@@ -1,0 +1,1 @@
+{"dataset_id": "3c61077c-a6e9-4a96-9a21-bd59c1f1b0d5", "row_count": 2, "column_count": 1, "column_names": ["x"], "column_types": {"x": "int64"}, "columns_metadata": [{"name": "x", "type": "int64", "null_count": 0, "null_percentage": 0.0, "unique_count": 2}], "classifications": {"numeric": ["x"], "categorical": [], "datetime": [], "boolean": []}}

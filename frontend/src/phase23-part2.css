@@ -25,7 +25,7 @@
 
 /* PHASE 23.12 -- Skeleton */
 @keyframes skeleton-shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
-.skeleton { background:linear-gradient(90deg,var(--border) 25%,var(--code-bg) 50%,var(--border) 75%); background-size:200% 100%; animation:skeleton-shimmer 1.6s infinite linear; }
+.skeleton { background:var(--surface-raised); }
 .skeleton-card { padding:16px; border-radius:10px; border:1px solid var(--border); background:var(--bg); }
 .skeleton-chart { border-radius:10px; border:1px solid var(--border); padding:16px; background:var(--bg); }
 .skeleton-kpi { display:flex; flex-direction:column; gap:10px; padding:16px; }

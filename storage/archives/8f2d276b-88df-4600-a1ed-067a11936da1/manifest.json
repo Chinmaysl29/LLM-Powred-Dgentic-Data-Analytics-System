@@ -1,0 +1,15 @@
+{
+  "dataset_id": "8f2d276b-88df-4600-a1ed-067a11936da1",
+  "archived_at": "2026-10-11T18:05:53Z",
+  "reason": "deleted",
+  "archived_files": [
+    "8f2d276b-88df-4600-a1ed-067a11936da1.json",
+    "8f2d276b-88df-4600-a1ed-067a11936da1.json",
+    "8f2d276b-88df-4600-a1ed-067a11936da1.json",
+    "8f2d276b-88df-4600-a1ed-067a11936da1.json",
+    "8f2d276b-88df-4600-a1ed-067a11936da1.json",
+    "8f2d276b-88df-4600-a1ed-067a11936da1_products.csv",
+    "8f2d276b-88df-4600-a1ed-067a11936da1_products.csv"
+  ],
+  "archive_path": "/app/storage/archives/8f2d276b-88df-4600-a1ed-067a11936da1"
+}

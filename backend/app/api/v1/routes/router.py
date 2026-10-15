@@ -1,6 +1,8 @@
 """Aggregate version 1 feature routes at one gateway boundary."""
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from backend.app.core.security import get_current_user, require_dataset_access
+from backend.app.core.workspace_authorization import require_os_workspace, deny_unverified_enterprise
 
 from backend.app.api.v1.routes.auth import router as auth_router
 from backend.app.api.v1.routes.datasets import router as datasets_router
@@ -30,30 +32,38 @@ from backend.app.api.v1.routes.enterprise_os import router as enterprise_os_rout
 
 
 router = APIRouter()
+from backend.app.api.v1.routes.document_indexing import router as document_indexing_router
+router.include_router(document_indexing_router, dependencies=[Depends(require_dataset_access)])
 router.include_router(health_router)
 router.include_router(auth_router)
-router.include_router(datasets_router)
-router.include_router(intent_router)
-router.include_router(orchestrator_router)
-router.include_router(planner_router)
-router.include_router(retrieval_router)
-router.include_router(eda_router)
-router.include_router(statistics_router)
-router.include_router(validation_router)
-router.include_router(summary_router)
-router.include_router(schema_router)
-router.include_router(sql_guardrails_router)
-router.include_router(document_loader_router)
-router.include_router(rag_router)
-router.include_router(forecasting_router)
-router.include_router(operations_router)
-router.include_router(enterprise_router)
-router.include_router(workspaces_router)
-router.include_router(autonomous_router)
-router.include_router(audit_router)
-router.include_router(chat_router)
-router.include_router(monitoring_router)
-router.include_router(lineage_router)
-router.include_router(enterprise_os_router)
+router.include_router(datasets_router, dependencies=[Depends(require_dataset_access)])
+router.include_router(intent_router, dependencies=[Depends(get_current_user)])
+router.include_router(orchestrator_router, dependencies=[Depends(require_dataset_access)])
+router.include_router(planner_router, dependencies=[Depends(get_current_user)])
+router.include_router(retrieval_router, dependencies=[Depends(require_dataset_access)])
+router.include_router(eda_router, dependencies=[Depends(require_dataset_access)])
+router.include_router(statistics_router, dependencies=[Depends(require_dataset_access)])
+router.include_router(validation_router, dependencies=[Depends(get_current_user)])
+router.include_router(summary_router, dependencies=[Depends(require_dataset_access)])
+router.include_router(schema_router, dependencies=[Depends(get_current_user)])
+router.include_router(sql_guardrails_router, dependencies=[Depends(get_current_user)])
+router.include_router(document_loader_router, dependencies=[Depends(get_current_user)])
+router.include_router(rag_router, dependencies=[Depends(get_current_user)])
+router.include_router(forecasting_router, dependencies=[Depends(require_dataset_access)])
+router.include_router(operations_router, dependencies=[Depends(get_current_user)])
+router.include_router(enterprise_router, dependencies=[Depends(deny_unverified_enterprise)])
+router.include_router(workspaces_router, dependencies=[Depends(get_current_user)])
+router.include_router(autonomous_router, dependencies=[Depends(deny_unverified_enterprise)])
+router.include_router(audit_router, dependencies=[Depends(get_current_user)])
+router.include_router(chat_router, dependencies=[Depends(require_dataset_access)])
+router.include_router(monitoring_router, dependencies=[Depends(get_current_user)])
+router.include_router(lineage_router, dependencies=[Depends(require_dataset_access)])
+router.include_router(enterprise_os_router, dependencies=[Depends(require_os_workspace)])
+from backend.app.api.v1.routes.analysis_runs import router as analysis_runs_router
+router.include_router(analysis_runs_router, dependencies=[Depends(get_current_user)])
+from backend.app.api.v1.routes.connections import router as connections_router
+router.include_router(connections_router, dependencies=[Depends(get_current_user)])
+from backend.app.api.v1.routes.analysis_history import router as analysis_history_router
+router.include_router(analysis_history_router, dependencies=[Depends(get_current_user)])
 
 

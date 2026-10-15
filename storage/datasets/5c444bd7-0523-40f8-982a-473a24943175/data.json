@@ -1,0 +1,15 @@
+{
+  "dataset_id": "5c444bd7-0523-40f8-982a-473a24943175",
+  "dataset_name": "data",
+  "columns": [
+    "x"
+  ],
+  "records": [
+    {
+      "x": 1
+    },
+    {
+      "x": 2
+    }
+  ]
+}

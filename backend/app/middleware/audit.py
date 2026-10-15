@@ -19,7 +19,7 @@ class AuditTrailMiddleware(BaseHTTPMiddleware):
                 if session_factory is not None:
                     with session_factory() as session:
                         audit_trail_service.record(
-                            actor=request.headers.get("X-Actor", "anonymous"),
+                            actor=getattr(request.state, "actor_id", "anonymous"),
                             action=action,
                             resource_type=resource_type,
                             resource_id=resource_id,
@@ -31,7 +31,7 @@ class AuditTrailMiddleware(BaseHTTPMiddleware):
                         )
                 else:
                     audit_trail_service.record(
-                        actor=request.headers.get("X-Actor", "anonymous"),
+                        actor=getattr(request.state, "actor_id", "anonymous"),
                         action=action,
                         resource_type=resource_type,
                         resource_id=resource_id,

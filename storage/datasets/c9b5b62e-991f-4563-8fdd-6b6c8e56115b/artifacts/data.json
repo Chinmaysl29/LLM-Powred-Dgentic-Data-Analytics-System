@@ -1,0 +1,30 @@
+{
+  "dataset_id": "c9b5b62e-991f-4563-8fdd-6b6c8e56115b",
+  "dataset_name": "revenue_report",
+  "columns": [
+    "id",
+    "name",
+    "revenue",
+    "department"
+  ],
+  "records": [
+    {
+      "id": 1,
+      "name": "Alpha",
+      "revenue": 1000.5,
+      "department": "Sales"
+    },
+    {
+      "id": 2,
+      "name": "Beta",
+      "revenue": 2500.0,
+      "department": "Marketing"
+    },
+    {
+      "id": 3,
+      "name": "Gamma",
+      "revenue": 300.0,
+      "department": "Engineering"
+    }
+  ]
+}

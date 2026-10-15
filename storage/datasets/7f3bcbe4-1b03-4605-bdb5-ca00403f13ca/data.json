@@ -1,0 +1,22 @@
+{
+  "dataset_id": "7f3bcbe4-1b03-4605-bdb5-ca00403f13ca",
+  "dataset_name": "gdp_data",
+  "columns": [
+    "country",
+    "gdp"
+  ],
+  "records": [
+    {
+      "country": "US",
+      "gdp": 25000
+    },
+    {
+      "country": "DE",
+      "gdp": 4200
+    },
+    {
+      "country": "JP",
+      "gdp": 4100
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+product_id,product_name,price,category,quantity
+101,Widget,19.99,Tools,50
+102,Gadget,29.99,Electronics,30
+103,Doohickey,9.99,Misc,100
+104,Thingamajig,49.99,Premium,15
+105,Whatsit,14.99,Misc,75

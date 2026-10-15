@@ -1,0 +1,31 @@
+{
+  "dataset_id": "8cbff24f-5cca-41c1-a3a8-b076cf8e3559",
+  "dataset_name": "Live Hardware Inventory XLSX",
+  "columns": [
+    "item",
+    "price",
+    "quantity"
+  ],
+  "records": [
+    {
+      "item": "Laptop",
+      "price": 1200,
+      "quantity": 15
+    },
+    {
+      "item": "Monitor",
+      "price": 350,
+      "quantity": 28
+    },
+    {
+      "item": "Keyboard",
+      "price": 85,
+      "quantity": 60
+    },
+    {
+      "item": "Mouse",
+      "price": 45,
+      "quantity": 110
+    }
+  ]
+}

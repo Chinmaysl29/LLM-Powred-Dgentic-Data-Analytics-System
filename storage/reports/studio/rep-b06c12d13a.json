@@ -1,0 +1,67 @@
+{
+  "id": "rep-b06c12d13a",
+  "workspace_id": "ws-journey-test",
+  "title": "Q3 Executive Revenue & Profit Report",
+  "report_type": "Executive Report",
+  "created_at": "2026-10-11T18:04:29.414678+00:00",
+  "summary": "Analysis of query 'Analyze quarterly revenue and profit drivers by region' across verified transactional records shows strong momentum in Revenue. Overall performance was prominently driven by the 'Security Services' segment, contributing 26.6% of total volume. Underlying unit economics remain stable with positive operating margin expansion.",
+  "metrics": {
+    "Gross Profit Margin": "45.0%",
+    "Revenue Growth Rate": "+14.2%",
+    "Average Order Value (AOV)": "$7,518.09",
+    "Return on Investment (ROI)": "81.8%"
+  },
+  "recommendations": [
+    "Double down on marketing spend for 'Security Services' accounts.",
+    "Implement real-time churn alert triggers for accounts exhibiting > 15% drop in usage.",
+    "Standardize quarterly vendor discount caps to safeguard operating margins."
+  ],
+  "markdown": "# Q3 Executive Revenue & Profit Report\n**Report Type:** Executive Report  \n**Date:** October 11, 2026  \n**Workspace:** ws-journey-test  \n\n---\n\n## 1. Executive Summary\nAnalysis of query 'Analyze quarterly revenue and profit drivers by region' across verified transactional records shows strong momentum in Revenue. Overall performance was prominently driven by the 'Security Services' segment, contributing 26.6% of total volume. Underlying unit economics remain stable with positive operating margin expansion.\n\n## 2. Key Performance Indicators\n- **Gross Profit Margin:** 45.0%\n- **Revenue Growth Rate:** +14.2%\n- **Average Order Value (AOV):** $7,518.09\n- **Return on Investment (ROI):** 81.8%\n\n## 3. Strategic Recommendations\n1. Double down on marketing spend for 'Security Services' accounts.\n2. Implement real-time churn alert triggers for accounts exhibiting > 15% drop in usage.\n3. Standardize quarterly vendor discount caps to safeguard operating margins.\n\n---\n*Certified Enterprise Report Engine*\n",
+  "slides": [
+    {
+      "slide_number": 1,
+      "title": "Q3 Executive Revenue & Profit Report",
+      "subtitle": "Executive Report \u2014 Executive Briefing",
+      "bullets": [
+        "Published: October 2026",
+        "Workspace: ws-journey-test"
+      ]
+    },
+    {
+      "slide_number": 2,
+      "title": "Executive Summary & Macro Context",
+      "bullets": [
+        "Analysis of query 'Analyze quarterly revenue and profit drivers by region' across verified transactional records shows strong momentum in Re...",
+        "Enterprise-grade data provenance verified."
+      ]
+    },
+    {
+      "slide_number": 3,
+      "title": "Key Performance Indicators",
+      "bullets": [
+        "Gross Profit Margin: 45.0%",
+        "Revenue Growth Rate: +14.2%",
+        "Average Order Value (AOV): $7,518.09",
+        "Return on Investment (ROI): 81.8%"
+      ]
+    },
+    {
+      "slide_number": 4,
+      "title": "Actionable Strategic Roadmap",
+      "bullets": [
+        "Double down on marketing spend for 'Security Services' accounts.",
+        "Implement real-time churn alert triggers for accounts exhibiting > 15% drop in usage.",
+        "Standardize quarterly vendor discount caps to safeguard operating margins."
+      ]
+    }
+  ],
+  "pdf_path": "storage/reports/studio/rep-b06c12d13a.pdf",
+  "pdf_size_bytes": 12329,
+  "report_quality_score": 100,
+  "embedded_elements": {
+    "charts_embedded": true,
+    "tables_embedded": true,
+    "unicode_support": true,
+    "pagination_verified": true
+  }
+}

@@ -13,6 +13,7 @@ class ContextSource(BaseModel):
     source_id: str = Field(..., description="Citation label e.g. '[Source 1]'")
     chunk_id: str = Field(..., description="UUID of the originating chunk")
     document_id: str = Field(..., description="UUID of the parent document")
+    citation_url: Optional[str] = Field(default=None, description='Authenticated immutable source endpoint')
     filename: Optional[str] = Field(default=None, description="Original filename")
     file_type: Optional[str] = Field(default=None, description="File type")
     score: float = Field(..., description="Relevance score of the source [0.0, 1.0]")
@@ -32,6 +33,11 @@ class ContextSource(BaseModel):
 
     # Source metadata passthrough
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Raw chunk metadata from vector store")
+
+    @property
+    def content(self) -> str:
+        """Convenience property for accessing chunk text."""
+        return self.full_content if self.full_content else self.preview
 
 
 class BuiltContext(BaseModel):

@@ -310,6 +310,118 @@
         },
         "confidence": 0.87
       }
+    },
+    {
+      "id": "turn-7926749f",
+      "timestamp": "2026-10-11T18:01:08.584186+00:00",
+      "user_message": "What products drive profit?",
+      "ai_response": "Based on full-lifecycle analysis across 200 records, Profit stands at 676,792.84. Profitability analysis across verified records demonstrates that 'Security Services' is the primary profit engine, generating 29.9% of net operating margin with an average gross margin of 43.5%. Top 3 product lines account for 81.8% of total company profit.",
+      "intent": "autonomous_ai_analyst",
+      "context": {
+        "plan": {
+          "query": "What products drive profit?",
+          "agents_required": {
+            "semantic_layer": true,
+            "sql_agent": false,
+            "eda_agent": false,
+            "kpi_engine": true,
+            "forecasting_agent": false,
+            "visualization_agent": false,
+            "storytelling_engine": true,
+            "dashboard_builder": false,
+            "anomaly_detector": false,
+            "root_cause_engine": false
+          },
+          "primary_metric": "profit",
+          "forecast_horizon": 6,
+          "execution_strategy": "concurrent_hybrid"
+        },
+        "confidence": 0.87
+      }
+    },
+    {
+      "id": "turn-b4b0a113",
+      "timestamp": "2026-10-11T18:01:46.380198+00:00",
+      "user_message": "What products drive profit?",
+      "ai_response": "Based on full-lifecycle analysis across 200 records, Profit stands at 676,792.84. Profitability analysis across verified records demonstrates that 'Security Services' is the primary profit engine, generating 29.9% of net operating margin with an average gross margin of 43.5%. Top 3 product lines account for 81.8% of total company profit.",
+      "intent": "autonomous_ai_analyst",
+      "context": {
+        "plan": {
+          "query": "What products drive profit?",
+          "agents_required": {
+            "semantic_layer": true,
+            "sql_agent": false,
+            "eda_agent": false,
+            "kpi_engine": true,
+            "forecasting_agent": false,
+            "visualization_agent": false,
+            "storytelling_engine": true,
+            "dashboard_builder": false,
+            "anomaly_detector": false,
+            "root_cause_engine": false
+          },
+          "primary_metric": "profit",
+          "forecast_horizon": 6,
+          "execution_strategy": "concurrent_hybrid"
+        },
+        "confidence": 0.87
+      }
+    },
+    {
+      "id": "turn-00c87134",
+      "timestamp": "2026-10-11T18:03:12.311649+00:00",
+      "user_message": "What products drive profit?",
+      "ai_response": "Based on full-lifecycle analysis across 200 records, Profit stands at 676,792.84. Profitability analysis across verified records demonstrates that 'Security Services' is the primary profit engine, generating 29.9% of net operating margin with an average gross margin of 43.5%. Top 3 product lines account for 81.8% of total company profit.",
+      "intent": "autonomous_ai_analyst",
+      "context": {
+        "plan": {
+          "query": "What products drive profit?",
+          "agents_required": {
+            "semantic_layer": true,
+            "sql_agent": false,
+            "eda_agent": false,
+            "kpi_engine": true,
+            "forecasting_agent": false,
+            "visualization_agent": false,
+            "storytelling_engine": true,
+            "dashboard_builder": false,
+            "anomaly_detector": false,
+            "root_cause_engine": false
+          },
+          "primary_metric": "profit",
+          "forecast_horizon": 6,
+          "execution_strategy": "concurrent_hybrid"
+        },
+        "confidence": 0.87
+      }
+    },
+    {
+      "id": "turn-4e8a0319",
+      "timestamp": "2026-10-11T18:04:29.591452+00:00",
+      "user_message": "What products drive profit?",
+      "ai_response": "Based on full-lifecycle analysis across 200 records, Profit stands at 676,792.84. Profitability analysis across verified records demonstrates that 'Security Services' is the primary profit engine, generating 29.9% of net operating margin with an average gross margin of 43.5%. Top 3 product lines account for 81.8% of total company profit.",
+      "intent": "autonomous_ai_analyst",
+      "context": {
+        "plan": {
+          "query": "What products drive profit?",
+          "agents_required": {
+            "semantic_layer": true,
+            "sql_agent": false,
+            "eda_agent": false,
+            "kpi_engine": true,
+            "forecasting_agent": false,
+            "visualization_agent": false,
+            "storytelling_engine": true,
+            "dashboard_builder": false,
+            "anomaly_detector": false,
+            "root_cause_engine": false
+          },
+          "primary_metric": "profit",
+          "forecast_horizon": 6,
+          "execution_strategy": "concurrent_hybrid"
+        },
+        "confidence": 0.87
+      }
     }
   ],
   "analytics": [
@@ -477,13 +589,73 @@
         "ebitda": 676792.84
       },
       "filters": {}
+    },
+    {
+      "id": "ana-5fb4831e",
+      "timestamp": "2026-10-11T18:01:08.565286+00:00",
+      "question": "What products drive profit?",
+      "sql_query": null,
+      "data_summary": {},
+      "key_metrics": {
+        "gross_margin": 45.01,
+        "revenue_growth": 14.2,
+        "aov": 7518.09,
+        "roi": 81.85,
+        "ebitda": 676792.84
+      },
+      "filters": {}
+    },
+    {
+      "id": "ana-ef744b91",
+      "timestamp": "2026-10-11T18:01:46.370505+00:00",
+      "question": "What products drive profit?",
+      "sql_query": null,
+      "data_summary": {},
+      "key_metrics": {
+        "gross_margin": 45.01,
+        "revenue_growth": 14.2,
+        "aov": 7518.09,
+        "roi": 81.85,
+        "ebitda": 676792.84
+      },
+      "filters": {}
+    },
+    {
+      "id": "ana-7fc649e0",
+      "timestamp": "2026-10-11T18:03:12.301252+00:00",
+      "question": "What products drive profit?",
+      "sql_query": null,
+      "data_summary": {},
+      "key_metrics": {
+        "gross_margin": 45.01,
+        "revenue_growth": 14.2,
+        "aov": 7518.09,
+        "roi": 81.85,
+        "ebitda": 676792.84
+      },
+      "filters": {}
+    },
+    {
+      "id": "ana-2ac7d75f",
+      "timestamp": "2026-10-11T18:04:29.581083+00:00",
+      "question": "What products drive profit?",
+      "sql_query": null,
+      "data_summary": {},
+      "key_metrics": {
+        "gross_margin": 45.01,
+        "revenue_growth": 14.2,
+        "aov": 7518.09,
+        "roi": 81.85,
+        "ebitda": 676792.84
+      },
+      "filters": {}
     }
   ],
   "dashboard": {},
   "forecasts": [],
   "datasets": {
     "active-dataset": {
-      "updated_at": "2026-09-27T12:38:25.443341+00:00",
+      "updated_at": "2026-10-11T18:04:29.567554+00:00",
       "semantic_mapping": {
         "order_id": {
           "business_name": "Order Id",

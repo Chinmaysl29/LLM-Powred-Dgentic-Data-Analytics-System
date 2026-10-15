@@ -30,10 +30,10 @@ class AuthService:
         self._active_sessions: dict[str, dict[str, Any]] = {}
 
     def _get_secret_and_algo(self) -> tuple[str, str]:
+        if not self.settings.jwt_secret_key or not self.settings.jwt_secret_key.get_secret_value():
+            raise RuntimeError("Local authentication signing key is not configured")
         secret = (
             self.settings.jwt_secret_key.get_secret_value()
-            if self.settings.jwt_secret_key
-            else "enterprise-super-secret-key-change-in-production-123456"
         )
         algo = self.settings.jwt_algorithm or "HS256"
         return secret, algo

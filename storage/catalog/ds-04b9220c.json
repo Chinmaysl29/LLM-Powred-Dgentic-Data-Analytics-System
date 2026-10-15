@@ -1,0 +1,66 @@
+{
+  "id": "ds-04b9220c",
+  "name": "Global Q3 Revenue Breakdown",
+  "workspace_id": "default-ws",
+  "owner": "Chief Data Officer",
+  "steward": "Lead Analytics Engineer",
+  "description": "Enterprise analytical dataset containing 2 records across 2 features.",
+  "tags": [
+    "Finance",
+    "Q3",
+    "Strategic"
+  ],
+  "classification": "Confidential",
+  "row_count": 2,
+  "column_count": 2,
+  "columns": [
+    {
+      "name": "revenue",
+      "type": "int64",
+      "is_numeric": true,
+      "null_count": 0,
+      "sample_values": [
+        "100",
+        "200"
+      ]
+    },
+    {
+      "name": "customer_segment",
+      "type": "object",
+      "is_numeric": false,
+      "null_count": 0,
+      "sample_values": [
+        "Enterprise",
+        "SMB"
+      ]
+    }
+  ],
+  "lineage": {
+    "source_system": "Enterprise CSV Upload",
+    "ingested_at": "2026-10-11T18:04:45.853138+00:00",
+    "transformations": [
+      "Schema Inference",
+      "Quality Profiling",
+      "Vector Indexing"
+    ],
+    "downstream_consumers": {
+      "dashboards": [
+        "Executive Business Dashboard"
+      ],
+      "reports": [
+        "Monthly Operations Report"
+      ],
+      "ai_agents": [
+        "AutonomousAIAnalyst",
+        "ForecastingAgent"
+      ]
+    }
+  },
+  "usage_stats": {
+    "query_count": 1,
+    "last_queried_at": "2026-10-11T18:04:45.853138+00:00",
+    "view_count": 1
+  },
+  "created_at": "2026-10-11T18:04:45.853138+00:00",
+  "updated_at": "2026-10-11T18:04:45.853138+00:00"
+}

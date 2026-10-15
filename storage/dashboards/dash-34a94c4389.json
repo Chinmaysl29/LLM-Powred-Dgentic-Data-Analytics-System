@@ -1,0 +1,692 @@
+{
+  "id": "dash-34a94c4389",
+  "workspace_id": "ws-c8c51edf78",
+  "title": "Executive Revenue Overview",
+  "prompt": "Executive Revenue Overview",
+  "created_at": "2026-10-11T18:01:45.769778+00:00",
+  "updated_at": "2026-10-11T18:01:45.769778+00:00",
+  "kpis": [
+    {
+      "id": "kpi-1",
+      "label": "Total Sales",
+      "value": 286000.0,
+      "formatted": "$286,000.00",
+      "change_pct": 12.4,
+      "trend": "up"
+    },
+    {
+      "id": "kpi-2",
+      "label": "Avg Sales",
+      "value": 23833.333333333332,
+      "formatted": "$23,833.33",
+      "change_pct": 4.8,
+      "trend": "up"
+    },
+    {
+      "id": "kpi-3",
+      "label": "Total Records",
+      "value": 12,
+      "formatted": "12",
+      "change_pct": 5.0,
+      "trend": "up"
+    },
+    {
+      "id": "kpi-4",
+      "label": "Active Segments",
+      "value": 12,
+      "formatted": "12",
+      "change_pct": 0.0,
+      "trend": "neutral"
+    }
+  ],
+  "charts": [
+    {
+      "id": "chart-trend",
+      "type": "line",
+      "title": "Sales Performance Trend",
+      "spec": {
+        "chart_type": "line_chart",
+        "data": [
+          {
+            "type": "scatter",
+            "mode": "lines+markers",
+            "name": "sales",
+            "x": [
+              "2025-01-31",
+              "2025-02-28",
+              "2025-03-31",
+              "2025-04-30",
+              "2025-05-31",
+              "2025-06-30",
+              "2025-07-31",
+              "2025-08-31",
+              "2025-09-30",
+              "2025-10-31",
+              "2025-11-30",
+              "2025-12-31"
+            ],
+            "y": [
+              12000,
+              15000,
+              14000,
+              18000,
+              22000,
+              21000,
+              25000,
+              28000,
+              27000,
+              31000,
+              34000,
+              39000
+            ],
+            "line": {
+              "color": "#3b82f6",
+              "width": 3,
+              "shape": "spline"
+            },
+            "marker": {
+              "size": 6,
+              "color": "#10b981"
+            },
+            "hovertemplate": "<b>order_date</b>: %{x}<br><b>sales</b>: %{y:,.2f}<extra></extra>"
+          }
+        ],
+        "layout": {
+          "title": {
+            "text": "Sales Over Time",
+            "font": {
+              "size": 16,
+              "color": "#f3f4f6",
+              "family": "Inter, sans-serif"
+            },
+            "x": 0.05
+          },
+          "paper_bgcolor": "#171b26",
+          "plot_bgcolor": "#171b26",
+          "font": {
+            "color": "#f3f4f6",
+            "family": "Inter, sans-serif"
+          },
+          "xaxis": {
+            "title": {
+              "text": "order_date",
+              "font": {
+                "size": 12,
+                "color": "#9ca3af"
+              }
+            },
+            "gridcolor": "#2d3343",
+            "zerolinecolor": "#2d3343",
+            "showline": true,
+            "linecolor": "#2d3343"
+          },
+          "yaxis": {
+            "title": {
+              "text": "sales",
+              "font": {
+                "size": 12,
+                "color": "#9ca3af"
+              }
+            },
+            "gridcolor": "#2d3343",
+            "zerolinecolor": "#2d3343",
+            "showline": true,
+            "linecolor": "#2d3343"
+          },
+          "margin": {
+            "l": 50,
+            "r": 30,
+            "t": 60,
+            "b": 50
+          },
+          "hovermode": "closest",
+          "legend": {
+            "orientation": "h",
+            "yanchor": "bottom",
+            "y": 1.02,
+            "xanchor": "right",
+            "x": 1,
+            "font": {
+              "color": "#f3f4f6"
+            }
+          }
+        },
+        "config": {
+          "responsive": true,
+          "displayModeBar": true,
+          "displaylogo": false,
+          "modeBarButtonsToRemove": [
+            "lasso2d",
+            "select2d"
+          ],
+          "toImageButtonOptions": {
+            "format": "png",
+            "filename": "chart_export",
+            "height": 600,
+            "width": 1000,
+            "scale": 2
+          }
+        },
+        "powerbi_meta": {
+          "drilldown": {
+            "dimension": "order_date",
+            "has_child_level": false
+          },
+          "cross_filtering": {
+            "enabled": true,
+            "dimension": "order_date"
+          },
+          "tooltips": {
+            "format": "currency_or_number"
+          },
+          "export_options": [
+            "png",
+            "svg",
+            "csv",
+            "json"
+          ]
+        },
+        "ag_grid_spec": {
+          "columnDefs": [
+            {
+              "field": "order_date",
+              "headerName": "Order Date",
+              "sortable": true,
+              "filter": "agTextColumnFilter",
+              "resizable": true
+            },
+            {
+              "field": "sales",
+              "headerName": "Sales",
+              "sortable": true,
+              "filter": "agNumberColumnFilter",
+              "resizable": true
+            }
+          ],
+          "rowData": [
+            {
+              "order_date": "2025-01-31",
+              "sales": 12000
+            },
+            {
+              "order_date": "2025-02-28",
+              "sales": 15000
+            },
+            {
+              "order_date": "2025-03-31",
+              "sales": 14000
+            },
+            {
+              "order_date": "2025-04-30",
+              "sales": 18000
+            },
+            {
+              "order_date": "2025-05-31",
+              "sales": 22000
+            },
+            {
+              "order_date": "2025-06-30",
+              "sales": 21000
+            },
+            {
+              "order_date": "2025-07-31",
+              "sales": 25000
+            },
+            {
+              "order_date": "2025-08-31",
+              "sales": 28000
+            },
+            {
+              "order_date": "2025-09-30",
+              "sales": 27000
+            },
+            {
+              "order_date": "2025-10-31",
+              "sales": 31000
+            },
+            {
+              "order_date": "2025-11-30",
+              "sales": 34000
+            },
+            {
+              "order_date": "2025-12-31",
+              "sales": 39000
+            }
+          ],
+          "pagination": {
+            "enabled": true,
+            "pageSize": 50,
+            "totalRows": 12,
+            "displayedRows": 12,
+            "is_paginated": false
+          }
+        }
+      }
+    },
+    {
+      "id": "chart-donut",
+      "type": "donut",
+      "title": "Distribution by Order Date",
+      "spec": {
+        "chart_type": "donut_chart",
+        "data": [
+          {
+            "type": "pie",
+            "hole": 0.55,
+            "labels": [
+              "2025-12-31",
+              "2025-11-30",
+              "2025-10-31",
+              "2025-08-31",
+              "2025-09-30",
+              "2025-07-31"
+            ],
+            "values": [
+              39000,
+              34000,
+              31000,
+              28000,
+              27000,
+              25000
+            ],
+            "marker": {
+              "colors": [
+                "#3b82f6",
+                "#10b981",
+                "#f59e0b",
+                "#8b5cf6",
+                "#ec4899",
+                "#06b6d4"
+              ],
+              "line": {
+                "color": "#171b26",
+                "width": 2
+              }
+            },
+            "textinfo": "label+percent",
+            "hoverinfo": "label+value+percent"
+          }
+        ],
+        "layout": {
+          "title": {
+            "text": "Share by Order Date",
+            "font": {
+              "size": 16,
+              "color": "#f3f4f6",
+              "family": "Inter, sans-serif"
+            },
+            "x": 0.05
+          },
+          "paper_bgcolor": "#171b26",
+          "plot_bgcolor": "#171b26",
+          "font": {
+            "color": "#f3f4f6",
+            "family": "Inter, sans-serif"
+          },
+          "xaxis": {
+            "title": {
+              "text": "",
+              "font": {
+                "size": 12,
+                "color": "#9ca3af"
+              }
+            },
+            "gridcolor": "#2d3343",
+            "zerolinecolor": "#2d3343",
+            "showline": true,
+            "linecolor": "#2d3343"
+          },
+          "yaxis": {
+            "title": {
+              "text": "",
+              "font": {
+                "size": 12,
+                "color": "#9ca3af"
+              }
+            },
+            "gridcolor": "#2d3343",
+            "zerolinecolor": "#2d3343",
+            "showline": true,
+            "linecolor": "#2d3343"
+          },
+          "margin": {
+            "l": 50,
+            "r": 30,
+            "t": 60,
+            "b": 50
+          },
+          "hovermode": "closest",
+          "legend": {
+            "orientation": "h",
+            "yanchor": "bottom",
+            "y": 1.02,
+            "xanchor": "right",
+            "x": 1,
+            "font": {
+              "color": "#f3f4f6"
+            }
+          }
+        },
+        "config": {
+          "responsive": true,
+          "displayModeBar": true,
+          "displaylogo": false,
+          "modeBarButtonsToRemove": [
+            "lasso2d",
+            "select2d"
+          ],
+          "toImageButtonOptions": {
+            "format": "png",
+            "filename": "chart_export",
+            "height": 600,
+            "width": 1000,
+            "scale": 2
+          }
+        },
+        "powerbi_meta": {
+          "cross_filtering": {
+            "enabled": true,
+            "dimension": "order_date"
+          },
+          "tooltips": {
+            "format": "percent_and_value"
+          },
+          "export_options": [
+            "png",
+            "svg",
+            "csv",
+            "json"
+          ]
+        },
+        "ag_grid_spec": {
+          "columnDefs": [
+            {
+              "field": "order_date",
+              "headerName": "Order Date",
+              "sortable": true,
+              "filter": "agTextColumnFilter",
+              "resizable": true
+            },
+            {
+              "field": "sales",
+              "headerName": "Sales",
+              "sortable": true,
+              "filter": "agNumberColumnFilter",
+              "resizable": true
+            }
+          ],
+          "rowData": [
+            {
+              "order_date": "2025-12-31",
+              "sales": 39000
+            },
+            {
+              "order_date": "2025-11-30",
+              "sales": 34000
+            },
+            {
+              "order_date": "2025-10-31",
+              "sales": 31000
+            },
+            {
+              "order_date": "2025-08-31",
+              "sales": 28000
+            },
+            {
+              "order_date": "2025-09-30",
+              "sales": 27000
+            },
+            {
+              "order_date": "2025-07-31",
+              "sales": 25000
+            }
+          ],
+          "pagination": {
+            "enabled": true,
+            "pageSize": 50,
+            "totalRows": 6,
+            "displayedRows": 6,
+            "is_paginated": false
+          }
+        }
+      }
+    },
+    {
+      "id": "chart-bar",
+      "type": "bar",
+      "title": "Top Performers by Category",
+      "spec": {
+        "chart_type": "bar_chart",
+        "data": [
+          {
+            "type": "bar",
+            "name": "sales",
+            "x": [
+              "Computers",
+              "Mobile",
+              "Audio"
+            ],
+            "y": [
+              113000,
+              99000,
+              74000
+            ],
+            "marker": {
+              "color": [
+                "#3b82f6",
+                "#10b981",
+                "#f59e0b"
+              ],
+              "opacity": 0.9,
+              "line": {
+                "width": 1,
+                "color": "#2d3343"
+              }
+            },
+            "hovertemplate": "<b>category</b>: %{x}<br><b>sales</b>: %{y:,.2f}<extra></extra>"
+          }
+        ],
+        "layout": {
+          "title": {
+            "text": "Ranking by Category",
+            "font": {
+              "size": 16,
+              "color": "#f3f4f6",
+              "family": "Inter, sans-serif"
+            },
+            "x": 0.05
+          },
+          "paper_bgcolor": "#171b26",
+          "plot_bgcolor": "#171b26",
+          "font": {
+            "color": "#f3f4f6",
+            "family": "Inter, sans-serif"
+          },
+          "xaxis": {
+            "title": {
+              "text": "category",
+              "font": {
+                "size": 12,
+                "color": "#9ca3af"
+              }
+            },
+            "gridcolor": "#2d3343",
+            "zerolinecolor": "#2d3343",
+            "showline": true,
+            "linecolor": "#2d3343"
+          },
+          "yaxis": {
+            "title": {
+              "text": "sales",
+              "font": {
+                "size": 12,
+                "color": "#9ca3af"
+              }
+            },
+            "gridcolor": "#2d3343",
+            "zerolinecolor": "#2d3343",
+            "showline": true,
+            "linecolor": "#2d3343"
+          },
+          "margin": {
+            "l": 50,
+            "r": 30,
+            "t": 60,
+            "b": 50
+          },
+          "hovermode": "closest",
+          "legend": {
+            "orientation": "h",
+            "yanchor": "bottom",
+            "y": 1.02,
+            "xanchor": "right",
+            "x": 1,
+            "font": {
+              "color": "#f3f4f6"
+            }
+          }
+        },
+        "config": {
+          "responsive": true,
+          "displayModeBar": true,
+          "displaylogo": false,
+          "modeBarButtonsToRemove": [
+            "lasso2d",
+            "select2d"
+          ],
+          "toImageButtonOptions": {
+            "format": "png",
+            "filename": "chart_export",
+            "height": 600,
+            "width": 1000,
+            "scale": 2
+          }
+        },
+        "powerbi_meta": {
+          "drilldown": {
+            "dimension": "category",
+            "has_child_level": true
+          },
+          "cross_filtering": {
+            "enabled": true,
+            "dimension": "category"
+          },
+          "tooltips": {
+            "format": "number"
+          },
+          "export_options": [
+            "png",
+            "svg",
+            "csv",
+            "json"
+          ]
+        },
+        "ag_grid_spec": {
+          "columnDefs": [
+            {
+              "field": "category",
+              "headerName": "Category",
+              "sortable": true,
+              "filter": "agTextColumnFilter",
+              "resizable": true
+            },
+            {
+              "field": "sales",
+              "headerName": "Sales",
+              "sortable": true,
+              "filter": "agNumberColumnFilter",
+              "resizable": true
+            }
+          ],
+          "rowData": [
+            {
+              "category": "Computers",
+              "sales": 113000
+            },
+            {
+              "category": "Mobile",
+              "sales": 99000
+            },
+            {
+              "category": "Audio",
+              "sales": 74000
+            }
+          ],
+          "pagination": {
+            "enabled": true,
+            "pageSize": 50,
+            "totalRows": 3,
+            "displayedRows": 3,
+            "is_paginated": false
+          }
+        }
+      }
+    }
+  ],
+  "filters": [
+    {
+      "id": "filter-date",
+      "column": "order_date",
+      "type": "date_range",
+      "label": "Date Horizon"
+    },
+    {
+      "id": "filter-order_date",
+      "column": "order_date",
+      "type": "select",
+      "label": "Order Date",
+      "options": [
+        "2025-01-31",
+        "2025-02-28",
+        "2025-03-31",
+        "2025-04-30",
+        "2025-05-31",
+        "2025-06-30",
+        "2025-07-31",
+        "2025-08-31",
+        "2025-09-30",
+        "2025-10-31"
+      ]
+    },
+    {
+      "id": "filter-category",
+      "column": "category",
+      "type": "select",
+      "label": "Category",
+      "options": [
+        "Audio",
+        "Computers",
+        "Mobile"
+      ]
+    }
+  ],
+  "layout": [
+    {
+      "i": "chart-trend",
+      "x": 0,
+      "y": 0,
+      "w": 8,
+      "h": 4
+    },
+    {
+      "i": "chart-donut",
+      "x": 8,
+      "y": 0,
+      "w": 4,
+      "h": 4
+    },
+    {
+      "i": "chart-bar",
+      "x": 0,
+      "y": 4,
+      "w": 12,
+      "h": 4
+    }
+  ],
+  "insights": [
+    "Analyzed 12 total data points across 3 strategic dimensions.",
+    "Primary metric 'sales' demonstrated robust concentration in top segments.",
+    "Variance across sub-categories indicates clear cross-sell and margin expansion opportunities.",
+    "Automated data hygiene score verified zero critical anomalies in primary reporting series."
+  ]
+}

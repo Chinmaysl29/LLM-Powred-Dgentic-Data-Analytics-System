@@ -1,0 +1,107 @@
+[
+  {
+    "sku": "SKU-100",
+    "warehouse_location": "US-East",
+    "stock_level": 450,
+    "unit_cost": 45.5,
+    "reorder_threshold": 100
+  },
+  {
+    "sku": "SKU-101",
+    "warehouse_location": "US-West",
+    "stock_level": 120,
+    "unit_cost": 112.0,
+    "reorder_threshold": 50
+  },
+  {
+    "sku": "SKU-102",
+    "warehouse_location": "EU-Central",
+    "stock_level": 890,
+    "unit_cost": 24.99,
+    "reorder_threshold": 200
+  },
+  {
+    "sku": "SKU-103",
+    "warehouse_location": "AP-South",
+    "stock_level": 340,
+    "unit_cost": 85.0,
+    "reorder_threshold": 100
+  },
+  {
+    "sku": "SKU-104",
+    "warehouse_location": "US-East",
+    "stock_level": 50,
+    "unit_cost": 310.0,
+    "reorder_threshold": 30
+  },
+  {
+    "sku": "SKU-105",
+    "warehouse_location": "US-West",
+    "stock_level": 1200,
+    "unit_cost": 12.5,
+    "reorder_threshold": 300
+  },
+  {
+    "sku": "SKU-106",
+    "warehouse_location": "EU-Central",
+    "stock_level": 670,
+    "unit_cost": 78.25,
+    "reorder_threshold": 150
+  },
+  {
+    "sku": "SKU-107",
+    "warehouse_location": "AP-South",
+    "stock_level": 230,
+    "unit_cost": 199.99,
+    "reorder_threshold": 80
+  },
+  {
+    "sku": "SKU-108",
+    "warehouse_location": "US-East",
+    "stock_level": 89,
+    "unit_cost": 450.0,
+    "reorder_threshold": 25
+  },
+  {
+    "sku": "SKU-109",
+    "warehouse_location": "US-West",
+    "stock_level": 410,
+    "unit_cost": 32.0,
+    "reorder_threshold": 100
+  },
+  {
+    "sku": "SKU-110",
+    "warehouse_location": "EU-Central",
+    "stock_level": 920,
+    "unit_cost": 64.5,
+    "reorder_threshold": 250
+  },
+  {
+    "sku": "SKU-111",
+    "warehouse_location": "AP-South",
+    "stock_level": 150,
+    "unit_cost": 145.0,
+    "reorder_threshold": 50
+  },
+  {
+    "sku": "SKU-112",
+    "warehouse_location": "US-East",
+    "stock_level": 600,
+    "unit_cost": 88.0,
+    "reorder_threshold": 150
+  },
+  {
+    "sku": "SKU-113",
+    "warehouse_location": "US-West",
+    "stock_level": 310,
+    "unit_cost": 52.5,
+    "reorder_threshold": 80
+  },
+  {
+    "sku": "SKU-114",
+    "warehouse_location": "EU-Central",
+    "stock_level": 780,
+    "unit_cost": 175.0,
+    "reorder_threshold": 200
+  }
+]

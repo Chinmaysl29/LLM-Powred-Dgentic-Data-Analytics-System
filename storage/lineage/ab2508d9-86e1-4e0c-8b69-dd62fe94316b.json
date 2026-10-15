@@ -1,0 +1,15 @@
+{
+  "dataset_id": "ab2508d9-86e1-4e0c-8b69-dd62fe94316b",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "b979cf36-86b5-447a-9f2d-1d1f6d1310fd",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-10-11 18:05:57.805861",
+      "author": "system",
+      "description": "Initial ingestion of products.csv"
+    }
+  ]
+}

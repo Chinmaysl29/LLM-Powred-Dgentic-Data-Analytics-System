@@ -1,0 +1,22 @@
+{
+  "dataset_id": "39828d89-6cfb-4851-9f38-661dd6dd1d53",
+  "dataset_name": "sales_categories",
+  "columns": [
+    "category",
+    "sales"
+  ],
+  "records": [
+    {
+      "category": "Electronics",
+      "sales": 1000
+    },
+    {
+      "category": "Furniture",
+      "sales": 500
+    },
+    {
+      "category": "Clothing",
+      "sales": 300
+    }
+  ]
+}

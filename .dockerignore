@@ -1,0 +1,28 @@
+# Root .dockerignore for AI Data Analyst OS
+.git/
+.github/
+.vscode/
+node_modules/
+frontend/node_modules/
+frontend/dist/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.log
+.coverage
+htmlcov/
+.env
+.env.*
+!.env.example
+
+# Host-only environments are not Linux image dependencies.
+.venv/
+.venv-bootstrap/
+**/__pycache__/
+**/.pytest_cache/
+
+# Local browser profiles and maintenance evidence are not image inputs.
+frontend/.ui-review/
+reports/repository-maintenance-local/

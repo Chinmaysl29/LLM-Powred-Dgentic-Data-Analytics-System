@@ -26,6 +26,42 @@
       "feedback_type": "thumbs_up",
       "user_comment": "Excellent attribution and reasoning.",
       "recorded_at": "2026-09-27T12:37:11.224961+00:00"
+    },
+    {
+      "id": "fb-1ffefb65",
+      "workspace_id": "default-ws",
+      "query": "What products drive profit?",
+      "rating": 5,
+      "feedback_type": "thumbs_up",
+      "user_comment": "Excellent attribution and reasoning.",
+      "recorded_at": "2026-10-11T18:01:33.900456+00:00"
+    },
+    {
+      "id": "fb-2dfd06e9",
+      "workspace_id": "default-ws",
+      "query": "What products drive profit?",
+      "rating": 5,
+      "feedback_type": "thumbs_up",
+      "user_comment": "Excellent attribution and reasoning.",
+      "recorded_at": "2026-10-11T18:02:06.465787+00:00"
+    },
+    {
+      "id": "fb-595b61b0",
+      "workspace_id": "default-ws",
+      "query": "What products drive profit?",
+      "rating": 5,
+      "feedback_type": "thumbs_up",
+      "user_comment": "Excellent attribution and reasoning.",
+      "recorded_at": "2026-10-11T18:03:33.059037+00:00"
+    },
+    {
+      "id": "fb-d5f0f93e",
+      "workspace_id": "default-ws",
+      "query": "What products drive profit?",
+      "rating": 5,
+      "feedback_type": "thumbs_up",
+      "user_comment": "Excellent attribution and reasoning.",
+      "recorded_at": "2026-10-11T18:04:45.866630+00:00"
     }
   ],
   "sql": [
@@ -49,6 +85,34 @@
       "success": true,
       "execution_ms": 12.5,
       "timestamp": "2026-09-27T12:37:11.226121+00:00"
+    },
+    {
+      "query": "Top customers",
+      "sql": "SELECT * FROM customers",
+      "success": true,
+      "execution_ms": 12.5,
+      "timestamp": "2026-10-11T18:01:33.905273+00:00"
+    },
+    {
+      "query": "Top customers",
+      "sql": "SELECT * FROM customers",
+      "success": true,
+      "execution_ms": 12.5,
+      "timestamp": "2026-10-11T18:02:06.470864+00:00"
+    },
+    {
+      "query": "Top customers",
+      "sql": "SELECT * FROM customers",
+      "success": true,
+      "execution_ms": 12.5,
+      "timestamp": "2026-10-11T18:03:33.064347+00:00"
+    },
+    {
+      "query": "Top customers",
+      "sql": "SELECT * FROM customers",
+      "success": true,
+      "execution_ms": 12.5,
+      "timestamp": "2026-10-11T18:04:45.871840+00:00"
     }
   ],
   "grounding": [
@@ -69,6 +133,30 @@
       "grounding_score": 0.98,
       "evidence_coverage": 0.99,
       "timestamp": "2026-09-27T12:37:11.227211+00:00"
+    },
+    {
+      "query": "Why did revenue drop?",
+      "grounding_score": 0.98,
+      "evidence_coverage": 0.99,
+      "timestamp": "2026-10-11T18:01:33.910243+00:00"
+    },
+    {
+      "query": "Why did revenue drop?",
+      "grounding_score": 0.98,
+      "evidence_coverage": 0.99,
+      "timestamp": "2026-10-11T18:02:06.475642+00:00"
+    },
+    {
+      "query": "Why did revenue drop?",
+      "grounding_score": 0.98,
+      "evidence_coverage": 0.99,
+      "timestamp": "2026-10-11T18:03:33.071178+00:00"
+    },
+    {
+      "query": "Why did revenue drop?",
+      "grounding_score": 0.98,
+      "evidence_coverage": 0.99,
+      "timestamp": "2026-10-11T18:04:45.878945+00:00"
     }
   ],
   "forecast": [
@@ -92,6 +180,34 @@
       "rmse": 24.5,
       "r2": 0.96,
       "timestamp": "2026-09-27T12:37:11.228215+00:00"
+    },
+    {
+      "model": "MultiModelEnsemble",
+      "mape": 3.8,
+      "rmse": 24.5,
+      "r2": 0.96,
+      "timestamp": "2026-10-11T18:01:33.915919+00:00"
+    },
+    {
+      "model": "MultiModelEnsemble",
+      "mape": 3.8,
+      "rmse": 24.5,
+      "r2": 0.96,
+      "timestamp": "2026-10-11T18:02:06.480587+00:00"
+    },
+    {
+      "model": "MultiModelEnsemble",
+      "mape": 3.8,
+      "rmse": 24.5,
+      "r2": 0.96,
+      "timestamp": "2026-10-11T18:03:33.077096+00:00"
+    },
+    {
+      "model": "MultiModelEnsemble",
+      "mape": 3.8,
+      "rmse": 24.5,
+      "r2": 0.96,
+      "timestamp": "2026-10-11T18:04:45.884634+00:00"
     }
   ]
 }

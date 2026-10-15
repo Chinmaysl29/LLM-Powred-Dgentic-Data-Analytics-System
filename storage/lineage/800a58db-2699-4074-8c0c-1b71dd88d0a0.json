@@ -1,0 +1,15 @@
+{
+  "dataset_id": "800a58db-2699-4074-8c0c-1b71dd88d0a0",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "7184edc2-8ef9-4263-915e-2cb4c0925bd6",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-10-13 18:39:49.163994",
+      "author": "system",
+      "description": "Initial ingestion of file1.csv"
+    }
+  ]
+}

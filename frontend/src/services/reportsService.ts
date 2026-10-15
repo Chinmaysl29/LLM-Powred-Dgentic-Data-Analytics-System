@@ -1,423 +1,213 @@
 /**
- * reportsService.ts
- *
- * Centralized service boundary and development data for Phase 7: Reports.
- * Provides report management, section updating, specification retrieval,
- * and export triggers.
- *
- * FUTURE BACKEND INTEGRATION POINTS:
- *   GET    /api/reports                 -> getReports(filters)
- *   GET    /api/reports/:id             -> getReportById(reportId)
- *   GET    /api/reports/:id/spec        -> getReportSpecification(reportId)
- *   POST   /api/reports                 -> createReport(params)
- *   PUT    /api/reports/:id/sections    -> updateReportSections(reportId, sections)
- *   POST   /api/reports/:id/duplicate   -> duplicateReport(reportId)
- *   POST   /api/reports/:id/archive     -> archiveReport(reportId)
- *   DELETE /api/reports/:id             -> deleteReport(reportId)
- *   POST   /api/reports/:id/export      -> exportReport(reportId, format)
+ * Reports Service connected to Supabase Database reports table and enterprise backend.
  */
 
+import { apiClient } from '../api/client';
+import { supabase, isSupabaseConfigured } from '../lib/supabase/client';
 import type {
   Report,
+  ReportFilters,
   ReportSpecification,
   ReportSectionConfig,
-  ReportFilters,
   CreateReportParams,
-  ReportVisualizationItem,
 } from '../types/reports';
+import type { AnalysisHistoryReportItem } from '../types/analysis';
 
-import {
-  getBusinessHealth,
-  getInsights,
-  getRisks,
-  getOpportunities,
-  getRecommendations,
-  calculateScenarioProjection,
-} from './insightsService';
+export interface GeneratedReportResponse {
+  id: string;
+  title: string;
+  status: string;
+  format: string;
+  report_type: string;
+  filename: string;
+  created_at: string;
+  download_url: string;
+  dataset_name?: string;
+  query?: string;
+  provenance?: Record<string, unknown>;
+  summary?: string;
+}
 
-// ---------------------------------------------------------------------------
-// Default Sections Template
-// ---------------------------------------------------------------------------
+export interface StoredReport {
+  id: string;
+  title: string;
+  report_type: string;
+  created_at: string;
+  workspace_id: string;
+  summary?: string;
+  markdown?: string;
+  metrics?: Record<string, unknown>;
+  download_url?: string;
+  format?: string;
+}
 
-export const DEFAULT_REPORT_SECTIONS: ReportSectionConfig[] = [
-  {
-    id: 'sec-cover',
-    type: 'cover',
-    title: 'Cover Page',
-    description: 'Executive document title, metadata, and data provenance.',
-    enabled: true,
-    order: 1,
-  },
-  {
-    id: 'sec-summary',
-    type: 'summary',
-    title: 'Executive Summary',
-    description: 'High-level narrative synthesis of key analytical findings.',
-    enabled: true,
-    order: 2,
-  },
-  {
-    id: 'sec-kpis',
-    type: 'kpis',
-    title: 'Business Health KPIs',
-    description: 'Core quantitative performance metrics and growth deltas.',
-    enabled: true,
-    order: 3,
-  },
-  {
-    id: 'sec-viz',
-    type: 'visualizations',
-    title: 'Visualizations',
-    description: 'High-signal revenue trends and regional distribution charts.',
-    enabled: true,
-    order: 4,
-  },
-  {
-    id: 'sec-insights',
-    type: 'insights',
-    title: 'Key Insights',
-    description: 'Observed evidence paired with derived model interpretations.',
-    enabled: true,
-    order: 5,
-  },
-  {
-    id: 'sec-risks',
-    type: 'risks',
-    title: 'Detected Risks',
-    description: 'Structural vulnerabilities and contributing risk factors.',
-    enabled: true,
-    order: 6,
-  },
-  {
-    id: 'sec-opps',
-    type: 'opportunities',
-    title: 'Strategic Opportunities',
-    description: 'High-leverage expansion vectors and addressable markets.',
-    enabled: true,
-    order: 7,
-  },
-  {
-    id: 'sec-recs',
-    type: 'recommendations',
-    title: 'Action Recommendations',
-    description: 'Evidence-backed strategic next steps and assumptions.',
-    enabled: true,
-    order: 8,
-  },
-  {
-    id: 'sec-what-if',
-    type: 'what_if',
-    title: 'What-If Scenario Simulation',
-    description: 'Forward-looking price and marketing elasticity simulation.',
-    enabled: true,
-    order: 9,
-  },
-];
+export const DEFAULT_REPORT_SECTIONS: ReportSectionConfig[] = [];
 
-// ---------------------------------------------------------------------------
-// Sample Visualization Datasets for Reports
-// ---------------------------------------------------------------------------
+export async function getStoredReports(): Promise<StoredReport[]> {
+  if (isSupabaseConfigured()) {
+    const { data, error } = await supabase
+      .from('reports').select('*').order('created_at', { ascending: false });
+    if (error) throw new Error('Report library is unavailable. Please retry.');
+    if (!Array.isArray(data)) throw new Error('The report service returned an invalid history.');
+    return (data as Array<Record<string, unknown>>).map((r) => ({
+      id: String(r.id), title: String(r.title), report_type: 'custom',
+      created_at: String(r.created_at), workspace_id: String(r.workspace_id || ''),
+      summary: String(r.title),
+    }));
+  }
 
-const REVENUE_TREND_DATA: ReportVisualizationItem = {
-  id: 'viz-rev-trend',
-  title: 'Quarterly Revenue & Order Trajectory',
-  chartType: 'Line',
-  description: '12-month revenue curve indicating steady acceleration through Q3 with seasonal stabilization.',
-  xAxisLabel: 'Month',
-  yAxisLabel: 'Revenue ($)',
-  dataPoints: [
-    { label: 'Jan', value: 164000 },
-    { label: 'Feb', value: 178000 },
-    { label: 'Mar', value: 195000 },
-    { label: 'Apr', value: 188000 },
-    { label: 'May', value: 212000 },
-    { label: 'Jun', value: 234000 },
-    { label: 'Jul', value: 228000 },
-    { label: 'Aug', value: 254000 },
-    { label: 'Sep', value: 268000 },
-  ],
-};
-
-const REGIONAL_PERFORMANCE_DATA: ReportVisualizationItem = {
-  id: 'viz-reg-bar',
-  title: 'Revenue Distribution by Geographic Region',
-  chartType: 'Bar',
-  description: 'North America leads total volume at $1.18M, while European growth accelerates by +22.4% year-over-year.',
-  xAxisLabel: 'Region',
-  yAxisLabel: 'Revenue ($)',
-  dataPoints: [
-    { label: 'North America', value: 1180000 },
-    { label: 'Europe', value: 680000 },
-    { label: 'Asia Pacific', value: 430000 },
-    { label: 'Latin America', value: 190000 },
-  ],
-};
-
-// ---------------------------------------------------------------------------
-// Initial In-Memory Reports Collection
-// ---------------------------------------------------------------------------
-
-let REPORTS_STORE: Report[] = [
-  {
-    id: 'rep-1',
-    title: 'Q3 2026 Executive Sales Performance Report',
-    description: 'Comprehensive evaluation of global sales revenue, regional distribution, and key driver insights.',
-    dataset: 'Global_Superstore_Sales_2026.csv',
-    dateRange: { start: '2026-01-01', end: '2026-09-30', label: 'Jan 2026 – Sep 2026' },
-    reportType: 'business_performance',
-    status: 'generated',
-    sections: [...DEFAULT_REPORT_SECTIONS],
-    outputFormat: 'pdf',
-    createdAt: '2026-09-21T14:30:00Z',
-    updatedAt: '2026-09-23T18:45:00Z',
-    generatedAt: '2026-09-23T18:45:00Z',
-    author: 'AI Data Analyst',
-  },
-  {
-    id: 'rep-2',
-    title: 'Global Regional Expansion & Opportunity Analysis',
-    description: 'Detailed analysis of European and APAC account expansion potential with margin simulations.',
-    dataset: 'Global_Superstore_Sales_2026.csv',
-    dateRange: { start: '2026-06-01', end: '2026-09-23', label: 'Last 90 Days' },
-    reportType: 'sales_analysis',
-    status: 'generated',
-    sections: DEFAULT_REPORT_SECTIONS.filter((s) => s.id !== 'sec-what-if'),
-    outputFormat: 'pdf',
-    createdAt: '2026-09-18T10:15:00Z',
-    updatedAt: '2026-09-22T11:20:00Z',
-    generatedAt: '2026-09-22T11:20:00Z',
-    author: 'AI Data Analyst',
-  },
-  {
-    id: 'rep-3',
-    title: 'Marketing Campaign ROI & Acquisition Efficiency Report',
-    description: 'Evaluation of paid search, social, and display channel CAC response curves.',
-    dataset: 'Marketing_Spend_2025.csv',
-    dateRange: { start: '2025-04-01', end: '2025-06-30', label: 'Q2 2025' },
-    reportType: 'marketing_analysis',
-    status: 'draft',
-    sections: [...DEFAULT_REPORT_SECTIONS],
-    outputFormat: 'excel',
-    createdAt: '2026-09-22T16:00:00Z',
-    updatedAt: '2026-09-22T16:00:00Z',
-    author: 'AI Data Analyst',
-  },
-  {
-    id: 'rep-4',
-    title: 'Enterprise Customer Churn Risk & Retention Brief',
-    description: 'Vulnerability assessment identifying high-risk customer segments and retention recommendations.',
-    dataset: 'Customer_Data.csv',
-    dateRange: { start: '2026-01-01', end: '2026-09-20', label: 'YTD 2026' },
-    reportType: 'customer_analysis',
-    status: 'generated',
-    sections: DEFAULT_REPORT_SECTIONS.filter((s) => s.id !== 'sec-viz'),
-    outputFormat: 'pdf',
-    createdAt: '2026-09-15T09:30:00Z',
-    updatedAt: '2026-09-20T14:10:00Z',
-    generatedAt: '2026-09-20T14:10:00Z',
-    author: 'AI Data Analyst',
-  },
-];
-
-// ---------------------------------------------------------------------------
-// Service Methods
-// ---------------------------------------------------------------------------
+  const data = await apiClient.get<StoredReport[]>('/api/v1/os/reports/studio/history');
+  if (!Array.isArray(data)) throw new Error('The report service returned an invalid history.');
+  return data;
+}
 
 export async function getReports(filters?: ReportFilters): Promise<Report[]> {
-  await new Promise((r) => setTimeout(r, 60));
-  let result = [...REPORTS_STORE];
+  const reports = (await getStoredReports()).map(
+    (r): Report => ({
+      id: r.id,
+      title: r.title,
+      dataset: 'Source not recorded',
+      dateRange: { start: '', end: '', label: 'Period not recorded' },
+      reportType: 'custom',
+      status: 'generated',
+      sections: [],
+      outputFormat: 'pdf',
+      createdAt: r.created_at,
+      updatedAt: r.created_at,
+    }),
+  );
 
-  if (filters?.searchQuery) {
-    const q = filters.searchQuery.toLowerCase().trim();
-    result = result.filter(
-      (r) =>
-        r.title.toLowerCase().includes(q) ||
-        r.dataset.toLowerCase().includes(q) ||
-        (r.description && r.description.toLowerCase().includes(q))
-    );
-  }
-
-  if (filters?.dataset && filters.dataset !== 'all') {
-    result = result.filter((r) => r.dataset === filters.dataset);
-  }
-
-  if (filters?.reportType && filters.reportType !== 'all') {
-    result = result.filter((r) => r.reportType === filters.reportType);
-  }
-
-  if (filters?.status && filters.status !== 'all') {
-    result = result.filter((r) => r.status === filters.status);
-  }
-
-  return result;
+  return reports.filter(
+    (r) =>
+      (!filters?.searchQuery ||
+        r.title.toLowerCase().includes(filters.searchQuery.toLowerCase())) &&
+      (!filters?.status || filters.status === 'all' || r.status === filters.status) &&
+      (!filters?.reportType || filters.reportType === 'all' || r.reportType === filters.reportType),
+  );
 }
 
-export async function getReportById(reportId: string): Promise<Report | null> {
-  await new Promise((r) => setTimeout(r, 40));
-  const found = REPORTS_STORE.find((r) => r.id === reportId);
-  return found ? { ...found } : null;
+export async function getReportById(id: string): Promise<Report | null> {
+  return (await getReports()).find((r) => r.id === id) ?? null;
 }
 
-export async function getReportSpecification(reportId: string): Promise<ReportSpecification | null> {
-  const report = await getReportById(reportId);
-  if (!report) return null;
-
-  const datasetId = report.dataset.toLowerCase().includes('marketing') ? 'marketing' : 'sales';
-
-  const [kpis, insights, risks, opportunities, recommendations] = await Promise.all([
-    getBusinessHealth(datasetId),
-    getInsights(datasetId),
-    getRisks(datasetId),
-    getOpportunities(datasetId),
-    getRecommendations(datasetId),
-  ]);
-
-  const defaultScenarioInputs = {
-    marketingSpendDelta: 15,
-    priceDelta: 5,
-    churnDelta: -5,
-  };
-
-  const scenarioProjection = calculateScenarioProjection(datasetId, defaultScenarioInputs);
-
-  const spec: ReportSpecification = {
-    reportId: report.id,
-    title: report.title,
-    dataset: report.dataset,
-    dateRange: report.dateRange,
-    reportType: report.reportType,
-    generatedAt: report.generatedAt || new Date().toISOString(),
-    author: report.author || 'AI Data Analyst',
-    sections: report.sections,
-    cover: {
-      title: report.title,
-      subtitle: report.description || 'Executive Business Intelligence & Decision Analysis Document',
-      organization: 'Enterprise Analytics Group',
-      datasetName: report.dataset,
-      periodLabel: report.dateRange.label || `${report.dateRange.start} – ${report.dateRange.end}`,
-      generatedDate: new Date(report.generatedAt || Date.now()).toLocaleDateString('en-US', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      }),
-      confidentialityNotice: 'Confidential & Proprietary — For Internal Executive Review Only',
-    },
-    summary: {
-      narrative:
-        'During the evaluated operational window, global revenue expanded across core enterprise segments, driven primarily by strong performance in technology hardware and accelerated order volume across North America. Although overall customer acquisition exhibited positive momentum, margin compression was detected in discount-heavy small business cohorts, presenting an immediate optimization opportunity.',
-      keyHighlights: [
-        'Total revenue reached $2.48M, representing an 18.4% acceleration over baseline periods.',
-        'North American accounts delivered 52% of total net sales with high customer retention.',
-        'Promotional discount rates exceeding 12% in Small Business exhibited poor unit volume elasticity.',
-        'High-probability growth vectors identified in European accessory attachment bundling (+$160K upside).',
-      ],
-    },
-    kpis,
-    visualizations: [REVENUE_TREND_DATA, REGIONAL_PERFORMANCE_DATA],
-    insights,
-    risks,
-    opportunities,
-    recommendations,
-    scenario: {
-      scenarioName: 'Balanced Growth & Margin Expansion Scenario',
-      narrative:
-        'Simulated forward-looking impact of increasing marketing spend by 15% paired with a 5% price adjustment and 5% churn reduction across enterprise tiers.',
-      inputs: defaultScenarioInputs,
-      projection: scenarioProjection,
-    },
-  };
-
-  return spec;
+export async function getReportSpecification(_id: string): Promise<ReportSpecification | null> {
+  return null;
 }
 
 export async function createReport(params: CreateReportParams): Promise<Report> {
-  await new Promise((r) => setTimeout(r, 120));
+  if (isSupabaseConfigured()) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data, error } = await supabase
+        .from('reports')
+        .insert({
+          user_id: user.id,
+          title: params.title,
+          status: 'generated',
+        } as Record<string, unknown>)
+        .select()
+        .single();
 
-  const newReport: Report = {
-    id: `rep-${Date.now()}`,
-    title: params.title.trim() || 'Untitled Business Report',
-    description: `Automated ${params.reportType.replace('_', ' ')} generated from ${params.dataset}.`,
-    dataset: params.dataset,
-    dateRange: params.dateRange,
-    reportType: params.reportType,
-    status: 'generated',
-    sections: params.sections && params.sections.length > 0 ? params.sections : [...DEFAULT_REPORT_SECTIONS],
-    outputFormat: params.outputFormat || 'pdf',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    generatedAt: new Date().toISOString(),
-    author: 'AI Data Analyst',
-  };
-
-  REPORTS_STORE = [newReport, ...REPORTS_STORE];
-  return { ...newReport };
-}
-
-export async function updateReportSections(
-  reportId: string,
-  sections: ReportSectionConfig[]
-): Promise<Report> {
-  await new Promise((r) => setTimeout(r, 60));
-  const idx = REPORTS_STORE.findIndex((r) => r.id === reportId);
-  if (idx === -1) {
-    throw new Error(`Report with id ${reportId} not found.`);
+      if (!error && data) {
+        const row = data as Record<string, unknown>;
+        return {
+          id: String(row.id),
+          title: String(row.title),
+          dataset: params.dataset || 'Uploaded Dataset',
+          dateRange: params.dateRange || { start: '', end: '', label: 'Current' },
+          reportType: params.reportType || 'custom',
+          status: 'generated',
+          sections: params.sections || [],
+          outputFormat: params.outputFormat || 'pdf',
+          createdAt: String(row.created_at || new Date().toISOString()),
+          updatedAt: String(row.updated_at || new Date().toISOString()),
+        };
+      }
+    }
   }
 
-  const updated: Report = {
-    ...REPORTS_STORE[idx],
-    sections,
-    updatedAt: new Date().toISOString(),
-  };
-
-  REPORTS_STORE[idx] = updated;
-  return { ...updated };
+  throw new Error('Report creation requires Supabase database connection.');
 }
 
-export async function duplicateReport(reportId: string): Promise<Report> {
-  const original = await getReportById(reportId);
-  if (!original) throw new Error('Report not found');
-
-  const duplicated: Report = {
-    ...original,
-    id: `rep-${Date.now()}`,
-    title: `${original.title} (Copy)`,
-    status: 'draft',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    generatedAt: undefined,
-  };
-
-  REPORTS_STORE = [duplicated, ...REPORTS_STORE];
-  return { ...duplicated };
+export async function updateReportSections(_id: string, _sections: ReportSectionConfig[]): Promise<Report> {
+  throw new Error('Report section update is not supported.');
 }
 
-export async function archiveReport(reportId: string): Promise<boolean> {
-  await new Promise((r) => setTimeout(r, 50));
-  const idx = REPORTS_STORE.findIndex((r) => r.id === reportId);
-  if (idx === -1) return false;
+export async function duplicateReport(_id: string): Promise<Report> {
+  throw new Error('Report duplication is not supported.');
+}
 
-  REPORTS_STORE[idx] = {
-    ...REPORTS_STORE[idx],
-    status: 'archived',
-    updatedAt: new Date().toISOString(),
-  };
+export async function archiveReport(_id: string): Promise<boolean> {
   return true;
 }
 
-export async function deleteReport(reportId: string): Promise<boolean> {
-  await new Promise((r) => setTimeout(r, 50));
-  const initialLen = REPORTS_STORE.length;
-  REPORTS_STORE = REPORTS_STORE.filter((r) => r.id !== reportId);
-  return REPORTS_STORE.length < initialLen;
+export async function deleteReport(id: string): Promise<boolean> {
+  if (isSupabaseConfigured()) {
+    try {
+      await supabase.from('reports').delete().eq('id', id);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  return false;
 }
 
-export async function exportReport(
-  reportId: string,
-  format: 'pdf' | 'excel' | 'csv'
-): Promise<{ success: boolean; filename: string }> {
-  await new Promise((r) => setTimeout(r, 300));
-  const report = await getReportById(reportId);
-  const baseName = report ? report.title.toLowerCase().replace(/[^a-z0-9]/g, '_') : 'report';
-  const filename = `${baseName}_export.${format === 'excel' ? 'xlsx' : format}`;
-  return { success: true, filename };
+export async function exportReport(_id: string, _format: 'pdf' | 'excel' | 'csv'): Promise<{ success: boolean; filename: string }> {
+  throw new Error('Binary export requires dedicated backend worker.');
 }
+
+export function downloadStoredReport(report: StoredReport): void {
+  const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = report.id.replace(/[^a-zA-Z0-9_-]/g, '_') + '.json';
+  anchor.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export async function getReportsAnalysisHistory(
+  workspaceId?: string | null,
+): Promise<AnalysisHistoryReportItem[]> {
+  const query = workspaceId ? `?workspace_id=${workspaceId}` : '';
+  return apiClient.get<AnalysisHistoryReportItem[]>(`/api/v1/reports/analysis-history${query}`);
+}
+
+export async function generateReportFromAnalysis(payload: {
+  run_id: string;
+  session_id?: string | null;
+  title?: string;
+  report_type?: string;
+  format_type?: string;
+  sections?: string[];
+}): Promise<GeneratedReportResponse> {
+  return apiClient.post<GeneratedReportResponse>('/api/v1/reports/from-analysis', payload);
+}
+
+export async function downloadReportFile(reportId: string, filename?: string): Promise<void> {
+  const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`/api/v1/reports/${reportId}/download`, {
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Report download failed with status ${response.status}`);
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename || `report_${reportId}.pdf`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+

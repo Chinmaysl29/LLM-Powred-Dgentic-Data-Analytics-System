@@ -1,0 +1,18 @@
+{
+  "dataset_id": "6d90f3c7-7cbf-467d-ae12-bc135ac9e25c",
+  "duplicate_rows": 0,
+  "duplicate_percentage": 0.0,
+  "missing_data_profile": {
+    "null_count": 0,
+    "null_percentage": 0.0,
+    "columns_with_missing": []
+  },
+  "cardinality_profile": {
+    "high_cardinality_columns": [],
+    "low_cardinality_columns": [
+      "timestamp",
+      "event"
+    ]
+  },
+  "numeric_columns_profile": {}
+}

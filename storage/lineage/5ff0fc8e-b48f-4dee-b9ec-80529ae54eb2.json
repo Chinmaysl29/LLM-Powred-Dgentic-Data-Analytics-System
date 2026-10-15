@@ -1,0 +1,15 @@
+{
+  "dataset_id": "5ff0fc8e-b48f-4dee-b9ec-80529ae54eb2",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "48de0df3-6837-4c3e-bc7f-3ad5ddbead63",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-10-13 17:47:02.710995+00:00",
+      "author": "system",
+      "description": "Initial ingestion of executive_summary.pdf"
+    }
+  ]
+}

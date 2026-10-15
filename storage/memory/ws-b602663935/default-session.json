@@ -1,0 +1,125 @@
+{
+  "workspace_id": "ws-b602663935",
+  "session_id": "default-session",
+  "created_at": "2026-10-11T18:01:07.973785+00:00",
+  "conversation": [
+    {
+      "id": "turn-1c2caf3a",
+      "timestamp": "2026-10-11T18:01:08.232979+00:00",
+      "user_message": "Analyze top revenue trends and risks",
+      "ai_response": "Based on full-lifecycle analysis across 15 records, Revenue stands at 392,000.00. Analysis of query 'Analyze top revenue trends and risks' across verified transactional records shows strong momentum in Revenue. Overall performance was prominently driven by the 'Enterprise' segment, contributing 51.8% of total volume. Underlying unit economics remain stable with positive operating margin expansion.",
+      "intent": "autonomous_ai_analyst",
+      "context": {
+        "plan": {
+          "query": "Analyze top revenue trends and risks",
+          "agents_required": {
+            "semantic_layer": true,
+            "sql_agent": true,
+            "eda_agent": false,
+            "kpi_engine": true,
+            "forecasting_agent": true,
+            "visualization_agent": true,
+            "storytelling_engine": true,
+            "dashboard_builder": false,
+            "anomaly_detector": false,
+            "root_cause_engine": false
+          },
+          "primary_metric": "revenue",
+          "forecast_horizon": 6,
+          "execution_strategy": "concurrent_hybrid"
+        },
+        "confidence": 0.85
+      }
+    }
+  ],
+  "analytics": [
+    {
+      "id": "ana-1eda6bd8",
+      "timestamp": "2026-10-11T18:01:08.225422+00:00",
+      "question": "Analyze top revenue trends and risks",
+      "sql_query": "SELECT category, SUM(revenue) AS total_revenue FROM active_dataset GROUP BY category ORDER BY total_revenue DESC LIMIT 10;",
+      "data_summary": {
+        "group_by": "category",
+        "metric": "revenue",
+        "row_count": 15
+      },
+      "key_metrics": {
+        "gross_margin": 60.0,
+        "revenue_growth": 14.2,
+        "aov": 26133.33,
+        "roi": 150.0,
+        "ebitda": 235200.0,
+        "customer_retention": 0.0,
+        "churn_rate": 4.2,
+        "ltv": 117600.0,
+        "cac": 7840.0
+      },
+      "filters": {}
+    }
+  ],
+  "dashboard": {},
+  "forecasts": [
+    {
+      "id": "fc-c37bc437",
+      "timestamp": "2026-10-11T18:01:08.215645+00:00",
+      "target_column": "revenue",
+      "model_name": "Autoregressive Linear Trend (Trained)",
+      "horizon_periods": 6,
+      "historical_summary": {
+        "mean": 26133.333333333332,
+        "count": 15
+      },
+      "forecast_values": [
+        47666.67,
+        50333.33,
+        53000.0,
+        55666.67,
+        58333.33,
+        61000.0
+      ],
+      "metrics": {
+        "MAE": 993.07,
+        "RMSE": 1254.4,
+        "MAPE": 3.9
+      },
+      "confidence_interval": {}
+    }
+  ],
+  "datasets": {
+    "active-dataset": {
+      "updated_at": "2026-10-11T18:01:08.202640+00:00",
+      "semantic_mapping": {
+        "date": {
+          "business_name": "Transaction Timestamp",
+          "canonical_key": "order_date",
+          "default_aggregation": "COUNT",
+          "description": "Recorded date and time at which the commercial transaction occurred."
+        },
+        "revenue": {
+          "business_name": "Gross Revenue",
+          "canonical_key": "revenue",
+          "default_aggregation": "SUM",
+          "description": "Total monetary value realized from commercial sales before returns or deductions."
+        },
+        "cogs": {
+          "business_name": "Cost of Goods Sold",
+          "canonical_key": "cogs",
+          "default_aggregation": "SUM",
+          "description": "Direct costs attributable to the production or acquisition of the goods sold."
+        },
+        "category": {
+          "business_name": "Category",
+          "canonical_key": "category",
+          "default_aggregation": "COUNT",
+          "description": "Column category"
+        },
+        "customer_id": {
+          "business_name": "Customer Identifier",
+          "canonical_key": "customer_id",
+          "default_aggregation": "COUNT_DISTINCT",
+          "description": "Unique enterprise key representing an individual or corporate purchasing entity."
+        }
+      }
+    }
+  }
+}

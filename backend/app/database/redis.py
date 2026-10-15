@@ -29,20 +29,30 @@ class RedisCache:
     async def connect(self) -> None:
         """Create and validate the Redis client."""
         if self._client is None:
-            self._client = redis.from_url(self._settings.redis_url, decode_responses=True)
+            self._client = redis.from_url(
+                self._settings.redis_url,
+                decode_responses=True,
+                socket_connect_timeout=5.0,
+                socket_timeout=5.0,
+            )
         try:
             await self._client.ping()
             logger.info("Redis connection established")
         except RedisError as exc:
             await self.close()
-            raise RedisConnectionError("Redis connection validation failed") from exc
+            logger.error("Redis connection validation failed: %s", exc.__class__.__name__)
+            raise RedisConnectionError("Redis connection validation failed") from None
 
     async def health_check(self) -> tuple[bool, str]:
         """Ping Redis and return a health result."""
         try:
-            await self.connect()
+            if self._client is None:
+                await self.connect()
+            else:
+                await self._client.ping()
             return True, "Redis is reachable"
-        except RedisConnectionError:
+        except (RedisConnectionError, RedisError, Exception):
+            await self.close()
             return False, "Redis is unavailable"
 
     async def get(self, key: str) -> str | None:

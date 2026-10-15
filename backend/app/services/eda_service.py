@@ -8,6 +8,7 @@ Provides deep, automated exploratory analysis answering:
 - What actionable business insights emerge from the data?
 """
 
+import hashlib
 import logging
 import time
 from typing import Any
@@ -156,6 +157,7 @@ class EDAService:
         )
 
         return EDAResults(
+            chart_manifest=__import__("backend.app.services.eda_charts", fromlist=["build_charts"]).build_charts(df, dataset_id),
             dataset_summary=summary,
             statistics=statistics,
             missing_values=missing_values,
@@ -172,21 +174,26 @@ class EDAService:
         dataset_id: str,
         version_number: int | None = None,
         sample_size: int | None = None,
+        filters=None,
     ) -> EDAResults:
         """Load dataset from retrieval service and execute full EDA."""
         if not self._retrieval_service:
             raise DataRetrievalError("DataRetrievalService not injected into EDAService")
 
         logger.info("Retrieving dataset %s (version=%s) for EDA", dataset_id, version_number)
-        df, was_sampled = self._retrieval_service.load_dataframe(
-            dataset_id=dataset_id,
-            version_number=version_number,
-            sample_size=sample_size,
+        from backend.app.services.eda_charts import build_charts
+        _, version, _, _, _ = self._retrieval_service.discover(dataset_id, version_number)
+        pinned_version = version.version_number
+        df, _ = self._retrieval_service.load_dataframe(
+            dataset_id=dataset_id, version_number=pinned_version, filters=filters, sample_size=0,
         )
-
+        source_path = self._retrieval_service.storage_service.retrieve_file(version.storage_path)
+        with source_path.open('rb') as source:
+            checksum = hashlib.file_digest(source, 'sha256').hexdigest()
         results = self.analyze_dataframe(df, dataset_id=dataset_id)
-        if was_sampled:
-            results.dataset_summary.is_sampled = True
+        results.chart_manifest = build_charts(df, dataset_id,
+            version=pinned_version, source_data_reference=f"dataset:{dataset_id}:version:{pinned_version}",
+            source_checksum=checksum, applied_filters=filters.model_dump(exclude_none=True) if filters else {})
         return results
 
     # -------------------------------------------------------------------------

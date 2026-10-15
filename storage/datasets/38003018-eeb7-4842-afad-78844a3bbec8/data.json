@@ -1,0 +1,114 @@
+{
+  "dataset_id": "38003018-eeb7-4842-afad-78844a3bbec8",
+  "dataset_name": "prosandcons",
+  "columns": [
+    "Bluestock Fintech — Nifty 100  |  Pros & Cons  |  16 records",
+    "Unnamed: 1",
+    "Unnamed: 2",
+    "Unnamed: 3"
+  ],
+  "records": [
+    {
+      "Bluestock Fintech — Nifty 100  |  Pros & Cons  |  16 records": "id",
+      "Unnamed: 1": "company_id",
+      "Unnamed: 2": "pros",
+      "Unnamed: 3": "cons"
+    },
+    {
+      "Bluestock Fintech — Nifty 100  |  Pros & Cons  |  16 records": 1,
+      "Unnamed: 1": "HDFCBANK",
+      "Unnamed: 2": "Company is expected to give good quarter",
+      "Unnamed: 3": "Stock is trading at 2.76 times its book value"
+    },
+    {
+      "Bluestock Fintech — Nifty 100  |  Pros & Cons  |  16 records": 2,
+      "Unnamed: 1": "HDFCBANK",
+      "Unnamed: 2": "Company has delivered good profit growth of 23.4% CAGR over last 5 years",
+      "Unnamed: 3": "Company has low interest coverage ratio."
+    },
+    {
+      "Bluestock Fintech — Nifty 100  |  Pros & Cons  |  16 records": 3,
+      "Unnamed: 1": "HDFCBANK",
+      "Unnamed: 2": "Company has been maintaining a healthy dividend payout of 22.9%",
+      "Unnamed: 3": "Contingent liabilities of Rs.24,09,821 Cr."
+    },
+    {
+      "Bluestock Fintech — Nifty 100  |  Pros & Cons  |  16 records": 4,
+      "Unnamed: 1": "HDFCBANK",
+      "Unnamed: 2": "Company's median sales growth is 16.4% of last 10 years",
+      "Unnamed: 3": "Earnings include an other income of Rs.1,55,870 Cr."
+    },
+    {
+      "Bluestock Fintech — Nifty 100  |  Pros & Cons  |  16 records": 5,
+      "Unnamed: 1": "SBILIFE",
+      "Unnamed: 2": "Company is almost debt free.",
+      "Unnamed: 3": "Stock is trading at 9.11 times its book value"
+    },
+    {
+      "Bluestock Fintech — Nifty 100  |  Pros & Cons  |  16 records": 6,
+      "Unnamed: 1": "SBILIFE",
+      "Unnamed: 2": "Company is expected to give good quarter",
+      "Unnamed: 3": "Tax rate seems low"
+    },
+    {
+      "Bluestock Fintech — Nifty 100  |  Pros & Cons  |  16 records": 7,
+      "Unnamed: 1": "SBILIFE",
+      "Unnamed: 2": null,
+      "Unnamed: 3": "Company has a low return on equity of 12.9% over last 3 years."
+    },
+    {
+      "Bluestock Fintech — Nifty 100  |  Pros & Cons  |  16 records": 8,
+      "Unnamed: 1": "SBILIFE",
+      "Unnamed: 2": null,
+      "Unnamed: 3": "Earnings include an other income of Rs.1,657 Cr."
+    },
+    {
+      "Bluestock Fintech — Nifty 100  |  Pros & Cons  |  16 records": 9,
+      "Unnamed: 1": "SBILIFE",
+      "Unnamed: 2": null,
+      "Unnamed: 3": "Dividend payout has been low at 14.0% of profits over last 3 years"
+    },
+    {
+      "Bluestock Fintech — Nifty 100  |  Pros & Cons  |  16 records": 10,
+      "Unnamed: 1": "INFY",
+      "Unnamed: 2": "Company has a good return on equity (ROE) track record: 3 Years ROE 30.9%",
+      "Unnamed: 3": "Stock is trading at 9.03 times its book value"
+    },
+    {
+      "Bluestock Fintech — Nifty 100  |  Pros & Cons  |  16 records": 11,
+      "Unnamed: 1": "INFY",
+      "Unnamed: 2": "Company has been maintaining a healthy dividend payout of 63.3%",
+      "Unnamed: 3": "Promoter holding is low: 14.4%"
+    },
+    {
+      "Bluestock Fintech — Nifty 100  |  Pros & Cons  |  16 records": 12,
+      "Unnamed: 1": "WIPRO",
+      "Unnamed: 2": null,
+      "Unnamed: 3": "The company has delivered a poor sales growth of 8.75% over past five years."
+    },
+    {
+      "Bluestock Fintech — Nifty 100  |  Pros & Cons  |  16 records": 13,
+      "Unnamed: 1": "WIPRO",
+      "Unnamed: 2": null,
+      "Unnamed: 3": "Dividend payout has been low at 12.2% of profits over last 3 years"
+    },
+    {
+      "Bluestock Fintech — Nifty 100  |  Pros & Cons  |  16 records": 14,
+      "Unnamed: 1": "TCS",
+      "Unnamed: 2": "Company is almost debt free.",
+      "Unnamed: 3": "Stock is trading at 15.2 times its book value"
+    },
+    {
+      "Bluestock Fintech — Nifty 100  |  Pros & Cons  |  16 records": 15,
+      "Unnamed: 1": "TCS",
+      "Unnamed: 2": "Company has a good return on equity (ROE) track record: 3 Years ROE 47.4%",
+      "Unnamed: 3": "The company has delivered a poor sales growth of 10.5% over past five years."
+    },
+    {
+      "Bluestock Fintech — Nifty 100  |  Pros & Cons  |  16 records": 16,
+      "Unnamed: 1": "TCS",
+      "Unnamed: 2": "Company has been maintaining a healthy dividend payout of 66.2%",
+      "Unnamed: 3": null
+    }
+  ]
+}

@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.database.postgres import get_db_session
 from backend.app.models.dataset import Dataset
+from backend.app.core.security import get_current_user
 
 logger = logging.getLogger(__name__)
 
@@ -16,8 +17,9 @@ logger = logging.getLogger(__name__)
 class DatasetRepository:
     """Repository handling persistence and retrieval of Dataset entities."""
 
-    def __init__(self, db: Session) -> None:
+    def __init__(self, db: Session, owner_id: str | None = None) -> None:
         self.db = db
+        self.owner_id = owner_id
 
     @property
     def session(self) -> Session:
@@ -26,6 +28,8 @@ class DatasetRepository:
 
     def create(self, dataset: Dataset) -> Dataset:
         """Persist a new Dataset record to the database."""
+        if self.owner_id is not None:
+            dataset.owner_id = self.owner_id
         self.db.add(dataset)
         self.db.commit()
         self.db.refresh(dataset)
@@ -40,6 +44,8 @@ class DatasetRepository:
     def get(self, dataset_id: str) -> Dataset | None:
         """Retrieve a single Dataset record by its unique dataset_id."""
         stmt = select(Dataset).where(Dataset.dataset_id == dataset_id)
+        if self.owner_id is not None:
+            stmt = stmt.where(Dataset.owner_id == self.owner_id)
         dataset = self.db.scalars(stmt).first()
         if dataset:
             logger.debug("Retrieved dataset record dataset_id=%s", dataset_id)
@@ -51,6 +57,7 @@ class DatasetRepository:
         """List Dataset records with pagination ordered by creation time descending."""
         stmt = (
             select(Dataset)
+            .where(Dataset.owner_id == self.owner_id if self.owner_id is not None else True)
             .order_by(Dataset.created_at.desc())
             .offset(skip)
             .limit(limit)
@@ -66,6 +73,8 @@ class DatasetRepository:
             logger.warning("Cannot update non-existent dataset dataset_id=%s", dataset_id)
             return None
 
+        if "owner_id" in kwargs or "dataset_id" in kwargs:
+            raise ValueError("Ownership and identity require explicit administrative assignment")
         for key, value in kwargs.items():
             if hasattr(dataset, key) and value is not None:
                 setattr(dataset, key, value)
@@ -88,6 +97,6 @@ class DatasetRepository:
         return True
 
 
-def get_dataset_repository(db: Session = Depends(get_db_session)) -> DatasetRepository:
+def get_dataset_repository(db: Session = Depends(get_db_session), current_user: Any = Depends(get_current_user)) -> DatasetRepository:
     """FastAPI dependency yielding a DatasetRepository instance."""
-    return DatasetRepository(db=db)
+    return DatasetRepository(db=db, owner_id=str(current_user.id))

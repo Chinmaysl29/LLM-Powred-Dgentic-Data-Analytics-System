@@ -69,3 +69,4 @@ __all__ = [
     "AuditEntry",
     "AuditLog",
 ]
+from backend.app.models.background_job import DurableJob

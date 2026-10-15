@@ -42,7 +42,7 @@ class RAGIngestRequest(BaseModel):
     document_id: str = Field(..., description="Source document UUID")
     content: str = Field(..., description="Normalized document text to ingest")
     metadata: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Document metadata")
-    chunking_strategy: str = Field(default="recursive", description="Chunking strategy to apply")
+    chunking_strategy: Optional[str] = Field(default="recursive", description="Chunking strategy to apply")
     chunk_size: int = Field(default=1000, description="Target chunk size")
     chunk_overlap: int = Field(default=200, description="Chunk overlap")
 

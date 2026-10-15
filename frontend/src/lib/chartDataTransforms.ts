@@ -1,4 +1,4 @@
-export type ChartType = 'Line' | 'Bar' | 'Pie' | 'Area' | 'Scatter' | 'Table' | 'Heatmap' | 'Treemap';
+export type ChartType = 'Line' | 'Bar' | 'Pie' | 'Area' | 'Scatter' | 'Table' | 'Heatmap' | 'Treemap' | 'Histogram';
 export type FieldType = 'date' | 'category' | 'number' | 'boolean';
 
 export type CellValue = string | number | boolean | null;
@@ -21,12 +21,15 @@ export interface VisualizationConfig {
 }
 
 export interface ChartPoint {
+  categoryKey?: string;
+  seriesKey?: string;
   label: string;
   value: number;
   group?: string;
 }
 
 export interface ScatterPoint {
+  sourceIndex?: number;
   x: number;
   y: number;
   label: string;
@@ -77,7 +80,19 @@ export interface TableData {
   totalCount: number;
 }
 
+export interface HistogramBin {
+  bin_start: number;
+  bin_end: number;
+  count: number;
+  percentage: number;
+  label?: string;
+}
+
 export interface TransformedChartData {
+  metric?: string;
+  aggregation?: string;
+  unit?: string;
+  scatterSampling?: { method: string; totalValid: number; displayed: number; domain: string };
   type: ChartType;
   isValid: boolean;
   validationMessage?: string;
@@ -87,6 +102,8 @@ export interface TransformedChartData {
   heatmapData?: HeatmapData;
   treemapData?: TreemapData;
   tableData?: TableData;
+  histogramBins?: HistogramBin[];
+  summaryMetrics?: Record<string, number>;
 }
 
 // ---------------------------------------------------------------------------
@@ -99,13 +116,142 @@ export function parseNumeric(value: unknown): number | null {
     return Number.isFinite(value) ? value : null;
   }
   if (typeof value === 'string') {
-    // Strip dollar signs, commas, and trailing/leading whitespace
-    const cleaned = value.replace(/[$,\s]/g, '').trim();
-    if (!cleaned) return null;
-    const parsed = Number(cleaned);
-    return Number.isFinite(parsed) ? parsed : null;
+    let str = value.trim();
+    if (!str || str === '-' || str === '--' || str.toLowerCase() === 'n/a' || str.toLowerCase() === 'null') return null;
+
+    let isNegative = false;
+    if (str.startsWith('(') && str.endsWith(')')) {
+      isNegative = true;
+      str = str.slice(1, -1).trim();
+    } else if (str.startsWith('-')) {
+      isNegative = true;
+      str = str.slice(1).trim();
+    } else if (str.startsWith('+')) {
+      str = str.slice(1).trim();
+    }
+
+    // Strip currency symbols ($, ₹, €, £, Rs., INR, USD, EUR, GBP) and commas
+    str = str.replace(/[$,₹€£\s]/g, '')
+             .replace(/^(?:rs\.?|inr|usd|eur|gbp)\s*/i, '')
+             .replace(/\s*(?:inr|usd|eur|gbp)$/i, '');
+
+    // Handle percentage: 25% -> 25
+    if (str.endsWith('%')) {
+      str = str.slice(0, -1).trim();
+    }
+
+    if (!str) return null;
+    const parsed = Number(str);
+    if (!Number.isFinite(parsed)) return null;
+    return isNegative ? -parsed : parsed;
   }
   return null;
+}
+
+export function computeHistogram(
+  rows: DataRow[],
+  metric: string,
+  targetBins: number = 10,
+): TransformedChartData {
+  if (!metric) {
+    return {
+      type: 'Histogram',
+      isValid: false,
+      validationMessage: 'No numerical field is available for a distribution chart in this dataset.',
+    };
+  }
+
+  const values: number[] = [];
+  for (const r of rows) {
+    const parsed = parseNumeric(r[metric]);
+    if (parsed !== null && Number.isFinite(parsed)) {
+      values.push(parsed);
+    }
+  }
+
+  if (values.length === 0) {
+    return {
+      type: 'Histogram',
+      isValid: false,
+      validationMessage: 'No numeric observations available for this field.',
+    };
+  }
+
+  const vMin = Math.min(...values);
+  const vMax = Math.max(...values);
+  const sum = values.reduce((acc, v) => acc + v, 0);
+  const mean = sum / values.length;
+  const sorted = [...values].sort((a, b) => a - b);
+  const median =
+    values.length % 2 === 0
+      ? (sorted[values.length / 2 - 1] + sorted[values.length / 2]) / 2
+      : sorted[Math.floor(values.length / 2)];
+
+  const summaryMetrics: Record<string, number> = {
+    count: values.length,
+    sum: Number(sum.toFixed(4)),
+    mean: Number(mean.toFixed(4)),
+    median: Number(median.toFixed(4)),
+    min: Number(vMin.toFixed(4)),
+    max: Number(vMax.toFixed(4)),
+    excluded_count: rows.length - values.length,
+  };
+
+  const histogramBins: HistogramBin[] = [];
+  const points: ChartPoint[] = [];
+
+  if (vMin === vMax) {
+    const label = `${vMin}`;
+    histogramBins.push({
+      bin_start: vMin,
+      bin_end: vMax,
+      count: values.length,
+      percentage: 100,
+      label,
+    });
+    points.push({ categoryKey: label, label, value: values.length });
+  } else {
+    const numBins = Math.max(3, Math.min(targetBins, 20));
+    const step = (vMax - vMin) / numBins;
+    const binCounts = new Array(numBins).fill(0);
+
+    for (const v of values) {
+      let bIdx = Math.floor((v - vMin) / step);
+      if (bIdx >= numBins) bIdx = numBins - 1;
+      binCounts[bIdx]++;
+    }
+
+    for (let i = 0; i < numBins; i++) {
+      const bStart = Number((vMin + i * step).toFixed(2));
+      const bEnd = Number((vMin + (i + 1) * step).toFixed(2));
+      const c = binCounts[i];
+      const pct = Number(((c / values.length) * 100).toFixed(1));
+      const binLabel = `${bStart} to ${bEnd}`;
+      histogramBins.push({
+        bin_start: bStart,
+        bin_end: bEnd,
+        count: c,
+        percentage: pct,
+        label: binLabel,
+      });
+      points.push({
+        categoryKey: binLabel,
+        label: binLabel,
+        value: c,
+      });
+    }
+  }
+
+  return {
+    type: 'Histogram',
+    isValid: true,
+    metric,
+    aggregation: 'frequency',
+    unit: 'observations',
+    points,
+    histogramBins,
+    summaryMetrics,
+  };
 }
 
 export function numberValue(value: unknown, fallback = 0): number {
@@ -293,6 +439,18 @@ export function validateChartConfig(
       }
       return { isValid: true };
 
+    case 'Histogram': {
+      const histMetric = config.yAxis || config.xAxis;
+      const histType = columns[histMetric];
+      if (!histMetric || histType !== 'number') {
+        return {
+          isValid: false,
+          message: 'Histogram distribution requires a numeric measure. Please select a numeric field.',
+        };
+      }
+      return { isValid: true };
+    }
+
     case 'Table':
     default:
       return { isValid: true };
@@ -319,105 +477,93 @@ export function getSensibleDefaults(
   const dateFields = Object.keys(columns).filter((col) => columns[col] === 'date');
   const allFields = Object.keys(columns);
 
-  let nextX = current?.xAxis ?? (dateFields[0] || categoricalFields[0] || allFields[0] || 'orderDate');
-  let nextY = current?.yAxis ?? (numericFields[0] || 'revenue');
-  let nextGroup = current?.groupBy ?? '';
+  let nextX = current?.xAxis && columns[current.xAxis] ? current.xAxis : '';
+  let nextY = current?.yAxis && columns[current.yAxis] ? current.yAxis : '';
+  let nextGroup = current?.groupBy && columns[current.groupBy] ? current.groupBy : '';
 
   switch (targetChartType) {
     case 'Scatter': {
-      // Must have numeric X and numeric Y
-      if (columns[nextY] !== 'number') {
-        nextY = numericFields.includes('revenue') ? 'revenue' : (numericFields[0] ?? 'revenue');
+      if (!nextY || columns[nextY] !== 'number') {
+        nextY = numericFields[0] ?? '';
       }
-
-      if (columns[nextX] !== 'number') {
-        // Pick a numeric field different from Y
+      if (!nextX || columns[nextX] !== 'number' || nextX === nextY) {
         const availableX = numericFields.filter((f) => f !== nextY);
-        nextX = availableX.includes('orders')
-          ? 'orders'
-          : (availableX[0] ?? (numericFields[1] || nextY));
+        nextX = availableX[0] ?? (numericFields[1] || nextY || '');
       }
       break;
     }
 
     case 'Heatmap': {
-      // Must have categorical X, categorical GroupBy, and numeric Y
-      if (columns[nextY] !== 'number') {
-        nextY = numericFields.includes('revenue') ? 'revenue' : (numericFields[0] ?? 'revenue');
+      if (!nextY || columns[nextY] !== 'number') {
+        nextY = numericFields[0] ?? '';
       }
-
-      if (columns[nextX] !== 'category' && columns[nextX] !== 'date') {
-        nextX = categoricalFields.includes('region')
-          ? 'region'
-          : (categoricalFields[0] ?? (dateFields[0] || 'region'));
+      if (!nextX || (columns[nextX] !== 'category' && columns[nextX] !== 'date')) {
+        nextX = categoricalFields[0] ?? (dateFields[0] || allFields[0] || '');
       }
-
       if (!nextGroup || (columns[nextGroup] !== 'category' && columns[nextGroup] !== 'date') || nextGroup === nextX) {
         const availableGroup = categoricalFields.filter((f) => f !== nextX);
-        nextGroup = availableGroup.includes('customerSegment')
-          ? 'customerSegment'
-          : (availableGroup.includes('productCategory')
-              ? 'productCategory'
-              : (availableGroup[0] ?? 'customerSegment'));
+        nextGroup = availableGroup[0] ?? '';
       }
       break;
     }
 
     case 'Pie': {
-      if (columns[nextY] !== 'number') {
-        nextY = numericFields[0] ?? 'revenue';
+      if (!nextY || columns[nextY] !== 'number') {
+        nextY = numericFields[0] ?? '';
       }
-
-      if (columns[nextX] === 'number') {
-        nextX = categoricalFields.includes('productCategory')
-          ? 'productCategory'
-          : (categoricalFields[0] ?? 'productCategory');
+      if (!nextX || columns[nextX] === 'number') {
+        nextX = categoricalFields[0] ?? (allFields.filter((f) => f !== nextY)[0] || '');
       }
       break;
     }
 
     case 'Line':
     case 'Area': {
-      if (columns[nextY] !== 'number') {
-        nextY = numericFields[0] ?? 'revenue';
+      if (!nextY || columns[nextY] !== 'number') {
+        nextY = numericFields[0] ?? '';
       }
-
-      // If X is numeric (left over from scatter), change back to date or category
-      if (columns[nextX] === 'number') {
-        nextX = dateFields[0] ?? (categoricalFields[0] || 'orderDate');
+      if (!nextX || columns[nextX] === 'number') {
+        nextX = dateFields[0] ?? (categoricalFields[0] || allFields.filter((f) => f !== nextY)[0] || '');
       }
       break;
     }
 
     case 'Bar': {
-      if (columns[nextY] !== 'number') {
-        nextY = numericFields[0] ?? 'revenue';
+      if (!nextY || columns[nextY] !== 'number') {
+        nextY = numericFields[0] ?? '';
       }
-
-      if (columns[nextX] === 'number') {
-        nextX = categoricalFields[0] ?? 'customerSegment';
+      if (!nextX || (columns[nextX] === 'number' && categoricalFields.length > 0)) {
+        nextX = categoricalFields[0] ?? (dateFields[0] || allFields.filter((f) => f !== nextY)[0] || '');
       }
       break;
     }
 
     case 'Treemap': {
-      if (columns[nextY] !== 'number') {
-        nextY = numericFields[0] ?? 'revenue';
+      if (!nextY || columns[nextY] !== 'number') {
+        nextY = numericFields[0] ?? '';
       }
-
-      if (columns[nextX] === 'number') {
-        nextX = categoricalFields.includes('productCategory')
-          ? 'productCategory'
-          : (categoricalFields[0] ?? 'productCategory');
+      if (!nextX || columns[nextX] === 'number') {
+        nextX = categoricalFields[0] ?? (allFields.filter((f) => f !== nextY)[0] || '');
       }
-
       if (!nextGroup) {
         nextGroup = categoricalFields.find((f) => f !== nextX) ?? '';
       }
       break;
     }
 
+    case 'Histogram': {
+      if (!nextY || columns[nextY] !== 'number') {
+        const nonId = numericFields.filter(f => !/(?:^|_)(?:id|code|key|index|zip|postal)(?:$|_)/i.test(f));
+        nextY = nonId[0] ?? numericFields[0] ?? '';
+      }
+      nextX = nextY;
+      nextGroup = '';
+      break;
+    }
+
     default:
+      if (!nextX) nextX = dateFields[0] || categoricalFields[0] || allFields[0] || '';
+      if (!nextY) nextY = numericFields[0] || '';
       break;
   }
 
@@ -449,6 +595,11 @@ export function transformChartData(
   const { chartType, xAxis, yAxis, groupBy } = config;
 
   switch (chartType) {
+    case 'Histogram': {
+      const metric = yAxis || xAxis;
+      return computeHistogram(rows, metric);
+    }
+
     case 'Scatter': {
       const validPoints: ScatterPoint[] = [];
       let minX = Infinity;
@@ -470,25 +621,43 @@ export function transformChartData(
         const label = String(row.product ?? row.productCategory ?? `Row ${idx + 1}`);
         const group = groupBy ? String(row[groupBy] ?? '') : undefined;
 
-        validPoints.push({ x: rawX, y: rawY, label, group });
+        validPoints.push({ x: rawX, y: rawY, label, group, sourceIndex: idx });
       });
 
-      if (minX === Infinity) {
-        minX = 0;
-        maxX = 100;
+      // Preserve all four extrema, then spread selections across spatial cells.
+      // This is a view of loaded records, not a statistical sample of the dataset.
+      const selected = new Set<ScatterPoint>();
+      if (validPoints.length <= 36) validPoints.forEach(p => selected.add(p));
+      else {
+        for (const predicate of [
+          (p: ScatterPoint) => p.x === minX, (p: ScatterPoint) => p.x === maxX,
+          (p: ScatterPoint) => p.y === minY, (p: ScatterPoint) => p.y === maxY,
+        ]) selected.add(validPoints.find(predicate)!);
+        const cells = new Map<string, ScatterPoint[]>();
+        for (const point of validPoints) {
+          const key = `${Math.min(5, Math.floor((point.x - minX) / (maxX - minX || 1) * 6))}:${Math.min(5, Math.floor((point.y - minY) / (maxY - minY || 1) * 6))}`;
+          const bucket = cells.get(key) ?? [];
+          bucket.push(point); cells.set(key, bucket);
+        }
+        const buckets = [...cells.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([, items]) => items.sort((a, b) => a.x - b.x || a.y - b.y || (a.sourceIndex! - b.sourceIndex!)));
+        // Round-robin occupied cells so dense leading rows do not dominate.
+        for (let depth = 0; selected.size < 36; depth++) {
+          let available = false;
+          for (const bucket of buckets) {
+            const point = bucket[depth];
+            if (point) { available = true; selected.add(point); }
+            if (selected.size === 36) break;
+          }
+          if (!available) break;
+        }
       }
-      if (minY === Infinity) {
-        minY = 0;
-        maxY = 100;
-      }
-      if (minX === maxX) maxX = minX + 1;
-      if (minY === maxY) maxY = minY + 1;
-
+      if (!validPoints.length) { minX = 0; maxX = 1; minY = 0; maxY = 1; }
+      if (minX === maxX) { minX -= .5; maxX += .5; }
+      if (minY === maxY) { minY -= .5; maxY += .5; }
       return {
-        type: 'Scatter',
-        isValid: true,
-        scatterPoints: validPoints.slice(0, 36),
-        scatterBounds: { minX, maxX, minY, maxY },
+        type: 'Scatter', isValid: true,
+        scatterPoints: [...selected], scatterBounds: { minX, maxX, minY, maxY },
+        scatterSampling: { method: 'deterministic spatial cells with extrema', totalValid: validPoints.length, displayed: selected.size, domain: 'loaded-record domain; extrema retained; constant axes padded' },
       };
     }
 

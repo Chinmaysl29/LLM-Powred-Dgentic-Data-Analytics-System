@@ -1,0 +1,21 @@
+{
+  "dataset_id": "93a57194-dae0-471c-af14-fe405472c680",
+  "dataset_name": "products",
+  "columns": [
+    "id",
+    "product",
+    "price"
+  ],
+  "records": [
+    {
+      "id": 101,
+      "product": "Widget A",
+      "price": 19.99
+    },
+    {
+      "id": 102,
+      "product": "Widget B",
+      "price": 29.99
+    }
+  ]
+}

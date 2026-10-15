@@ -1,0 +1,26 @@
+{
+  "dataset_id": "8dd42c67-a700-454f-8b6a-63a7b22683da",
+  "dataset_name": "retail_sample",
+  "columns": [
+    "company_name",
+    "revenue",
+    "profit_margin"
+  ],
+  "records": [
+    {
+      "company_name": "Alpha Corp",
+      "revenue": 1200,
+      "profit_margin": 25.5
+    },
+    {
+      "company_name": "Beta LLC",
+      "revenue": 800,
+      "profit_margin": 18.2
+    },
+    {
+      "company_name": "Gamma Inc",
+      "revenue": 1500,
+      "profit_margin": 30.0
+    }
+  ]
+}

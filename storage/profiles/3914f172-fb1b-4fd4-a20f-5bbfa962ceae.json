@@ -1,0 +1,15 @@
+{
+  "dataset_id": "3914f172-fb1b-4fd4-a20f-5bbfa962ceae",
+  "duplicate_rows": 0,
+  "duplicate_percentage": 0.0,
+  "missing_data_profile": {
+    "null_count": 0,
+    "null_percentage": 0.0,
+    "columns_with_missing": []
+  },
+  "cardinality_profile": {
+    "high_cardinality_columns": [],
+    "low_cardinality_columns": []
+  },
+  "numeric_columns_profile": {}
+}

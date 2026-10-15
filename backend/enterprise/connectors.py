@@ -158,6 +158,15 @@ class ConnectorManager:
                 default_tables=["users", "accounts", "logs", "metrics"],
             ),
             ConnectorDefinition(
+                id="mysql",
+                name="MySQL Database",
+                category=ConnectorCategory.DATABASE,
+                description="High-performance open-source relational database management system",
+                supported_auth=[AuthMethod.BASIC_AUTH],
+                icon="server",
+                default_tables=["customers", "orders", "inventory", "transactions"],
+            ),
+            ConnectorDefinition(
                 id="salesforce",
                 name="Salesforce CRM",
                 category=ConnectorCategory.CRM,

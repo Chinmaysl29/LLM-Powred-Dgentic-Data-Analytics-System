@@ -1,0 +1,15 @@
+{
+  "dataset_id": "265ec811-3c6e-4f73-8a69-362c777409da",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "8d49d0c0-e226-436d-b747-d09ec09597db",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-10-13 18:02:33.053508+00:00",
+      "author": "system",
+      "description": "Initial ingestion of analysis.xlsx"
+    }
+  ]
+}

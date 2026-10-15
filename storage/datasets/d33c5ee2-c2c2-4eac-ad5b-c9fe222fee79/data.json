@@ -1,0 +1,22 @@
+{
+  "dataset_id": "d33c5ee2-c2c2-4eac-ad5b-c9fe222fee79",
+  "dataset_name": "sensors",
+  "columns": [
+    "sensor_id",
+    "temp"
+  ],
+  "records": [
+    {
+      "sensor_id": 1,
+      "temp": 21.5
+    },
+    {
+      "sensor_id": 2,
+      "temp": 22.0
+    },
+    {
+      "sensor_id": 3,
+      "temp": 21.8
+    }
+  ]
+}

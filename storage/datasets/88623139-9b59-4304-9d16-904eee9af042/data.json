@@ -1,0 +1,21 @@
+{
+  "dataset_id": "88623139-9b59-4304-9d16-904eee9af042",
+  "dataset_name": "revenue_metrics",
+  "columns": [
+    "revenue",
+    "cost",
+    "region"
+  ],
+  "records": [
+    {
+      "revenue": 1000,
+      "cost": 400,
+      "region": "North"
+    },
+    {
+      "revenue": 1500,
+      "cost": 600,
+      "region": "South"
+    }
+  ]
+}

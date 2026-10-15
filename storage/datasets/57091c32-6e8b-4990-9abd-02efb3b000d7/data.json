@@ -1,0 +1,24 @@
+{
+  "dataset_id": "57091c32-6e8b-4990-9abd-02efb3b000d7",
+  "dataset_name": "Product Catalog",
+  "columns": [
+    "product_id",
+    "product_name",
+    "price",
+    "category"
+  ],
+  "records": [
+    {
+      "product_id": 101,
+      "product_name": "Widget",
+      "price": 19.99,
+      "category": "Tools"
+    },
+    {
+      "product_id": 102,
+      "product_name": "Gadget",
+      "price": 29.99,
+      "category": "Tools"
+    }
+  ]
+}

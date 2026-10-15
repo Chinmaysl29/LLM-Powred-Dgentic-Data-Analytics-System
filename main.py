@@ -1,7 +1,5 @@
-from fastapi import FastAPI
+"""Root application entry point delegating to the production FastAPI app."""
 
-app = FastAPI()
+from backend.app.main import app
 
-@app.get("/")
-def home():
-    return {"message":"AI Data Analyst Backend Running"}
+__all__ = ["app"]

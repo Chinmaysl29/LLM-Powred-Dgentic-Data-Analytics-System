@@ -310,6 +310,118 @@
         },
         "confidence": 0.87
       }
+    },
+    {
+      "id": "turn-f39aa009",
+      "timestamp": "2026-10-11T18:01:10.827858+00:00",
+      "user_message": "Forecast next 12 months.",
+      "ai_response": "Based on full-lifecycle analysis across 200 records, Revenue stands at 1,503,618.06. Time-series projection across a 12-period forward horizon forecasts cumulative expansion of -36.6%. Ensemble models indicate peak momentum in intermediate quarters with robust model confidence (MAPE: 4.2%).",
+      "intent": "autonomous_ai_analyst",
+      "context": {
+        "plan": {
+          "query": "Forecast next 12 months.",
+          "agents_required": {
+            "semantic_layer": true,
+            "sql_agent": false,
+            "eda_agent": false,
+            "kpi_engine": false,
+            "forecasting_agent": true,
+            "visualization_agent": true,
+            "storytelling_engine": true,
+            "dashboard_builder": false,
+            "anomaly_detector": false,
+            "root_cause_engine": false
+          },
+          "primary_metric": "revenue",
+          "forecast_horizon": 12,
+          "execution_strategy": "concurrent_hybrid"
+        },
+        "confidence": 0.87
+      }
+    },
+    {
+      "id": "turn-035ae815",
+      "timestamp": "2026-10-11T18:01:47.745010+00:00",
+      "user_message": "Forecast next 12 months.",
+      "ai_response": "Based on full-lifecycle analysis across 200 records, Revenue stands at 1,503,618.06. Time-series projection across a 12-period forward horizon forecasts cumulative expansion of -36.6%. Ensemble models indicate peak momentum in intermediate quarters with robust model confidence (MAPE: 4.2%).",
+      "intent": "autonomous_ai_analyst",
+      "context": {
+        "plan": {
+          "query": "Forecast next 12 months.",
+          "agents_required": {
+            "semantic_layer": true,
+            "sql_agent": false,
+            "eda_agent": false,
+            "kpi_engine": false,
+            "forecasting_agent": true,
+            "visualization_agent": true,
+            "storytelling_engine": true,
+            "dashboard_builder": false,
+            "anomaly_detector": false,
+            "root_cause_engine": false
+          },
+          "primary_metric": "revenue",
+          "forecast_horizon": 12,
+          "execution_strategy": "concurrent_hybrid"
+        },
+        "confidence": 0.87
+      }
+    },
+    {
+      "id": "turn-79c3797d",
+      "timestamp": "2026-10-11T18:03:13.827327+00:00",
+      "user_message": "Forecast next 12 months.",
+      "ai_response": "Based on full-lifecycle analysis across 200 records, Revenue stands at 1,503,618.06. Time-series projection across a 12-period forward horizon forecasts cumulative expansion of -36.6%. Ensemble models indicate peak momentum in intermediate quarters with robust model confidence (MAPE: 4.2%).",
+      "intent": "autonomous_ai_analyst",
+      "context": {
+        "plan": {
+          "query": "Forecast next 12 months.",
+          "agents_required": {
+            "semantic_layer": true,
+            "sql_agent": false,
+            "eda_agent": false,
+            "kpi_engine": false,
+            "forecasting_agent": true,
+            "visualization_agent": true,
+            "storytelling_engine": true,
+            "dashboard_builder": false,
+            "anomaly_detector": false,
+            "root_cause_engine": false
+          },
+          "primary_metric": "revenue",
+          "forecast_horizon": 12,
+          "execution_strategy": "concurrent_hybrid"
+        },
+        "confidence": 0.87
+      }
+    },
+    {
+      "id": "turn-b5278ea0",
+      "timestamp": "2026-10-11T18:04:30.877000+00:00",
+      "user_message": "Forecast next 12 months.",
+      "ai_response": "Based on full-lifecycle analysis across 200 records, Revenue stands at 1,503,618.06. Time-series projection across a 12-period forward horizon forecasts cumulative expansion of -36.6%. Ensemble models indicate peak momentum in intermediate quarters with robust model confidence (MAPE: 4.2%).",
+      "intent": "autonomous_ai_analyst",
+      "context": {
+        "plan": {
+          "query": "Forecast next 12 months.",
+          "agents_required": {
+            "semantic_layer": true,
+            "sql_agent": false,
+            "eda_agent": false,
+            "kpi_engine": false,
+            "forecasting_agent": true,
+            "visualization_agent": true,
+            "storytelling_engine": true,
+            "dashboard_builder": false,
+            "anomaly_detector": false,
+            "root_cause_engine": false
+          },
+          "primary_metric": "revenue",
+          "forecast_horizon": 12,
+          "execution_strategy": "concurrent_hybrid"
+        },
+        "confidence": 0.87
+      }
     }
   ],
   "analytics": [
@@ -406,6 +518,42 @@
     {
       "id": "ana-93b5723f",
       "timestamp": "2026-09-27T12:38:27.405696+00:00",
+      "question": "Forecast next 12 months.",
+      "sql_query": null,
+      "data_summary": {},
+      "key_metrics": {},
+      "filters": {}
+    },
+    {
+      "id": "ana-15dc01b1",
+      "timestamp": "2026-10-11T18:01:10.812283+00:00",
+      "question": "Forecast next 12 months.",
+      "sql_query": null,
+      "data_summary": {},
+      "key_metrics": {},
+      "filters": {}
+    },
+    {
+      "id": "ana-2ec03717",
+      "timestamp": "2026-10-11T18:01:47.736542+00:00",
+      "question": "Forecast next 12 months.",
+      "sql_query": null,
+      "data_summary": {},
+      "key_metrics": {},
+      "filters": {}
+    },
+    {
+      "id": "ana-5057fa19",
+      "timestamp": "2026-10-11T18:03:13.808233+00:00",
+      "question": "Forecast next 12 months.",
+      "sql_query": null,
+      "data_summary": {},
+      "key_metrics": {},
+      "filters": {}
+    },
+    {
+      "id": "ana-487e512c",
+      "timestamp": "2026-10-11T18:04:30.865034+00:00",
       "question": "Forecast next 12 months.",
       "sql_query": null,
       "data_summary": {},
@@ -755,11 +903,135 @@
         "MAPE": 4.2
       },
       "confidence_interval": {}
+    },
+    {
+      "id": "fc-218c24a5",
+      "timestamp": "2026-10-11T18:01:10.793154+00:00",
+      "target_column": "revenue",
+      "model_name": "MultiModelEnsemble (XGBoost 60% + ARIMA 40%)",
+      "horizon_periods": 12,
+      "historical_summary": {
+        "mean": 7518.0903,
+        "count": 200
+      },
+      "forecast_values": [
+        8101.89,
+        8513.56,
+        7337.36,
+        7694.57,
+        7454.66,
+        7969.49,
+        8006.83,
+        8215.86,
+        8278.23,
+        8609.92,
+        7491.18,
+        7491.18
+      ],
+      "metrics": {
+        "MAE": 3293.14,
+        "RMSE": 4000.88,
+        "MAPE": 4.2
+      },
+      "confidence_interval": {}
+    },
+    {
+      "id": "fc-dbec2f1f",
+      "timestamp": "2026-10-11T18:01:47.720300+00:00",
+      "target_column": "revenue",
+      "model_name": "MultiModelEnsemble (XGBoost 60% + ARIMA 40%)",
+      "horizon_periods": 12,
+      "historical_summary": {
+        "mean": 7518.0903,
+        "count": 200
+      },
+      "forecast_values": [
+        8101.89,
+        8513.56,
+        7337.36,
+        7694.57,
+        7454.66,
+        7969.49,
+        8006.83,
+        8215.86,
+        8278.23,
+        8609.92,
+        7491.18,
+        7491.18
+      ],
+      "metrics": {
+        "MAE": 3293.14,
+        "RMSE": 4000.88,
+        "MAPE": 4.2
+      },
+      "confidence_interval": {}
+    },
+    {
+      "id": "fc-9ea3bdcf",
+      "timestamp": "2026-10-11T18:03:13.741917+00:00",
+      "target_column": "revenue",
+      "model_name": "MultiModelEnsemble (XGBoost 60% + ARIMA 40%)",
+      "horizon_periods": 12,
+      "historical_summary": {
+        "mean": 7518.0903,
+        "count": 200
+      },
+      "forecast_values": [
+        8101.89,
+        8513.56,
+        7337.36,
+        7694.57,
+        7454.66,
+        7969.49,
+        8006.83,
+        8215.86,
+        8278.23,
+        8609.92,
+        7491.18,
+        7491.18
+      ],
+      "metrics": {
+        "MAE": 3293.14,
+        "RMSE": 4000.88,
+        "MAPE": 4.2
+      },
+      "confidence_interval": {}
+    },
+    {
+      "id": "fc-45ae2f49",
+      "timestamp": "2026-10-11T18:04:30.846295+00:00",
+      "target_column": "revenue",
+      "model_name": "MultiModelEnsemble (XGBoost 60% + ARIMA 40%)",
+      "horizon_periods": 12,
+      "historical_summary": {
+        "mean": 7518.0903,
+        "count": 200
+      },
+      "forecast_values": [
+        8101.89,
+        8513.56,
+        7337.36,
+        7694.57,
+        7454.66,
+        7969.49,
+        8006.83,
+        8215.86,
+        8278.23,
+        8609.92,
+        7491.18,
+        7491.18
+      ],
+      "metrics": {
+        "MAE": 3293.14,
+        "RMSE": 4000.88,
+        "MAPE": 4.2
+      },
+      "confidence_interval": {}
     }
   ],
   "datasets": {
     "active-dataset": {
-      "updated_at": "2026-09-27T12:38:25.459117+00:00",
+      "updated_at": "2026-10-11T18:04:29.605062+00:00",
       "semantic_mapping": {
         "order_id": {
           "business_name": "Order Id",

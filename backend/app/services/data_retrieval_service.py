@@ -8,6 +8,8 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from backend.app.database.postgres import get_db_session as get_db
+from backend.app.core.security import get_current_user
+from backend.app.core.authorization import owned_dataset
 from backend.app.core.exceptions import (
     CorruptedFileError,
     DataRetrievalError,
@@ -38,8 +40,9 @@ logger = logging.getLogger(__name__)
 class DataRetrievalService:
     """Service providing single-source-of-truth access to datasets and their contexts."""
 
-    def __init__(self, db: Session, storage_service: StorageService):
+    def __init__(self, db: Session, storage_service: StorageService, *, owner_id: str | None = None):
         self.db = db
+        self.owner_id = owner_id
         self.storage_service = storage_service
         self.dataset_loader = DatasetLoader()
 
@@ -47,9 +50,7 @@ class DataRetrievalService:
         self, dataset_id: str, version_number: int | None = None
     ) -> tuple[Dataset, DatasetVersion, DatasetMetadata | None, DatasetProfile | None, DatasetQuality | None]:
         """Gather dataset records and version from database."""
-        dataset = self.db.query(Dataset).filter(Dataset.dataset_id == dataset_id).first()
-        if not dataset:
-            raise DatasetNotFoundError(f"Dataset with ID {dataset_id} not found.")
+        dataset = owned_dataset(self.db, dataset_id, self.owner_id)
 
         # Resolve version
         query = self.db.query(DatasetVersion).filter(DatasetVersion.dataset_id == dataset_id)
@@ -72,6 +73,10 @@ class DataRetrievalService:
         profile = self.db.query(DatasetProfile).filter(DatasetProfile.dataset_id == dataset_id).first()
         quality = self.db.query(DatasetQuality).filter(DatasetQuality.dataset_id == dataset_id).first()
 
+        # Dataset-level summaries describe the latest materialization, not an
+        # arbitrary historical/rolled-back version. Never attach them to it.
+        if version.version_number != dataset.version or not version.is_active:
+            metadata = profile = quality = None
         return dataset, version, metadata, profile, quality
 
     def get_schema(self, dataset_id: str, version_number: int | None = None) -> DatasetSchemaResponse:
@@ -88,20 +93,11 @@ class DataRetrievalService:
 
         # Otherwise read a preview using pandas
         try:
-            file_path = self.storage_service.retrieve_file(version.file_path)
+            file_path = self.storage_service.retrieve_file(version.storage_path)
+            file_type = file_path.suffix.lower().lstrip(".")
             
-            if dataset.file_type == "csv":
-                df_preview = pd.read_csv(file_path, nrows=5)
-            elif dataset.file_type in ["xlsx", "xls"]:
-                df_preview = pd.read_excel(file_path, nrows=5)
-            elif dataset.file_type == "json":
-                df_preview = pd.read_json(file_path)
-                df_preview = df_preview.head(5)
-            elif dataset.file_type == "parquet":
-                df_preview = pd.read_parquet(file_path)
-                df_preview = df_preview.head(5)
-            else:
-                raise DataRetrievalError(f"Unsupported file type for preview: {dataset.file_type}")
+            from backend.app.services.tabular_loader import load_tabular_dataframe
+            df_preview = load_tabular_dataframe(file_path, file_type, nrows=5)
                 
             dtypes = {col: str(dtype) for col, dtype in df_preview.dtypes.items()}
             return DatasetSchemaResponse(
@@ -195,20 +191,14 @@ class DataRetrievalService:
             # Canonical artifacts are the source of truth for agents. The
             # legacy source-file branch supports datasets uploaded before the
             # Phase 17.11 migration.
-            if dataset.canonical_path or dataset.json_path:
-                df = self.dataset_loader.load_dataframe(dataset)
-            else:
+            # discover() resolves the active version even without an explicit
+            # version argument. A dataset-level canonical pointer can still
+            # reference a newer version after rollback.
+            if version:
                 file_path = self.storage_service.retrieve_file(version.storage_path)
-                if dataset.file_type == "csv":
-                    df = pd.read_csv(file_path)
-                elif dataset.file_type in ["xlsx", "xls"]:
-                    df = pd.read_excel(file_path)
-                elif dataset.file_type == "json":
-                    df = pd.read_json(file_path)
-                elif dataset.file_type == "parquet":
-                    df = pd.read_parquet(file_path)
-                else:
-                    raise DataRetrievalError(f"Unsupported file type: {dataset.file_type}")
+                file_type = file_path.suffix.lower().lstrip(".")
+                from backend.app.services.tabular_loader import load_tabular_dataframe
+                df = load_tabular_dataframe(file_path, file_type)
         except Exception as e:
             logger.error("Failed to load DataFrame for dataset %s: %s", dataset_id, e)
             raise CorruptedFileError(f"Failed to read dataset file: {str(e)}")
@@ -250,7 +240,7 @@ class DataRetrievalService:
         # We need the row/col count based on actual loaded data (especially if filtered)
         # If no filters, we can just use metadata if available to save a load.
         if filters:
-            df, _ = self.load_dataframe(dataset_id, version_number, filters=filters)
+            df, _ = self.load_dataframe(dataset_id, version_number, filters=filters, sample_size=0)
             rows, columns = df.shape
         else:
             if metadata and metadata.row_count is not None and metadata.column_count is not None:
@@ -262,7 +252,7 @@ class DataRetrievalService:
                     rows = schema.row_count
                     columns = len(schema.columns)
                 else:
-                    df, _ = self.load_dataframe(dataset_id, version_number)
+                    df, _ = self.load_dataframe(dataset_id, version_number, sample_size=0)
                     rows, columns = df.shape
                     
         return PackagedDatasetContext(
@@ -281,6 +271,7 @@ class DataRetrievalService:
 
 def get_data_retrieval_service(
     db: Session = Depends(get_db),
-    storage_service: StorageService = Depends(get_storage_service)
+    storage_service: StorageService = Depends(get_storage_service),
+    current_user: Any = Depends(get_current_user),
 ) -> DataRetrievalService:
-    return DataRetrievalService(db=db, storage_service=storage_service)
+    return DataRetrievalService(db=db, storage_service=storage_service, owner_id=str(current_user.id))

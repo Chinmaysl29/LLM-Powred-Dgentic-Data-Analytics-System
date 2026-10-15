@@ -1,6 +1,7 @@
 """Dataset upload orchestration service for executing the multi-stage ingestion pipeline."""
 
 import logging
+import hashlib
 from pathlib import Path
 from typing import Any
 
@@ -115,6 +116,7 @@ class DatasetUploadService:
 
         # Stage 2: Create base Dataset record
         dataset = Dataset(
+            owner_id=self.dataset_repository.owner_id,
             dataset_id=dataset_id,
             dataset_name=resolved_name,
             file_name=file_name,
@@ -130,6 +132,22 @@ class DatasetUploadService:
             self.storage_service.delete_file(file_path)
             logger.exception("Failed to persist dataset record: %s", exc)
             raise
+
+        if file_type.lower() in ('pdf', 'txt', 'text', 'md', 'markdown'):
+            # Document extraction belongs to the durable worker. Even malformed
+            # documents retain a recoverable source and a truthful UPLOADED state.
+            checksum = hashlib.sha256(Path(file_path).read_bytes()).hexdigest()
+            created_record = self.dataset_repository.update(dataset_id, original_path=file_path,
+                canonical_path=file_path, canonical_format='document_source', size_bytes=size_bytes,
+                content_hash=checksum, status='uploaded') or created_record
+            version_record = self.versioning_service.create_initial_version(dataset_id=dataset_id,
+                file_path=file_path, metadata=None, quality=None, created_by=str(self.dataset_repository.owner_id))
+            created_record = self.dataset_repository.update(dataset_id, last_active_version_id=version_record.version_id) or created_record
+            from backend.app.schemas.dataset import DatasetResponse
+            return {**DatasetResponse.model_validate(created_record).model_dump(),
+                    'message': 'Document stored. Select an authorized workspace to queue indexing.',
+                    'indexing_status': 'UPLOADED',
+                    'version_info': {'version_number': version_record.version_number, 'version_id': version_record.version_id}}
 
         # Stage 2b: preserve the source and materialize a canonical artifact
         # before downstream agents can consume the dataset.
@@ -152,34 +170,8 @@ class DatasetUploadService:
             logger.exception("Canonical dataset materialization failed dataset_id=%s", dataset_id)
             raise
 
-        # Stage 2c: If document/PDF, chunk, embed, and index into Vector Store (ChromaDB)
-        if created_record.file_type == "pdf" or canonical.get("canonical_format") == "document_json":
-            try:
-                proc_json = self.storage_service.processed_dir / f"{dataset_id}.json"
-                if proc_json.exists():
-                    doc_payload = json.loads(proc_json.read_text(encoding="utf-8"))
-                    extracted_text = doc_payload.get("text") or " ".join(
-                        p.get("text", "") for p in doc_payload.get("pages", [])
-                    )
-                    if extracted_text.strip():
-                        from backend.app.services.rag_service import get_pipeline, RAGService
-                        rag_svc = RAGService(get_pipeline())
-                        ingest_res = rag_svc.ingest_document(
-                            document_id=dataset_id,
-                            content=extracted_text,
-                            metadata={
-                                "dataset_id": dataset_id,
-                                "file_name": file_name,
-                                "file_type": file_type,
-                            },
-                        )
-                        logger.info(
-                            "Indexed document into RAG/Chroma dataset_id=%s chunks=%d",
-                            dataset_id,
-                            ingest_res.chunks_indexed,
-                        )
-            except Exception as exc:
-                logger.warning("RAG indexing for document dataset_id=%s encountered issue: %s", dataset_id, exc)
+        # Indexing is queued only after an authorized workspace binding exists.
+        # It runs under a durable worker lease, not inside the upload request.
 
         metadata_create = None
         profile_create = None
@@ -373,6 +365,7 @@ class DatasetUploadService:
             "created_at": created_record.created_at,
             "updated_at": created_record.updated_at,
             "message": "Dataset uploaded successfully",
+            "indexing_status": "UPLOADED" if file_type == "pdf" else "NOT_APPLICABLE",
             "version_info": {
                 "version_number": version_record.version_number if version_record else 1,
                 "version_id": version_record.version_id if version_record else None,

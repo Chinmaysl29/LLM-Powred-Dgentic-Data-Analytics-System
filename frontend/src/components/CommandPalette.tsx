@@ -283,28 +283,3 @@ export function CommandPalette({ isOpen, onClose, dynamicItems = [] }: CommandPa
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// useCommandPalette hook
-// ---------------------------------------------------------------------------
-
-export function useCommandPalette() {
-  const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        setIsOpen(prev => !prev);
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, []);
-
-  return {
-    isOpen,
-    open: () => setIsOpen(true),
-    close: () => setIsOpen(false),
-  };
-}

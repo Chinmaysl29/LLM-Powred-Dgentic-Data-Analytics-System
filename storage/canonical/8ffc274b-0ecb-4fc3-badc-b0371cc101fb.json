@@ -1,0 +1,14 @@
+[
+  {
+    "dept": "Finance",
+    "budget": 1200
+  },
+  {
+    "dept": "Engineering",
+    "budget": 2500
+  },
+  {
+    "dept": "HR",
+    "budget": 800
+  }
+]

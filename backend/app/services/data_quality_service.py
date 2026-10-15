@@ -219,7 +219,7 @@ class DataQualityService:
         if not profile:
             raise QualityAssessmentError(f"Profile is required for dataset {dataset_id}")
 
-        if file_type == "pdf":
+        if file_type.lower() in {"pdf", "txt", "text", "md", "markdown"}:
             return DatasetQualityCreate(
                 dataset_id=dataset_id,
                 completeness_score=100.0,

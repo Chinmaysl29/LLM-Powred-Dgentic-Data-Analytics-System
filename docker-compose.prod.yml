@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   backend:
     build:
@@ -11,11 +9,15 @@ services:
     environment:
       ENVIRONMENT: production
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://postgres:secure_production_password@postgres:5432/ai_analyst_prod}
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-secure_redis_password}
+      REDIS_URL: ${REDIS_URL:-redis://:${REDIS_PASSWORD:-secure_redis_password}@redis:6379/0}
       CHROMA_HOST: chromadb
       CHROMA_PORT: 8000
       CHROMA_PERSIST_DIRECTORY: /app/storage/chroma
       FRONTEND_URL: ${FRONTEND_URL:-https://ai-data-analyst.vercel.app}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://ai-data-analyst.vercel.app}
       UPLOAD_DIR: /app/storage/uploads
       ALLOWED_FILE_TYPES: csv,xlsx,xls,json,parquet,pdf
       MAX_UPLOAD_SIZE_MB: 250
@@ -30,7 +32,7 @@ services:
       chromadb:
         condition: service_started
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      test: ["CMD", "python", "-c", "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health/live', timeout=5).getcode() == 200 else 1)"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -40,11 +42,10 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      target: production
     restart: always
     ports:
       - "80:80"
-    environment:
-      VITE_API_URL: ${VITE_API_URL:-http://backend:8000/api/v1}
     depends_on:
       - backend
 
@@ -66,17 +67,19 @@ services:
   redis:
     image: redis:7-alpine
     restart: always
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD:-secure_redis_password}
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-secure_redis_password}
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   chromadb:
-    image: chromadb/chroma:0.5.5
+    image: ${CHROMA_IMAGE:?Set an approved pinned Chroma image after compatibility and backup verification}
     restart: always
     ports:
       - "8001:8000"

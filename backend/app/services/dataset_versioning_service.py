@@ -47,7 +47,7 @@ class DatasetVersioningService:
         if not dataset:
             raise VersionNotFoundError("Dataset not found")
             
-        if not metadata or not quality:
+        if dataset.file_type.lower() not in {'pdf', 'txt', 'text', 'md', 'markdown'} and (not metadata or not quality):
             raise ValueError("Metadata and quality are required")
 
         metadata_snapshot = {
@@ -56,7 +56,7 @@ class DatasetVersioningService:
             "columns": getattr(metadata, "column_names", []),
             "dtypes": getattr(metadata, "column_types", {}),
             "null_counts": {}, # Not natively stored in metadata top-level currently, could extract if needed
-        }
+        } if metadata else {'kind': 'document', 'status': 'not_extracted'}
         
         quality_snapshot = {
             "completeness_score": getattr(quality, "completeness_score", 0.0),
@@ -66,7 +66,7 @@ class DatasetVersioningService:
             "integrity_score": getattr(quality, "integrity_score", 0.0),
             "overall_score": getattr(quality, "overall_score", 0.0),
             "classification": getattr(quality, "quality_classification", "Poor")
-        }
+        } if quality else {'status': 'not_assessed'}
         
         version = DatasetVersion(
             dataset_id=dataset_id,

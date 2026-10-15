@@ -44,6 +44,7 @@ class EnvironmentManager:
     SECRET_KEYS = {
         "JWT_SECRET_KEY",
         "POSTGRES_PASSWORD",
+        "REDIS_PASSWORD",
         "OPENAI_API_KEY",
         "GROQ_API_KEY",
         "GEMINI_API_KEY",

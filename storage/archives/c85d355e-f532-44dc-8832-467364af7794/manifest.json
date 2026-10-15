@@ -1,0 +1,15 @@
+{
+  "dataset_id": "c85d355e-f532-44dc-8832-467364af7794",
+  "archived_at": "2026-10-11T18:09:55Z",
+  "reason": "deleted",
+  "archived_files": [
+    "c85d355e-f532-44dc-8832-467364af7794.json",
+    "c85d355e-f532-44dc-8832-467364af7794.json",
+    "c85d355e-f532-44dc-8832-467364af7794.json",
+    "c85d355e-f532-44dc-8832-467364af7794.json",
+    "c85d355e-f532-44dc-8832-467364af7794.json",
+    "c85d355e-f532-44dc-8832-467364af7794_lifecycle_test.csv",
+    "c85d355e-f532-44dc-8832-467364af7794_lifecycle_test.csv"
+  ],
+  "archive_path": "/app/storage/archives/c85d355e-f532-44dc-8832-467364af7794"
+}

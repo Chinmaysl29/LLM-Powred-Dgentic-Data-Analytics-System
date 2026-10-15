@@ -1,0 +1,15 @@
+{
+  "dataset_id": "fba7b64b-cb4a-4b1f-aac2-59663892fa79",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "f1876a7e-edb8-4786-896e-b2b80a257694",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-10-15 08:41:02.484878+00:00",
+      "author": "system",
+      "description": "Initial ingestion of metrics.csv"
+    }
+  ]
+}

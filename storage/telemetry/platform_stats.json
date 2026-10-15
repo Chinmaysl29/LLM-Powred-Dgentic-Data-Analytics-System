@@ -1,16 +1,16 @@
 {
-  "total_queries": 11,
+  "total_queries": 15,
   "queries_by_intent": {
     "sql": 0,
     "eda": 0,
     "forecast": 0,
-    "storytelling": 11,
+    "storytelling": 15,
     "rag": 0,
     "autonomous": 0
   },
-  "datasets_uploaded": 11,
-  "dashboards_created": 11,
-  "reports_generated": 11,
+  "datasets_uploaded": 15,
+  "dashboards_created": 15,
+  "reports_generated": 15,
   "agent_invocations": {
     "SQLAgent": 0,
     "EDAAgent": 0,
@@ -18,7 +18,7 @@
     "VisualizationAgent": 0,
     "StorytellingEngine": 0,
     "KPIEngine": 0,
-    "AutonomousAIAnalyst": 11
+    "AutonomousAIAnalyst": 15
   },
   "latencies_ms": [
     120.0,
@@ -53,7 +53,19 @@
     210.0,
     120.0,
     85.0,
+    210.0,
+    120.0,
+    85.0,
+    210.0,
+    120.0,
+    85.0,
+    210.0,
+    120.0,
+    85.0,
+    210.0,
+    120.0,
+    85.0,
     210.0
   ],
-  "last_updated": "2026-09-27T12:38:28.121150+00:00"
+  "last_updated": "2026-10-11T18:04:32.245079+00:00"
 }

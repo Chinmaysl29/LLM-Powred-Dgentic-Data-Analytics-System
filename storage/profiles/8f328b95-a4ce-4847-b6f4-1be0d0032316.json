@@ -1,0 +1,47 @@
+{
+  "dataset_id": "8f328b95-a4ce-4847-b6f4-1be0d0032316",
+  "duplicate_rows": 0,
+  "duplicate_percentage": 0.0,
+  "missing_data_profile": {
+    "null_count": 0,
+    "null_percentage": 0.0,
+    "columns_with_missing": []
+  },
+  "cardinality_profile": {
+    "high_cardinality_columns": [],
+    "low_cardinality_columns": [
+      "sensor_id",
+      "temp"
+    ]
+  },
+  "numeric_columns_profile": {
+    "sensor_id": {
+      "mean": 2.0,
+      "median": 2.0,
+      "mode": 1.0,
+      "min": 1.0,
+      "max": 3.0,
+      "std": 1.0,
+      "variance": 1.0,
+      "p25": 1.5,
+      "p50": 2.0,
+      "p75": 2.5,
+      "skewness": 0.0,
+      "kurtosis": 0.0
+    },
+    "temp": {
+      "mean": 21.766666666666666,
+      "median": 21.8,
+      "mode": 21.5,
+      "min": 21.5,
+      "max": 22.0,
+      "std": 0.2516611478423584,
+      "variance": 0.06333333333333337,
+      "p25": 21.65,
+      "p50": 21.8,
+      "p75": 21.9,
+      "skewness": -0.5855827262813533,
+      "kurtosis": 0.0
+    }
+  }
+}

@@ -1,0 +1,14 @@
+import { chromium } from '@playwright/test';
+import { writeFile } from 'node:fs/promises';
+const b=await chromium.launch({channel:'msedge',headless:true});
+const c=await b.newContext({viewport:{width:375,height:900},reducedMotion:'no-preference'});
+const p=await c.newPage();await p.goto('http://localhost:5173/login');await p.waitForSelector('[data-motion=running]');
+await p.waitForTimeout(2300);await p.screenshot({path:'.ui-review/motion-mobile-check.png',fullPage:true});
+console.log('mobile',await p.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth})));
+await p.emulateMedia({reducedMotion:'reduce'});await p.waitForSelector('[data-motion=reduced]');console.log('reduced',await p.locator('.pipeline-card').innerText());
+await p.emulateMedia({reducedMotion:'no-preference'});await p.waitForSelector('[data-motion=running]');
+await p.getByRole('button',{name:'Enable static preview'}).click();await p.waitForSelector('[data-motion=reduced]');
+await p.reload();await p.waitForSelector('[data-motion=reduced]');
+await p.getByRole('button',{name:'Enable live animation'}).click();await p.waitForSelector('[data-motion=running]');console.log('manual pause persistence and resume PASS');
+await p.setViewportSize({width:1440,height:1000});await p.waitForTimeout(1500);await p.screenshot({path:'.ui-review/motion-desktop-check.png',fullPage:true});
+await b.close();

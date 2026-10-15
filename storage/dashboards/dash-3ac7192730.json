@@ -1,0 +1,267 @@
+{
+  "id": "dash-3ac7192730",
+  "workspace_id": "ws-portfolio-demo",
+  "title": "Corporate Financial P&L & Margin Health",
+  "prompt": "Corporate Financial P&L and Margin Health",
+  "created_at": "2026-10-11T18:01:11.714661+00:00",
+  "updated_at": "2026-10-11T18:01:11.714661+00:00",
+  "kpis": [
+    {
+      "id": "kpi-1",
+      "label": "Total Month Num",
+      "value": 300.0,
+      "formatted": "300",
+      "change_pct": 12.4,
+      "trend": "up"
+    },
+    {
+      "id": "kpi-2",
+      "label": "Avg Month Num",
+      "value": 12.5,
+      "formatted": "12.50",
+      "change_pct": 4.8,
+      "trend": "up"
+    },
+    {
+      "id": "kpi-3",
+      "label": "Total Revenue",
+      "value": 60323311.3,
+      "formatted": "60,323,311",
+      "change_pct": -2.1,
+      "trend": "down"
+    },
+    {
+      "id": "kpi-4",
+      "label": "Active Segments",
+      "value": 24,
+      "formatted": "24",
+      "change_pct": 0.0,
+      "trend": "neutral"
+    }
+  ],
+  "charts": [
+    {
+      "id": "chart-donut",
+      "type": "donut",
+      "title": "Distribution by Period",
+      "spec": {
+        "chart_type": "donut_chart",
+        "data": [
+          {
+            "type": "pie",
+            "hole": 0.55,
+            "labels": [
+              "2025-12-31",
+              "2025-11-30",
+              "2025-10-31",
+              "2025-09-30",
+              "2025-08-31",
+              "2025-07-31"
+            ],
+            "values": [
+              24,
+              23,
+              22,
+              21,
+              20,
+              19
+            ],
+            "marker": {
+              "colors": [
+                "#3b82f6",
+                "#10b981",
+                "#f59e0b",
+                "#8b5cf6",
+                "#ec4899",
+                "#06b6d4"
+              ],
+              "line": {
+                "color": "#171b26",
+                "width": 2
+              }
+            },
+            "textinfo": "label+percent",
+            "hoverinfo": "label+value+percent"
+          }
+        ],
+        "layout": {
+          "title": {
+            "text": "Share by Period",
+            "font": {
+              "size": 16,
+              "color": "#f3f4f6",
+              "family": "Inter, sans-serif"
+            },
+            "x": 0.05
+          },
+          "paper_bgcolor": "#171b26",
+          "plot_bgcolor": "#171b26",
+          "font": {
+            "color": "#f3f4f6",
+            "family": "Inter, sans-serif"
+          },
+          "xaxis": {
+            "title": {
+              "text": "",
+              "font": {
+                "size": 12,
+                "color": "#9ca3af"
+              }
+            },
+            "gridcolor": "#2d3343",
+            "zerolinecolor": "#2d3343",
+            "showline": true,
+            "linecolor": "#2d3343"
+          },
+          "yaxis": {
+            "title": {
+              "text": "",
+              "font": {
+                "size": 12,
+                "color": "#9ca3af"
+              }
+            },
+            "gridcolor": "#2d3343",
+            "zerolinecolor": "#2d3343",
+            "showline": true,
+            "linecolor": "#2d3343"
+          },
+          "margin": {
+            "l": 50,
+            "r": 30,
+            "t": 60,
+            "b": 50
+          },
+          "hovermode": "closest",
+          "legend": {
+            "orientation": "h",
+            "yanchor": "bottom",
+            "y": 1.02,
+            "xanchor": "right",
+            "x": 1,
+            "font": {
+              "color": "#f3f4f6"
+            }
+          }
+        },
+        "config": {
+          "responsive": true,
+          "displayModeBar": true,
+          "displaylogo": false,
+          "modeBarButtonsToRemove": [
+            "lasso2d",
+            "select2d"
+          ],
+          "toImageButtonOptions": {
+            "format": "png",
+            "filename": "chart_export",
+            "height": 600,
+            "width": 1000,
+            "scale": 2
+          }
+        },
+        "powerbi_meta": {
+          "cross_filtering": {
+            "enabled": true,
+            "dimension": "period"
+          },
+          "tooltips": {
+            "format": "percent_and_value"
+          },
+          "export_options": [
+            "png",
+            "svg",
+            "csv",
+            "json"
+          ]
+        },
+        "ag_grid_spec": {
+          "columnDefs": [
+            {
+              "field": "period",
+              "headerName": "Period",
+              "sortable": true,
+              "filter": "agTextColumnFilter",
+              "resizable": true
+            },
+            {
+              "field": "month_num",
+              "headerName": "Month Num",
+              "sortable": true,
+              "filter": "agNumberColumnFilter",
+              "resizable": true
+            }
+          ],
+          "rowData": [
+            {
+              "period": "2025-12-31",
+              "month_num": 24
+            },
+            {
+              "period": "2025-11-30",
+              "month_num": 23
+            },
+            {
+              "period": "2025-10-31",
+              "month_num": 22
+            },
+            {
+              "period": "2025-09-30",
+              "month_num": 21
+            },
+            {
+              "period": "2025-08-31",
+              "month_num": 20
+            },
+            {
+              "period": "2025-07-31",
+              "month_num": 19
+            }
+          ],
+          "pagination": {
+            "enabled": true,
+            "pageSize": 50,
+            "totalRows": 6,
+            "displayedRows": 6,
+            "is_paginated": false
+          }
+        }
+      }
+    }
+  ],
+  "filters": [
+    {
+      "id": "filter-period",
+      "column": "period",
+      "type": "select",
+      "label": "Period",
+      "options": [
+        "2024-01-31",
+        "2024-02-29",
+        "2024-03-31",
+        "2024-04-30",
+        "2024-05-31",
+        "2024-06-30",
+        "2024-07-31",
+        "2024-08-31",
+        "2024-09-30",
+        "2024-10-31"
+      ]
+    }
+  ],
+  "layout": [
+    {
+      "i": "chart-donut",
+      "x": 8,
+      "y": 0,
+      "w": 4,
+      "h": 4
+    }
+  ],
+  "insights": [
+    "Analyzed 24 total data points across 9 strategic dimensions.",
+    "Primary metric 'month_num' demonstrated robust concentration in top segments.",
+    "Variance across sub-categories indicates clear cross-sell and margin expansion opportunities.",
+    "Automated data hygiene score verified zero critical anomalies in primary reporting series."
+  ]
+}

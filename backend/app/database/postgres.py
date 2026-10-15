@@ -56,6 +56,19 @@ class PostgresDatabase:
         except DatabaseConnectionError:
             return False, "PostgreSQL is unavailable"
 
+    async def schema_check(self) -> tuple[bool, str]:
+        """Connectivity is insufficient when required application objects are absent."""
+        from backend.app.database.schema_contract import inspect_schema
+        def check():
+            with self.engine.connect() as connection:
+                result = inspect_schema(connection)
+            return result['compatible']
+        try:
+            compatible = await asyncio.to_thread(check)
+            return compatible, "Schema compatible" if compatible else "Schema incompatible; run migration preflight"
+        except Exception:
+            return False, "Schema compatibility could not be verified"
+
     def session(self) -> Generator[Session, None, None]:
         """Yield one transaction-safe SQLAlchemy session per request."""
         if self._session_factory is None:
@@ -78,6 +91,8 @@ class PostgresDatabase:
 def get_db_session(request: Request) -> Generator[Session | None, None, None]:
     """FastAPI dependency that reads the database adapter from application state."""
     postgres = getattr(request.app.state, "postgres", None)
+    if getattr(request.app.state, "schema_compatible", None) is False:
+        raise DatabaseConnectionError("Database schema is incompatible or unverified; run migration preflight")
     if postgres is not None and getattr(postgres, "_session_factory", None) is not None:
         yield from postgres.session()
     else:

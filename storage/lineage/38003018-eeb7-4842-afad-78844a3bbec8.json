@@ -1,0 +1,15 @@
+{
+  "dataset_id": "38003018-eeb7-4842-afad-78844a3bbec8",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "e9e1ea8e-b181-4bc7-aaf3-7f8735704599",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-10-13 18:02:48.877346+00:00",
+      "author": "system",
+      "description": "Initial ingestion of prosandcons.xlsx"
+    }
+  ]
+}

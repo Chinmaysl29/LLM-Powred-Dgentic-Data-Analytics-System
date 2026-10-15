@@ -54,7 +54,13 @@ class CSVLoader(BaseDocumentLoader):
 
         # Markdown table representation for the first N rows
         preview_df = df.head(max_rows_as_table)
-        sections.append(preview_df.to_markdown(index=False))
+        try:
+            sections.append(preview_df.to_markdown(index=False))
+        except (ImportError, ModuleNotFoundError, Exception):
+            headers = "| " + " | ".join(col_names) + " |"
+            sep_line = "| " + " | ".join(["---"] * len(col_names)) + "|"
+            rows = ["| " + " | ".join(str(val) for val in row) + " |" for row in preview_df.values]
+            sections.append("\n".join([headers, sep_line] + rows))
 
         if row_count > max_rows_as_table:
             sections.append(f"\n*(Truncated: showing first {max_rows_as_table} of {row_count:,} total records)*")

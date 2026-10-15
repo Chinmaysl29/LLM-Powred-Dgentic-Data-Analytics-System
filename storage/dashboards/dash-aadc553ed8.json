@@ -1,0 +1,881 @@
+{
+  "id": "dash-aadc553ed8",
+  "workspace_id": "default-ws",
+  "title": "Sales Performance Dashboard (default-ws)",
+  "prompt": "Generated from marketplace template: Sales Performance Dashboard",
+  "created_at": "2026-10-11T18:01:06.608408+00:00",
+  "updated_at": "2026-10-11T18:01:06.608408+00:00",
+  "kpis": [
+    {
+      "id": "kpi-1",
+      "label": "Total Revenue",
+      "value": 963291.0,
+      "formatted": "$963,291.00",
+      "change_pct": 12.4,
+      "trend": "up"
+    },
+    {
+      "id": "kpi-2",
+      "label": "Avg Revenue",
+      "value": 26758.083333333332,
+      "formatted": "$26,758.08",
+      "change_pct": 4.8,
+      "trend": "up"
+    },
+    {
+      "id": "kpi-3",
+      "label": "Total Cogs",
+      "value": 363848.0,
+      "formatted": "363,848",
+      "change_pct": -2.1,
+      "trend": "down"
+    },
+    {
+      "id": "kpi-4",
+      "label": "Active Segments",
+      "value": 36,
+      "formatted": "36",
+      "change_pct": 0.0,
+      "trend": "neutral"
+    }
+  ],
+  "charts": [
+    {
+      "id": "chart-trend",
+      "type": "line",
+      "title": "Revenue Performance Trend",
+      "spec": {
+        "chart_type": "line_chart",
+        "data": [
+          {
+            "type": "scatter",
+            "mode": "lines+markers",
+            "name": "revenue",
+            "x": [
+              "2024-01-31",
+              "2024-02-29",
+              "2024-03-31",
+              "2024-04-30",
+              "2024-05-31",
+              "2024-06-30",
+              "2024-07-31",
+              "2024-08-31",
+              "2024-09-30",
+              "2024-10-31",
+              "2024-11-30",
+              "2024-12-31",
+              "2025-01-31",
+              "2025-02-28",
+              "2025-03-31",
+              "2025-04-30",
+              "2025-05-31",
+              "2025-06-30",
+              "2025-07-31",
+              "2025-08-31",
+              "2025-09-30",
+              "2025-10-31",
+              "2025-11-30",
+              "2025-12-31",
+              "2026-01-31",
+              "2026-02-28",
+              "2026-03-31",
+              "2026-04-30",
+              "2026-05-31",
+              "2026-06-30",
+              "2026-07-31",
+              "2026-08-31",
+              "2026-09-30",
+              "2026-10-31",
+              "2026-11-30",
+              "2026-12-31"
+            ],
+            "y": [
+              11602,
+              12785,
+              14060,
+              14320,
+              15006,
+              15821,
+              17300,
+              17470,
+              18914,
+              19271,
+              20466,
+              21064,
+              22030,
+              23008,
+              23487,
+              24622,
+              25199,
+              26821,
+              27463,
+              27780,
+              29161,
+              29658,
+              30969,
+              31393,
+              32391,
+              33163,
+              34405,
+              34835,
+              35491,
+              37105,
+              37276,
+              38010,
+              39159,
+              39863,
+              40421,
+              41502
+            ],
+            "line": {
+              "color": "#3b82f6",
+              "width": 3,
+              "shape": "spline"
+            },
+            "marker": {
+              "size": 6,
+              "color": "#10b981"
+            },
+            "hovertemplate": "<b>order_date</b>: %{x}<br><b>revenue</b>: %{y:,.2f}<extra></extra>"
+          }
+        ],
+        "layout": {
+          "title": {
+            "text": "Revenue Over Time",
+            "font": {
+              "size": 16,
+              "color": "#f3f4f6",
+              "family": "Inter, sans-serif"
+            },
+            "x": 0.05
+          },
+          "paper_bgcolor": "#171b26",
+          "plot_bgcolor": "#171b26",
+          "font": {
+            "color": "#f3f4f6",
+            "family": "Inter, sans-serif"
+          },
+          "xaxis": {
+            "title": {
+              "text": "order_date",
+              "font": {
+                "size": 12,
+                "color": "#9ca3af"
+              }
+            },
+            "gridcolor": "#2d3343",
+            "zerolinecolor": "#2d3343",
+            "showline": true,
+            "linecolor": "#2d3343"
+          },
+          "yaxis": {
+            "title": {
+              "text": "revenue",
+              "font": {
+                "size": 12,
+                "color": "#9ca3af"
+              }
+            },
+            "gridcolor": "#2d3343",
+            "zerolinecolor": "#2d3343",
+            "showline": true,
+            "linecolor": "#2d3343"
+          },
+          "margin": {
+            "l": 50,
+            "r": 30,
+            "t": 60,
+            "b": 50
+          },
+          "hovermode": "closest",
+          "legend": {
+            "orientation": "h",
+            "yanchor": "bottom",
+            "y": 1.02,
+            "xanchor": "right",
+            "x": 1,
+            "font": {
+              "color": "#f3f4f6"
+            }
+          }
+        },
+        "config": {
+          "responsive": true,
+          "displayModeBar": true,
+          "displaylogo": false,
+          "modeBarButtonsToRemove": [
+            "lasso2d",
+            "select2d"
+          ],
+          "toImageButtonOptions": {
+            "format": "png",
+            "filename": "chart_export",
+            "height": 600,
+            "width": 1000,
+            "scale": 2
+          }
+        },
+        "powerbi_meta": {
+          "drilldown": {
+            "dimension": "order_date",
+            "has_child_level": false
+          },
+          "cross_filtering": {
+            "enabled": true,
+            "dimension": "order_date"
+          },
+          "tooltips": {
+            "format": "currency_or_number"
+          },
+          "export_options": [
+            "png",
+            "svg",
+            "csv",
+            "json"
+          ]
+        },
+        "ag_grid_spec": {
+          "columnDefs": [
+            {
+              "field": "order_date",
+              "headerName": "Order Date",
+              "sortable": true,
+              "filter": "agTextColumnFilter",
+              "resizable": true
+            },
+            {
+              "field": "revenue",
+              "headerName": "Revenue",
+              "sortable": true,
+              "filter": "agNumberColumnFilter",
+              "resizable": true
+            }
+          ],
+          "rowData": [
+            {
+              "order_date": "2024-01-31",
+              "revenue": 11602
+            },
+            {
+              "order_date": "2024-02-29",
+              "revenue": 12785
+            },
+            {
+              "order_date": "2024-03-31",
+              "revenue": 14060
+            },
+            {
+              "order_date": "2024-04-30",
+              "revenue": 14320
+            },
+            {
+              "order_date": "2024-05-31",
+              "revenue": 15006
+            },
+            {
+              "order_date": "2024-06-30",
+              "revenue": 15821
+            },
+            {
+              "order_date": "2024-07-31",
+              "revenue": 17300
+            },
+            {
+              "order_date": "2024-08-31",
+              "revenue": 17470
+            },
+            {
+              "order_date": "2024-09-30",
+              "revenue": 18914
+            },
+            {
+              "order_date": "2024-10-31",
+              "revenue": 19271
+            },
+            {
+              "order_date": "2024-11-30",
+              "revenue": 20466
+            },
+            {
+              "order_date": "2024-12-31",
+              "revenue": 21064
+            },
+            {
+              "order_date": "2025-01-31",
+              "revenue": 22030
+            },
+            {
+              "order_date": "2025-02-28",
+              "revenue": 23008
+            },
+            {
+              "order_date": "2025-03-31",
+              "revenue": 23487
+            },
+            {
+              "order_date": "2025-04-30",
+              "revenue": 24622
+            },
+            {
+              "order_date": "2025-05-31",
+              "revenue": 25199
+            },
+            {
+              "order_date": "2025-06-30",
+              "revenue": 26821
+            },
+            {
+              "order_date": "2025-07-31",
+              "revenue": 27463
+            },
+            {
+              "order_date": "2025-08-31",
+              "revenue": 27780
+            },
+            {
+              "order_date": "2025-09-30",
+              "revenue": 29161
+            },
+            {
+              "order_date": "2025-10-31",
+              "revenue": 29658
+            },
+            {
+              "order_date": "2025-11-30",
+              "revenue": 30969
+            },
+            {
+              "order_date": "2025-12-31",
+              "revenue": 31393
+            },
+            {
+              "order_date": "2026-01-31",
+              "revenue": 32391
+            },
+            {
+              "order_date": "2026-02-28",
+              "revenue": 33163
+            },
+            {
+              "order_date": "2026-03-31",
+              "revenue": 34405
+            },
+            {
+              "order_date": "2026-04-30",
+              "revenue": 34835
+            },
+            {
+              "order_date": "2026-05-31",
+              "revenue": 35491
+            },
+            {
+              "order_date": "2026-06-30",
+              "revenue": 37105
+            },
+            {
+              "order_date": "2026-07-31",
+              "revenue": 37276
+            },
+            {
+              "order_date": "2026-08-31",
+              "revenue": 38010
+            },
+            {
+              "order_date": "2026-09-30",
+              "revenue": 39159
+            },
+            {
+              "order_date": "2026-10-31",
+              "revenue": 39863
+            },
+            {
+              "order_date": "2026-11-30",
+              "revenue": 40421
+            },
+            {
+              "order_date": "2026-12-31",
+              "revenue": 41502
+            }
+          ],
+          "pagination": {
+            "enabled": true,
+            "pageSize": 50,
+            "totalRows": 36,
+            "displayedRows": 36,
+            "is_paginated": false
+          }
+        }
+      }
+    },
+    {
+      "id": "chart-donut",
+      "type": "donut",
+      "title": "Distribution by Order Id",
+      "spec": {
+        "chart_type": "donut_chart",
+        "data": [
+          {
+            "type": "pie",
+            "hole": 0.55,
+            "labels": [
+              "ORD-0036",
+              "ORD-0035",
+              "ORD-0034",
+              "ORD-0033",
+              "ORD-0032",
+              "ORD-0031"
+            ],
+            "values": [
+              41502,
+              40421,
+              39863,
+              39159,
+              38010,
+              37276
+            ],
+            "marker": {
+              "colors": [
+                "#3b82f6",
+                "#10b981",
+                "#f59e0b",
+                "#8b5cf6",
+                "#ec4899",
+                "#06b6d4"
+              ],
+              "line": {
+                "color": "#171b26",
+                "width": 2
+              }
+            },
+            "textinfo": "label+percent",
+            "hoverinfo": "label+value+percent"
+          }
+        ],
+        "layout": {
+          "title": {
+            "text": "Share by Order Id",
+            "font": {
+              "size": 16,
+              "color": "#f3f4f6",
+              "family": "Inter, sans-serif"
+            },
+            "x": 0.05
+          },
+          "paper_bgcolor": "#171b26",
+          "plot_bgcolor": "#171b26",
+          "font": {
+            "color": "#f3f4f6",
+            "family": "Inter, sans-serif"
+          },
+          "xaxis": {
+            "title": {
+              "text": "",
+              "font": {
+                "size": 12,
+                "color": "#9ca3af"
+              }
+            },
+            "gridcolor": "#2d3343",
+            "zerolinecolor": "#2d3343",
+            "showline": true,
+            "linecolor": "#2d3343"
+          },
+          "yaxis": {
+            "title": {
+              "text": "",
+              "font": {
+                "size": 12,
+                "color": "#9ca3af"
+              }
+            },
+            "gridcolor": "#2d3343",
+            "zerolinecolor": "#2d3343",
+            "showline": true,
+            "linecolor": "#2d3343"
+          },
+          "margin": {
+            "l": 50,
+            "r": 30,
+            "t": 60,
+            "b": 50
+          },
+          "hovermode": "closest",
+          "legend": {
+            "orientation": "h",
+            "yanchor": "bottom",
+            "y": 1.02,
+            "xanchor": "right",
+            "x": 1,
+            "font": {
+              "color": "#f3f4f6"
+            }
+          }
+        },
+        "config": {
+          "responsive": true,
+          "displayModeBar": true,
+          "displaylogo": false,
+          "modeBarButtonsToRemove": [
+            "lasso2d",
+            "select2d"
+          ],
+          "toImageButtonOptions": {
+            "format": "png",
+            "filename": "chart_export",
+            "height": 600,
+            "width": 1000,
+            "scale": 2
+          }
+        },
+        "powerbi_meta": {
+          "cross_filtering": {
+            "enabled": true,
+            "dimension": "order_id"
+          },
+          "tooltips": {
+            "format": "percent_and_value"
+          },
+          "export_options": [
+            "png",
+            "svg",
+            "csv",
+            "json"
+          ]
+        },
+        "ag_grid_spec": {
+          "columnDefs": [
+            {
+              "field": "order_id",
+              "headerName": "Order Id",
+              "sortable": true,
+              "filter": "agTextColumnFilter",
+              "resizable": true
+            },
+            {
+              "field": "revenue",
+              "headerName": "Revenue",
+              "sortable": true,
+              "filter": "agNumberColumnFilter",
+              "resizable": true
+            }
+          ],
+          "rowData": [
+            {
+              "order_id": "ORD-0036",
+              "revenue": 41502
+            },
+            {
+              "order_id": "ORD-0035",
+              "revenue": 40421
+            },
+            {
+              "order_id": "ORD-0034",
+              "revenue": 39863
+            },
+            {
+              "order_id": "ORD-0033",
+              "revenue": 39159
+            },
+            {
+              "order_id": "ORD-0032",
+              "revenue": 38010
+            },
+            {
+              "order_id": "ORD-0031",
+              "revenue": 37276
+            }
+          ],
+          "pagination": {
+            "enabled": true,
+            "pageSize": 50,
+            "totalRows": 6,
+            "displayedRows": 6,
+            "is_paginated": false
+          }
+        }
+      }
+    },
+    {
+      "id": "chart-bar",
+      "type": "bar",
+      "title": "Top Performers by Order Date",
+      "spec": {
+        "chart_type": "bar_chart",
+        "data": [
+          {
+            "type": "bar",
+            "name": "revenue",
+            "x": [
+              "2026-12-31",
+              "2026-11-30",
+              "2026-10-31",
+              "2026-09-30",
+              "2026-08-31",
+              "2026-07-31",
+              "2026-06-30",
+              "2026-05-31",
+              "2026-04-30",
+              "2026-03-31"
+            ],
+            "y": [
+              41502,
+              40421,
+              39863,
+              39159,
+              38010,
+              37276,
+              37105,
+              35491,
+              34835,
+              34405
+            ],
+            "marker": {
+              "color": "#3b82f6",
+              "opacity": 0.9,
+              "line": {
+                "width": 1,
+                "color": "#2d3343"
+              }
+            },
+            "hovertemplate": "<b>order_date</b>: %{x}<br><b>revenue</b>: %{y:,.2f}<extra></extra>"
+          }
+        ],
+        "layout": {
+          "title": {
+            "text": "Ranking by Order Date",
+            "font": {
+              "size": 16,
+              "color": "#f3f4f6",
+              "family": "Inter, sans-serif"
+            },
+            "x": 0.05
+          },
+          "paper_bgcolor": "#171b26",
+          "plot_bgcolor": "#171b26",
+          "font": {
+            "color": "#f3f4f6",
+            "family": "Inter, sans-serif"
+          },
+          "xaxis": {
+            "title": {
+              "text": "order_date",
+              "font": {
+                "size": 12,
+                "color": "#9ca3af"
+              }
+            },
+            "gridcolor": "#2d3343",
+            "zerolinecolor": "#2d3343",
+            "showline": true,
+            "linecolor": "#2d3343"
+          },
+          "yaxis": {
+            "title": {
+              "text": "revenue",
+              "font": {
+                "size": 12,
+                "color": "#9ca3af"
+              }
+            },
+            "gridcolor": "#2d3343",
+            "zerolinecolor": "#2d3343",
+            "showline": true,
+            "linecolor": "#2d3343"
+          },
+          "margin": {
+            "l": 50,
+            "r": 30,
+            "t": 60,
+            "b": 50
+          },
+          "hovermode": "closest",
+          "legend": {
+            "orientation": "h",
+            "yanchor": "bottom",
+            "y": 1.02,
+            "xanchor": "right",
+            "x": 1,
+            "font": {
+              "color": "#f3f4f6"
+            }
+          }
+        },
+        "config": {
+          "responsive": true,
+          "displayModeBar": true,
+          "displaylogo": false,
+          "modeBarButtonsToRemove": [
+            "lasso2d",
+            "select2d"
+          ],
+          "toImageButtonOptions": {
+            "format": "png",
+            "filename": "chart_export",
+            "height": 600,
+            "width": 1000,
+            "scale": 2
+          }
+        },
+        "powerbi_meta": {
+          "drilldown": {
+            "dimension": "order_date",
+            "has_child_level": true
+          },
+          "cross_filtering": {
+            "enabled": true,
+            "dimension": "order_date"
+          },
+          "tooltips": {
+            "format": "number"
+          },
+          "export_options": [
+            "png",
+            "svg",
+            "csv",
+            "json"
+          ]
+        },
+        "ag_grid_spec": {
+          "columnDefs": [
+            {
+              "field": "order_date",
+              "headerName": "Order Date",
+              "sortable": true,
+              "filter": "agTextColumnFilter",
+              "resizable": true
+            },
+            {
+              "field": "revenue",
+              "headerName": "Revenue",
+              "sortable": true,
+              "filter": "agNumberColumnFilter",
+              "resizable": true
+            }
+          ],
+          "rowData": [
+            {
+              "order_date": "2026-12-31",
+              "revenue": 41502
+            },
+            {
+              "order_date": "2026-11-30",
+              "revenue": 40421
+            },
+            {
+              "order_date": "2026-10-31",
+              "revenue": 39863
+            },
+            {
+              "order_date": "2026-09-30",
+              "revenue": 39159
+            },
+            {
+              "order_date": "2026-08-31",
+              "revenue": 38010
+            },
+            {
+              "order_date": "2026-07-31",
+              "revenue": 37276
+            },
+            {
+              "order_date": "2026-06-30",
+              "revenue": 37105
+            },
+            {
+              "order_date": "2026-05-31",
+              "revenue": 35491
+            },
+            {
+              "order_date": "2026-04-30",
+              "revenue": 34835
+            },
+            {
+              "order_date": "2026-03-31",
+              "revenue": 34405
+            }
+          ],
+          "pagination": {
+            "enabled": true,
+            "pageSize": 50,
+            "totalRows": 10,
+            "displayedRows": 10,
+            "is_paginated": false
+          }
+        }
+      }
+    }
+  ],
+  "filters": [
+    {
+      "id": "filter-date",
+      "column": "order_date",
+      "type": "date_range",
+      "label": "Date Horizon"
+    },
+    {
+      "id": "filter-order_id",
+      "column": "order_id",
+      "type": "select",
+      "label": "Order Id",
+      "options": [
+        "ORD-0001",
+        "ORD-0002",
+        "ORD-0003",
+        "ORD-0004",
+        "ORD-0005",
+        "ORD-0006",
+        "ORD-0007",
+        "ORD-0008",
+        "ORD-0009",
+        "ORD-0010"
+      ]
+    },
+    {
+      "id": "filter-order_date",
+      "column": "order_date",
+      "type": "select",
+      "label": "Order Date",
+      "options": [
+        "2024-01-31",
+        "2024-02-29",
+        "2024-03-31",
+        "2024-04-30",
+        "2024-05-31",
+        "2024-06-30",
+        "2024-07-31",
+        "2024-08-31",
+        "2024-09-30",
+        "2024-10-31"
+      ]
+    }
+  ],
+  "layout": [
+    {
+      "i": "chart-trend",
+      "x": 0,
+      "y": 0,
+      "w": 8,
+      "h": 4
+    },
+    {
+      "i": "chart-donut",
+      "x": 8,
+      "y": 0,
+      "w": 4,
+      "h": 4
+    },
+    {
+      "i": "chart-bar",
+      "x": 0,
+      "y": 4,
+      "w": 12,
+      "h": 4
+    }
+  ],
+  "insights": [
+    "Analyzed 36 total data points across 7 strategic dimensions.",
+    "Primary metric 'revenue' demonstrated robust concentration in top segments.",
+    "Variance across sub-categories indicates clear cross-sell and margin expansion opportunities.",
+    "Automated data hygiene score verified zero critical anomalies in primary reporting series."
+  ]
+}

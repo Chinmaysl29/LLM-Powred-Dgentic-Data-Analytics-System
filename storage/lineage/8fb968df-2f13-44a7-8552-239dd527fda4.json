@@ -1,0 +1,15 @@
+{
+  "dataset_id": "8fb968df-2f13-44a7-8552-239dd527fda4",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "edbe9dd2-8425-4136-96a3-6bc61e61b5ad",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-10-13 17:47:01.880917+00:00",
+      "author": "system",
+      "description": "Initial ingestion of catalog.json"
+    }
+  ]
+}

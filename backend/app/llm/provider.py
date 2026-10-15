@@ -41,20 +41,33 @@ class LLMProvider:
     # Provider initialization
     # ------------------------------------------------------------------
     def _init_groq(self) -> BaseChatModel | None:
-        """Initialize Groq LLM (Llama 3.3 70B)."""
+        """Initialize Groq LLM with available model resolution."""
         if not self._settings.groq_api_key:
             return None
         try:
             from langchain_groq import ChatGroq
+            from groq import Groq
+
+            groq_key = self._settings.groq_api_key.get_secret_value()
+            target_model = self._settings.default_llm
+            try:
+                g_client = Groq(api_key=groq_key)
+                available = [m.id for m in g_client.models.list().data]
+                if target_model not in available:
+                    preferred = ["llama-3.3-70b-versatile", "qwen/qwen3.8-27b", "openai/gpt-oss-120b"]
+                    target_model = next((m for m in preferred if m in available), available[0] if available else target_model)
+            except Exception:
+                pass
 
             model = ChatGroq(
-                api_key=self._settings.groq_api_key.get_secret_value(),
-                model=self._settings.default_llm,
+                api_key=groq_key,
+                model=target_model,
                 temperature=0.1,
                 max_tokens=4096,
+                timeout=30.0,
             )
             self._provider_name = "groq"
-            logger.info("Groq LLM initialized model=%s", self._settings.default_llm)
+            logger.info("Groq LLM initialized model=%s", target_model)
             return model
         except Exception:
             logger.warning("Groq initialization failed, trying fallback", exc_info=True)
@@ -69,9 +82,10 @@ class LLMProvider:
 
             model = ChatGoogleGenerativeAI(
                 api_key=self._settings.gemini_api_key.get_secret_value(),
-                model="gemini-2.0-flash",
+                model="gemini-2.5-flash",
                 temperature=0.1,
                 max_output_tokens=4096,
+                timeout=30.0,
             )
             self._provider_name = "gemini"
             logger.info("Gemini LLM initialized")
@@ -92,6 +106,7 @@ class LLMProvider:
                 model="gpt-4o-mini",
                 temperature=0.1,
                 max_tokens=4096,
+                timeout=30.0,
             )
             self._provider_name = "openai"
             logger.info("OpenAI LLM initialized")
@@ -128,7 +143,10 @@ class LLMProvider:
         system_prompt: str | None = None,
         history: list[dict[str, str]] | None = None,
     ) -> str:
-        """Send a chat message and return the response text."""
+        """Send a chat message and return the response text with runtime provider fallback."""
+        if not message or not str(message).strip():
+            raise ValueError("Message content cannot be empty.")
+
         messages: list[BaseMessage] = []
         if system_prompt:
             messages.append(SystemMessage(content=system_prompt))
@@ -140,8 +158,32 @@ class LLMProvider:
                     messages.append(AIMessage(content=msg["content"]))
         messages.append(HumanMessage(content=message))
 
-        response = await self.chat_model.ainvoke(messages)
-        return str(response.content)
+        initializers = [
+            ("groq", self._init_groq),
+            ("gemini", self._init_gemini),
+            ("openai", self._init_openai),
+        ]
+        last_error = None
+        for prov_name, init_fn in initializers:
+            try:
+                candidate = init_fn()
+                if candidate is None:
+                    continue
+                response = await candidate.ainvoke(messages)
+                self._chat_model = candidate
+                self._provider_name = prov_name
+                return str(response.content)
+            except (ValueError, TypeError) as val_err:
+                # Do not retry invalid user inputs across providers
+                raise val_err
+            except Exception as e:
+                last_error = e
+                logger.warning("Provider %s call failed, trying next provider in chain: %s", prov_name, e)
+                continue
+
+        if last_error:
+            raise last_error
+        raise RuntimeError("No LLM provider available.")
 
     async def chat_with_json(
         self,

@@ -50,7 +50,14 @@ class XlsxLoader(BaseDocumentLoader):
             sections.append(f"## Worksheet: {sheet} ({sheet_rows:,} rows, {col_count} columns)")
             if not df.empty:
                 preview = df.head(max_rows_per_sheet)
-                sections.append(preview.to_markdown(index=False))
+                try:
+                    sections.append(preview.to_markdown(index=False))
+                except (ImportError, ModuleNotFoundError, Exception):
+                    col_names = [str(c) for c in preview.columns]
+                    headers = "| " + " | ".join(col_names) + " |"
+                    sep_line = "| " + " | ".join(["---"] * len(col_names)) + "|"
+                    rows = ["| " + " | ".join(str(val) for val in row) + " |" for row in preview.values]
+                    sections.append("\n".join([headers, sep_line] + rows))
                 if sheet_rows > max_rows_per_sheet:
                     sections.append(f"*(Truncated: showing first {max_rows_per_sheet} of {sheet_rows:,} rows)*")
             else:

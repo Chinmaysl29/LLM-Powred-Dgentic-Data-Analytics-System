@@ -1,0 +1,98 @@
+[
+  {
+    "id":1,
+    "company_id":"HDFCBANK",
+    "pros":"Company is expected to give good quarter",
+    "cons":"Stock is trading at 2.76 times its book value"
+  },
+  {
+    "id":2,
+    "company_id":"HDFCBANK",
+    "pros":"Company has delivered good profit growth of 23.4% CAGR over last 5 years",
+    "cons":"Company has low interest coverage ratio."
+  },
+  {
+    "id":3,
+    "company_id":"HDFCBANK",
+    "pros":"Company has been maintaining a healthy dividend payout of 22.9%",
+    "cons":"Contingent liabilities of Rs.24,09,821 Cr."
+  },
+  {
+    "id":4,
+    "company_id":"HDFCBANK",
+    "pros":"Company's median sales growth is 16.4% of last 10 years",
+    "cons":"Earnings include an other income of Rs.1,55,870 Cr."
+  },
+  {
+    "id":5,
+    "company_id":"SBILIFE",
+    "pros":"Company is almost debt free.",
+    "cons":"Stock is trading at 9.11 times its book value"
+  },
+  {
+    "id":6,
+    "company_id":"SBILIFE",
+    "pros":"Company is expected to give good quarter",
+    "cons":"Tax rate seems low"
+  },
+  {
+    "id":7,
+    "company_id":"SBILIFE",
+    "pros":null,
+    "cons":"Company has a low return on equity of 12.9% over last 3 years."
+  },
+  {
+    "id":8,
+    "company_id":"SBILIFE",
+    "pros":null,
+    "cons":"Earnings include an other income of Rs.1,657 Cr."
+  },
+  {
+    "id":9,
+    "company_id":"SBILIFE",
+    "pros":null,
+    "cons":"Dividend payout has been low at 14.0% of profits over last 3 years"
+  },
+  {
+    "id":10,
+    "company_id":"INFY",
+    "pros":"Company has a good return on equity (ROE) track record: 3 Years ROE 30.9%",
+    "cons":"Stock is trading at 9.03 times its book value"
+  },
+  {
+    "id":11,
+    "company_id":"INFY",
+    "pros":"Company has been maintaining a healthy dividend payout of 63.3%",
+    "cons":"Promoter holding is low: 14.4%"
+  },
+  {
+    "id":12,
+    "company_id":"WIPRO",
+    "pros":null,
+    "cons":"The company has delivered a poor sales growth of 8.75% over past five years."
+  },
+  {
+    "id":13,
+    "company_id":"WIPRO",
+    "pros":null,
+    "cons":"Dividend payout has been low at 12.2% of profits over last 3 years"
+  },
+  {
+    "id":14,
+    "company_id":"TCS",
+    "pros":"Company is almost debt free.",
+    "cons":"Stock is trading at 15.2 times its book value"
+  },
+  {
+    "id":15,
+    "company_id":"TCS",
+    "pros":"Company has a good return on equity (ROE) track record: 3 Years ROE 47.4%",
+    "cons":"The company has delivered a poor sales growth of 10.5% over past five years."
+  },
+  {
+    "id":16,
+    "company_id":"TCS",
+    "pros":"Company has been maintaining a healthy dividend payout of 66.2%",
+    "cons":null
+  }
+]

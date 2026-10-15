@@ -39,16 +39,9 @@ class TenantValidator:
     ) -> bool:
         """Return True if resource belongs to request_tenant_id or system tenant."""
         req_tid = str(request_tenant_id)
-        # System tenant has super-administrative cross-tenant diagnostic authority
-        if req_tid == "system":
-            return True
-
         res_tid = self.extract_resource_tenant_id(resource)
-        # If resource has no tenant assigned, treat as shared or system
-        if res_tid is None or res_tid == "system":
-            return True
-
-        return res_tid == req_tid
+        # This equality helper is not a membership check or an admin bypass.
+        return bool(res_tid and req_tid and res_tid != "system" and req_tid != "system" and res_tid == req_tid)
 
     def enforce_access(
         self,
@@ -83,8 +76,8 @@ class TenantValidator:
         """Verify whether a user is an authorized member of the specified tenant."""
         req_tid = str(tenant_id)
         user_tid = getattr(user, "tenant_id", None)
-        if user_tid is None or str(user_tid) == "system":
-            return True
+        if user_tid is None or str(user_tid) == "system" or req_tid == "system":
+            return False
         return str(user_tid) == req_tid
 
 

@@ -16,12 +16,13 @@ import type { DatasetStatus } from '../types/datasets';
 import { STATUS_LABELS } from '../datasetUtils';
 
 export function StatusBadge({ status }: { status: DatasetStatus }) {
+  const label = STATUS_LABELS[status] || status || 'Unknown';
   return (
     <span
       className={`status-badge status-badge--${status}`}
-      aria-label={`Status: ${STATUS_LABELS[status]}`}
+      aria-label={`Status: ${label}`}
     >
-      {STATUS_LABELS[status]}
+      {label}
     </span>
   );
 }

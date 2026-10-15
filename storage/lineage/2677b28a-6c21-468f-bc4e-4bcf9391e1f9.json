@@ -1,0 +1,15 @@
+{
+  "dataset_id": "2677b28a-6c21-468f-bc4e-4bcf9391e1f9",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "124ecb29-aa79-42c9-9815-a1476c0ed919",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-10-13 18:39:47.326931",
+      "author": "system",
+      "description": "Initial ingestion of sales.csv"
+    }
+  ]
+}

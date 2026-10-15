@@ -1,6 +1,8 @@
 import { type FormEvent, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
+import { Mail, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { authService } from '../../services/authService';
 
 // ---------------------------------------------------------------------------
 // Validation
@@ -15,195 +17,153 @@ function validateEmail(email: string): string | null {
 }
 
 // ---------------------------------------------------------------------------
-// Motion config
+// ForgotPasswordPage Component — Approved Modern Split-Screen Auth Card
 // ---------------------------------------------------------------------------
-
-const TRANSITION = { duration: 0.30, ease: [0.22, 1, 0.36, 1] as const };
-
-const fadeUp = {
-  initial: { opacity: 0, y: 16 },
-  animate: { opacity: 1, y: 0 },
-  exit:    { opacity: 0, y: -8 },
-};
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
-
-type ForgotState = 'idle' | 'submitting' | 'sent';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
-  const [state, setState] = useState<ForgotState>('idle');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSent, setIsSent] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  function handleBlur() {
+  const handleBlur = () => {
     setTouched(true);
     setEmailError(validateEmail(email));
-  }
+  };
 
-  // -------------------------------------------------------------------------
-  // Submit
-  // BACKEND DEPENDENCY: authService.forgotPassword() will be called here
-  // once the backend endpoint is implemented.
-  // -------------------------------------------------------------------------
-  async function handleSubmit(e: FormEvent) {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
     setTouched(true);
 
     const err = validateEmail(email);
     setEmailError(err);
-    if (err) return;
-    if (state === 'submitting') return;
+    if (err || isSubmitting) return;
 
-    setState('submitting');
+    setIsSubmitting(true);
     try {
-      // Real HTTP call via authService.forgotPassword({ email }) goes here
-      // once backend /api/auth/forgot-password is implemented.
-      await new Promise<void>((_, reject) => {
-        setTimeout(() => {
-          reject(new Error('Backend authentication is not yet available.'));
-        }, 600);
-      });
-    } catch (err: unknown) {
+      await authService.forgotPassword({ email: email.trim() });
+      setIsSent(true);
+    } catch (error: unknown) {
       const message =
-        err instanceof Error ? err.message : 'An unexpected error occurred.';
+        error instanceof Error ? error.message : 'Unable to send reset email. Please try again.';
       setSubmitError(message);
-      setState('idle');
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  if (isSent) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+        className="cinematic-auth-card"
+      >
+        <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+          <CheckCircle2
+            className="w-12 h-12"
+            style={{ color: '#151915', margin: '0 auto 1.25rem' }}
+          />
+          <h2 className="cinematic-card-title">Instructions sent</h2>
+          <p className="cinematic-card-subtitle" style={{ marginBottom: '1.75rem' }}>
+            If an account exists for <strong>{email}</strong>, password reset instructions have been sent. Check your inbox and spam folder.
+          </p>
+          <Link
+            to="/login"
+            className="cinematic-submit-btn"
+            style={{ justifyContent: 'center', textDecoration: 'none' }}
+          >
+            <span>Return to Sign In</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </motion.div>
+    );
   }
 
   return (
-    <div className="av2-card">
-      {/* Heading */}
-      <motion.h1
-        className="av2-heading"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ ...TRANSITION, delay: 0.05 }}
-      >
-        Reset Password
-      </motion.h1>
-      <motion.p
-        className="av2-subtext"
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ ...TRANSITION, delay: 0.12 }}
-      >
-        Enter your email and we&apos;ll send a reset link
-      </motion.p>
+    <motion.div
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.5, delay: 0.08, ease: 'easeOut' }}
+      className="cinematic-auth-card"
+    >
+      <h2 className="cinematic-card-title">Reset password</h2>
+      <p className="cinematic-card-subtitle">
+        Enter your registered work email to receive secure password recovery instructions.
+      </p>
 
-      {/* Animated form / success state */}
-      <AnimatePresence mode="wait" initial={false}>
-        {state === 'sent' ? (
-          <motion.div
-            key="sent"
-            className="av2-form"
-            variants={fadeUp}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            transition={TRANSITION}
-          >
-            <p className="av2-success-banner" role="status">
-              If an account exists for <strong>{email}</strong>, a reset link has been sent.
-              Check your inbox.
+      {/* Error banner */}
+      {submitError && (
+        <div className="cinematic-error-banner" role="alert">
+          {submitError}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} noValidate className="cinematic-form">
+        {/* Email */}
+        <div className="cinematic-input-group">
+          <label htmlFor="forgot-email" className="cinematic-label">
+            Work Email
+          </label>
+          <div className="cinematic-input-wrapper">
+            <input
+              id="forgot-email"
+              type="email"
+              autoComplete="email"
+              placeholder="analyst@enterprise.com"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (touched) setEmailError(validateEmail(e.target.value));
+              }}
+              onBlur={handleBlur}
+              className={`cinematic-input ${
+                touched && emailError ? 'cinematic-input--error' : ''
+              }`}
+              aria-invalid={Boolean(touched && emailError)}
+              aria-describedby={touched && emailError ? 'forgot-email-error' : undefined}
+              disabled={isSubmitting}
+            />
+            <Mail className="cinematic-input-icon" />
+          </div>
+          {touched && emailError && (
+            <p id="forgot-email-error" className="cinematic-field-error" role="alert">
+              {emailError}
             </p>
-          </motion.div>
-        ) : (
-          <motion.form
-            key="form"
-            onSubmit={handleSubmit}
-            noValidate
-            className="av2-form"
-            variants={fadeUp}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            transition={TRANSITION}
-            aria-label="Password reset form"
-          >
-            {/* Submit error */}
-            {submitError && (
-              <p className="av2-error-banner" role="alert">
-                {submitError}
-              </p>
-            )}
+          )}
+        </div>
 
-            {/* Email input */}
-            <div>
-              <div className="av2-input-row">
-                <label htmlFor="forgot-email" className="sr-only">
-                  Email address
-                </label>
-                <input
-                  id="forgot-email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className={`av2-input${touched && emailError ? ' av2-input--error' : ''}`}
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (touched) setEmailError(validateEmail(e.target.value));
-                  }}
-                  onBlur={handleBlur}
-                  aria-invalid={touched && !!emailError}
-                  aria-describedby={
-                    touched && emailError ? 'forgot-email-error' : undefined
-                  }
-                  disabled={state === 'submitting'}
-                />
-                <button
-                  type="submit"
-                  className="av2-arrow-btn"
-                  aria-label="Send reset link"
-                  disabled={state === 'submitting'}
-                >
-                  {state === 'submitting' ? (
-                    <span className="av2-spinner" aria-hidden="true" />
-                  ) : (
-                    '→'
-                  )}
-                </button>
-              </div>
-              {touched && emailError && (
-                <p id="forgot-email-error" className="av2-field-error" role="alert">
-                  {emailError}
-                </p>
-              )}
-            </div>
+        {/* Submit */}
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="cinematic-submit-btn"
+          aria-label="Send reset link"
+        >
+          {isSubmitting ? (
+            <>
+              <span className="cinematic-spinner" aria-hidden="true" />
+              <span>Sending instructions…</span>
+            </>
+          ) : (
+            <>
+              <span>Send reset link</span>
+              <ArrowRight className="w-4 h-4" />
+            </>
+          )}
+        </button>
+      </form>
 
-            {/* Submit button */}
-            <button
-              type="submit"
-              className="av2-submit-btn"
-              disabled={state === 'submitting'}
-            >
-              {state === 'submitting' && (
-                <span className="av2-spinner" aria-hidden="true" />
-              )}
-              {state === 'submitting' ? 'Sending…' : 'Send reset link'}
-            </button>
-          </motion.form>
-        )}
-      </AnimatePresence>
-
-      {/* Back to login */}
-      <motion.p
-        className="av2-footer"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ ...TRANSITION, delay: 0.28 }}
-      >
-        <Link to="/login" className="av2-link av2-link--sm">
-          ← Back to login
-        </Link>
-      </motion.p>
-    </div>
+      {/* Login link */}
+      <div className="cinematic-auth-footer">
+        <span>Remember your password?</span>
+        <Link to="/login">Sign in</Link>
+      </div>
+    </motion.div>
   );
 }

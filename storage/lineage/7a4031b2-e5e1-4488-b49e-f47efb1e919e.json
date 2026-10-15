@@ -1,0 +1,15 @@
+{
+  "dataset_id": "7a4031b2-e5e1-4488-b49e-f47efb1e919e",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "988e9a2f-2e0a-49e2-bd4b-794ef898719d",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-10-15 06:49:09.280186+00:00",
+      "author": "system",
+      "description": "Initial ingestion of ../../../../etc/passwd.csv"
+    }
+  ]
+}

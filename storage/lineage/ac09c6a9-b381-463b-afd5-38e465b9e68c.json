@@ -1,0 +1,15 @@
+{
+  "dataset_id": "ac09c6a9-b381-463b-afd5-38e465b9e68c",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "99195a66-072b-46a8-8928-f1d0f38b36b2",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-10-15 06:18:20.426210+00:00",
+      "author": "system",
+      "description": "Initial ingestion of sensors.parquet"
+    }
+  ]
+}

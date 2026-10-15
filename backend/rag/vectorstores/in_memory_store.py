@@ -39,7 +39,15 @@ class InMemoryVectorStore(BaseVectorStore):
         if metadatas is None:
             metadatas = [{} for _ in embeddings]
 
+        if not (len(chunk_ids) == len(document_ids) == len(texts) == len(embeddings) == len(metadatas)):
+            raise ValueError("Vector index batch lengths do not match")
         new_matrix = np.array(embeddings, dtype=np.float32)
+        if new_matrix.ndim != 2 or not np.isfinite(new_matrix).all():
+            raise ValueError("Embedding vectors must be a finite rectangular matrix")
+        if self._dimension and new_matrix.shape[1] != self._dimension:
+            raise ValueError("Embedding dimension mismatch")
+        # Match persistent-store upsert behavior, including idempotent job retries.
+        self.delete(chunk_ids=chunk_ids)
         # L2 normalize rows
         norms = np.linalg.norm(new_matrix, axis=1, keepdims=True)
         norms = np.where(norms == 0, 1.0, norms)

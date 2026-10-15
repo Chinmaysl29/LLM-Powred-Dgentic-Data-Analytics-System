@@ -1,0 +1,31 @@
+{
+  "dataset_id": "d52ee852-1b08-4163-9b7f-bfeccd884530",
+  "duplicate_rows": 0,
+  "duplicate_percentage": 0.0,
+  "missing_data_profile": {
+    "null_count": 231,
+    "null_percentage": 0.012059514487079091,
+    "columns_with_missing": [
+      "Unnamed: 5",
+      "Unnamed: 6",
+      "Unnamed: 11",
+      "Unnamed: 13",
+      "Unnamed: 14"
+    ]
+  },
+  "cardinality_profile": {
+    "high_cardinality_columns": [
+      "Bluestock Fintech \u2014 Nifty 100  |  Profit & Loss  |  1,276 records",
+      "Unnamed: 3",
+      "Unnamed: 4",
+      "Unnamed: 5",
+      "Unnamed: 7",
+      "Unnamed: 8",
+      "Unnamed: 9",
+      "Unnamed: 10",
+      "Unnamed: 12"
+    ],
+    "low_cardinality_columns": []
+  },
+  "numeric_columns_profile": {}
+}

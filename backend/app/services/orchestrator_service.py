@@ -13,6 +13,8 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from backend.app.core.exceptions import ValidationException
+from backend.app.core.authorization import owned_dataset
+from backend.app.core.security import get_current_user
 from backend.app.database.postgres import get_db_session
 from backend.app.llm.provider import LLMProvider, get_llm_provider
 from backend.app.repositories.dataset_metadata_repository import DatasetMetadataRepository
@@ -44,12 +46,14 @@ class OrchestratorService:
         planner: Any | None = None,
         llm: LLMProvider | None = None,
         db: Session | None = None,
+        owner_id: str | None = None,
     ) -> None:
         self._intent_classifier = intent_classifier or IntentClassificationService(llm=llm)
         self._workflow_registry = workflow_registry or WorkflowRegistry()
         self._agent_registry = agent_registry or AgentRegistry()
         self._llm = llm
         self._db = db
+        self._owner_id = owner_id
         if planner is not None:
             self._planner = planner
         else:
@@ -75,7 +79,7 @@ class OrchestratorService:
             from backend.app.services.executive_summary_service import ExecutiveSummaryService
             
             storage = StorageService(settings=get_settings())
-            retrieval_service = DataRetrievalService(db=self._db, storage_service=storage)
+            retrieval_service = DataRetrievalService(db=self._db, storage_service=storage, owner_id=self._owner_id)
             eda_service = EDAService(retrieval_service=retrieval_service)
             statistics_service = StatisticsService(retrieval_service=retrieval_service)
             validation_service = ValidationService()
@@ -206,6 +210,8 @@ class OrchestratorService:
         if not query or not query.strip():
             raise ValidationException("Query cannot be empty or whitespace")
         cleaned_query = query.strip()
+        if dataset_id:
+            owned_dataset(self._db, dataset_id, self._owner_id)
 
         logger.info("Orchestrator initiated query=%s dataset_id=%s", cleaned_query[:50], dataset_id)
 
@@ -339,6 +345,7 @@ class OrchestratorService:
 def get_orchestrator_service(
     intent_service: IntentClassificationService = Depends(get_intent_classification_service),
     db: Session = Depends(get_db_session),
+    current_user: Any = Depends(get_current_user),
 ) -> OrchestratorService:
     """FastAPI dependency provider yielding an OrchestratorService instance."""
     try:
@@ -350,4 +357,5 @@ def get_orchestrator_service(
         intent_classifier=intent_service,
         llm=llm,
         db=db,
+        owner_id=str(current_user.id),
     )

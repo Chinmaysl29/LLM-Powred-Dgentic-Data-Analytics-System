@@ -1,0 +1,15 @@
+{
+  "dataset_id": "4e1dda96-fee4-460f-b749-c402b01c3d63",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "5f2529a5-8366-4779-85ea-4997cb31e0ab",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-10-13 18:02:36.296170+00:00",
+      "author": "system",
+      "description": "Initial ingestion of balancesheet.xlsx"
+    }
+  ]
+}

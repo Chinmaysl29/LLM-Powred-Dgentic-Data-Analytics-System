@@ -1,10 +1,8 @@
 # AI-Powered Data Analyst Platform
 
-<<<<<<< HEAD
-A full-stack, LLM-powered data analytics platform that allows users to upload datasets, inspect them, and interact with their data through AI-driven insights, natural-language queries, visualisations, and automated reports.
-=======
-This repository contains the Phase 1 backend foundation for a production-grade enterprise AI Data Analyst platform. It provides a versioned FastAPI gateway, typed configuration, PostgreSQL, Redis, and ChromaDB adapters, request middleware, structured logging, lifecycle management, health checks, and a testing foundation.
->>>>>>> origin/main
+> Current status (2026-10-12): the redesigned internal UI is wired and authenticated browser-reviewed. Analytical correctness repairs pass documented regression checks, but the backend now runs locally with selected live checks passing; Insights schema drift and broader Phase 24?28 work remain open. See the [current verification matrix](reports/ANALYTICAL_CORRECTNESS_REMEDIATION_REPORT.md) and [remaining checklist](reports/ANALYTICAL_CORRECTNESS_REMEDIATION_CHECKLIST.md). The phase narrative below is historical, not current readiness evidence.
+
+A full-stack, enterprise AI-powered data analytics platform that allows users to upload datasets, inspect them, and interact with their data through AI-driven insights, natural-language queries, visualisations, automated reports, and predictive modeling. The backend provides a versioned FastAPI gateway, typed configuration, PostgreSQL, Redis, and ChromaDB adapters, request middleware, structured logging, lifecycle management, truthful health checks, and a comprehensive test foundation.
 
 ---
 
@@ -42,7 +40,7 @@ The **AI-Powered Data Analyst Platform** is a production-oriented, multi-phase p
 6. Receive AI-generated forecasts and recommendations (planned)
 7. Export automated reports (planned)
 
-The project is built **phase by phase**. Each phase is reviewed and approved before the next begins. This document reflects the state of the project as of **Phase 2E**.
+The project is built **phase by phase**. Each phase is reviewed and approved before the next begins. The detailed phase narrative below preserves the historical **Phase 2E** snapshot; use the current verification matrix above for present status.
 
 ---
 
@@ -84,7 +82,7 @@ The project is built **phase by phase**. Each phase is reviewed and approved bef
 All services run via Docker Compose:
 
 ```
-Backend   → http://localhost:8400   (FastAPI)
+Backend   → http://localhost:8000   (FastAPI)
 Frontend  → http://localhost:5173   (Vite dev server)
 PostgreSQL → localhost:5432
 Redis      → localhost:6379
@@ -435,11 +433,39 @@ npm run dev
 
 ### Backend only (development)
 
+**Option 1 — From repository root (recommended):**
+
+```bash
+pip install -r backend/requirements.txt
+uvicorn backend.main:app --reload --port 8000
+# → http://localhost:8000 (Health check: http://localhost:8000/api/v1/health)
+```
+
+**Option 2 — From inside the `backend` directory:**
+
+Because application modules use absolute imports (`backend.app...`), set `PYTHONPATH` to the parent repository root when launching from inside the `backend` folder:
+
 ```bash
 cd backend
 pip install -r requirements.txt
-uvicorn backend.main:app --reload --port 8000
+
+# Linux / macOS:
+PYTHONPATH=.. uvicorn backend.main:app --reload --port 8000
+
+# Windows (PowerShell):
+$env:PYTHONPATH=".."; uvicorn backend.main:app --reload --port 8000
+
+# Windows (Command Prompt):
+set PYTHONPATH=.. && uvicorn backend.main:app --reload --port 8000
 # → http://localhost:8000
+```
+
+**Option 3 — Running with Docker Compose:**
+
+```bash
+docker compose up --build
+# Or backend only with its dependencies:
+docker compose up backend postgres redis chromadb
 ```
 
 ### Running Backend Tests

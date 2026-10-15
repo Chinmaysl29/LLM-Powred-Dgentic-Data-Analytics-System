@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useId } from 'react';
 import { motion, useReducedMotion, useInView, animate } from 'motion/react';
+import { useAppearance } from '../hooks/useAppearance';
+function useChartReducedMotion() { const system = useReducedMotion(); const { appearance } = useAppearance(); return system || appearance.reducedMotion; }
 import { AlertCircle, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import type {
   ChartPoint,
@@ -18,7 +20,7 @@ import type { WorldCountryShape } from '../lib/worldMapData';
 
 export type { ChartPoint, ScatterPoint, HeatmapData, TreemapData, TableData };
 
-const VIZ_PALETTE = ['#4294ff', '#e368f1', '#55d5ff', '#23d6e4', '#8d54ff', '#67f0ce', '#ff7298', '#ffb042'];
+const VIZ_PALETTE = ['#b3d779', '#789b48', '#a0b69a', '#52755b', '#c8fd39', '#829b8b', '#d5ddc9', '#42604a'];
 
 function formatCompactNumber(value: number, prefix = ''): string {
   const abs = Math.abs(value);
@@ -79,7 +81,7 @@ export function AnimatedCountUp({
   className = '',
   replayKey,
 }: AnimatedCountUpProps) {
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useChartReducedMotion();
   const containerRef = useRef<HTMLSpanElement>(null);
   const inView = useInView(containerRef, { amount: 0.15 });
   const [animatedValue, setAnimatedValue] = useState<number>(0);
@@ -131,7 +133,7 @@ export function SelfFormingLineChart({
   isArea = false,
   replayKey,
 }: SelfFormingLineChartProps) {
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useChartReducedMotion();
   const width = 540;
   const height = 190;
   const filterId = useId().replace(/:/g, '');
@@ -379,7 +381,7 @@ export function SelfFormingLineChart({
                     fontSize="9.5"
                     fontWeight="700"
                   >
-                    {formatCompactNumber(point.value, '$')}
+                    {formatCompactNumber(point.value)}
                   </text>
                 </motion.g>
               )}
@@ -426,7 +428,7 @@ export function SelfFormingLineChart({
           <div className="viz-tooltip-card">
             <span className="viz-tooltip-label">{activeHoverPoint.label}</span>
             <strong className="viz-tooltip-val">
-              {formatCompactNumber(activeHoverPoint.value, '$')}
+              {formatCompactNumber(activeHoverPoint.value)}
             </strong>
             {activeHoverPoint.group && (
               <em className="viz-tooltip-group">{activeHoverPoint.group}</em>
@@ -453,7 +455,7 @@ export function SelfFormingBarChart({
   ariaLabel,
   replayKey,
 }: SelfFormingBarChartProps) {
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useChartReducedMotion();
   const containerRef = useRef<HTMLDivElement>(null);
   useInView(containerRef, { once: true, amount: 0.05 });
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
@@ -501,7 +503,7 @@ export function SelfFormingBarChart({
                 transition: 'color 0.2s, transform 0.2s',
               }}
             >
-              {formatCompactNumber(item.value, '$')}
+              {formatCompactNumber(item.value)}
             </motion.b>
 
             {/* Rising Bar */}
@@ -582,7 +584,7 @@ export function SelfFormingDonutChart({
   isPie = false,
   replayKey,
 }: SelfFormingDonutChartProps) {
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useChartReducedMotion();
   const validData = Array.isArray(data)
     ? data.filter((d) => d && typeof d.label === 'string' && Number.isFinite(d.value) && d.value >= 0)
     : [];
@@ -725,7 +727,7 @@ export function SelfFormingScatterChart({
   ariaLabel,
   replayKey,
 }: SelfFormingScatterChartProps) {
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useChartReducedMotion();
   const width = 540;
   const height = 190;
   const containerRef = useRef<SVGSVGElement>(null);
@@ -774,9 +776,9 @@ export function SelfFormingScatterChart({
 
         {/* Y Axis ticks */}
         <g className="viz-axis-labels">
-          <text x="32" y="34" textAnchor="end">{formatCompactNumber(maxY, '$')}</text>
-          <text x="32" y="94" textAnchor="end">{formatCompactNumber(minY + rangeY * 0.5, '$')}</text>
-          <text x="32" y="154" textAnchor="end">{formatCompactNumber(minY, '$')}</text>
+          <text x="32" y="34" textAnchor="end">{formatCompactNumber(maxY)}</text>
+          <text x="32" y="94" textAnchor="end">{formatCompactNumber(minY + rangeY * 0.5)}</text>
+          <text x="32" y="154" textAnchor="end">{formatCompactNumber(minY)}</text>
         </g>
 
         {/* X Axis ticks */}
@@ -828,7 +830,7 @@ export function SelfFormingScatterChart({
           <div className="viz-tooltip-card">
             <span className="viz-tooltip-label">{activeHoverPoint.label}</span>
             <strong className="viz-tooltip-val">
-              Y: {formatCompactNumber(activeHoverPoint.y, '$')}
+              Y: {formatCompactNumber(activeHoverPoint.y)}
             </strong>
             <span style={{ fontSize: '11px', color: '#64f2ff' }}>
               X: {Math.round(activeHoverPoint.x).toLocaleString()}
@@ -858,7 +860,7 @@ export function SelfFormingHeatmap({
   ariaLabel,
   replayKey,
 }: SelfFormingHeatmapProps) {
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useChartReducedMotion();
   const containerRef = useRef<HTMLDivElement>(null);
   useInView(containerRef, { once: true, amount: 0.05 });
 
@@ -944,7 +946,7 @@ export function SelfFormingHeatmap({
                     }
                   }}
                 >
-                  {formatCompactNumber(val, '$')}
+                  {formatCompactNumber(val)}
                 </motion.div>
               );
             })}
@@ -970,7 +972,7 @@ export function SelfFormingHeatmap({
               {activeCell.row} × {activeCell.col}
             </span>
             <strong className="viz-tooltip-val">
-              {formatCompactNumber(activeCell.value, '$')}
+              {formatCompactNumber(activeCell.value)}
             </strong>
           </div>
         </div>
@@ -994,7 +996,7 @@ export function SelfFormingTreemap({
   ariaLabel,
   replayKey,
 }: SelfFormingTreemapProps) {
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useChartReducedMotion();
   const containerRef = useRef<HTMLDivElement>(null);
   useInView(containerRef, { once: true, amount: 0.05 });
 
@@ -1037,7 +1039,7 @@ export function SelfFormingTreemap({
               <span className="viz-treemap-tile-share">{Math.round(node.percent)}%</span>
             </div>
             <strong className="viz-treemap-tile-val">
-              {formatCompactNumber(node.value, '$')}
+              {formatCompactNumber(node.value)}
             </strong>
           </motion.div>
         );
@@ -1061,7 +1063,7 @@ export function SelfFormingTable({
   ariaLabel,
   replayKey,
 }: SelfFormingTableProps) {
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useChartReducedMotion();
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
 
@@ -1156,7 +1158,7 @@ export function SelfFormingRankingBars({
   data: ChartPoint[];
   replayKey?: string | number;
 }) {
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useChartReducedMotion();
   const containerRef = useRef<HTMLDivElement>(null);
   useInView(containerRef, { once: true, amount: 0.05 });
 
@@ -1180,7 +1182,7 @@ export function SelfFormingRankingBars({
           <div key={item.label} className="viz-rank-row" style={{ position: 'relative' }}>
             <span>{item.label}</span>
             <b style={{ color: index === 0 ? '#64f2ff' : '#fff' }}>
-              {formatCompactNumber(item.value, '$')}
+              {formatCompactNumber(item.value)}
             </b>
             <motion.em
               initial={{ width: prefersReducedMotion ? `${targetPercent}%` : '0%' }}
@@ -1217,7 +1219,7 @@ export function SelfFormingRegionMap({
   filteredRows,
   replayKey,
 }: SelfFormingRegionMapProps) {
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useChartReducedMotion();
   const containerRef = useRef<HTMLDivElement>(null);
   useInView(containerRef, { once: true, amount: 0.05 });
 
@@ -1496,9 +1498,9 @@ export function SelfFormingRegionMap({
 
       {/* Color Scale Legend */}
       <div className="viz-map-legend">
-        <span>Low: {formatCompactNumber(minSale, '$')}</span>
+        <span>Low: {formatCompactNumber(minSale)}</span>
         <div className="viz-map-legend-bar" />
-        <span>High: {formatCompactNumber(maxSale, '$')}</span>
+        <span>High: {formatCompactNumber(maxSale)}</span>
       </div>
     </div>
   );
@@ -1517,7 +1519,7 @@ export function CustomerSegmentChart({
   data: ChartPoint[];
   replayKey?: string | number;
 }) {
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useChartReducedMotion();
   const validData = Array.isArray(data)
     ? data.filter((d) => d && typeof d.label === 'string' && Number.isFinite(d.value) && d.value >= 0)
     : [];
@@ -1588,7 +1590,7 @@ export function CustomerSegmentChart({
             key={item.label}
             onMouseEnter={() => setHoveredSegment(item.label)}
             style={{ cursor: 'pointer', position: 'relative' }}
-            title={`${item.label}: ${formatCompactNumber(item.value, '$')} (${percent}%)`}
+            title={`${item.label}: ${formatCompactNumber(item.value)} (${percent}%)`}
           >
             {isHovered && (
               <div
@@ -1611,7 +1613,7 @@ export function CustomerSegmentChart({
                 }}
               >
                 <div style={{ fontWeight: 600, color: '#64f2ff' }}>{item.label}</div>
-                <div>{formatCompactNumber(item.value, '$')} ({percent}%)</div>
+                <div>{formatCompactNumber(item.value)} ({percent}%)</div>
               </div>
             )}
             {/* Value Label + Share badge */}
@@ -1622,7 +1624,7 @@ export function CustomerSegmentChart({
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}
             >
               <b style={{ color: isHovered ? '#64f2ff' : '#ffffff', fontSize: '11px' }}>
-                {formatCompactNumber(item.value, '$')}
+                {formatCompactNumber(item.value)}
               </b>
               <span style={{ fontSize: '9.5px', color: '#64f2ff', fontWeight: 700 }}>
                 {percent}%

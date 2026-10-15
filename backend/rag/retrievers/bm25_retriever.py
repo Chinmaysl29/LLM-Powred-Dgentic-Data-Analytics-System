@@ -4,6 +4,10 @@ Inverted-index BM25 keyword retrieval for exact term matching.
 """
 
 import math
+import json
+import sqlite3
+from pathlib import Path
+from threading import RLock
 import re
 from collections import Counter, defaultdict
 from typing import Any, Dict, List, Optional, Tuple
@@ -19,7 +23,13 @@ class BM25Retriever(BaseRetriever):
         score(D, Q) = Σ IDF(qi) * (f(qi,D) * (k1+1)) / (f(qi,D) + k1*(1-b+b*|D|/avgdl))
     """
 
-    def __init__(self, k1: float = 1.5, b: float = 0.75) -> None:
+    def __init__(self, k1: float = 1.5, b: float = 0.75, storage_path: str | Path | None = None) -> None:
+        self._lock = RLock()
+        self._storage_path = Path(storage_path) if storage_path else None
+        if self._storage_path:
+            self._storage_path.parent.mkdir(parents=True, exist_ok=True)
+            with sqlite3.connect(self._storage_path, timeout=30) as db:
+                db.execute("CREATE TABLE IF NOT EXISTS chunks (chunk_id TEXT PRIMARY KEY, document_id TEXT NOT NULL, content TEXT NOT NULL, metadata TEXT NOT NULL)")
         self.k1 = k1
         self.b = b
         self._chunk_ids: List[str] = []
@@ -31,6 +41,7 @@ class BM25Retriever(BaseRetriever):
         self._doc_lengths: List[int] = []
         self._avg_doc_length: float = 0.0
         self._corpus_size: int = 0
+        self._reload()
 
     @staticmethod
     def _tokenize(text: str) -> List[str]:
@@ -58,23 +69,54 @@ class BM25Retriever(BaseRetriever):
         if metadatas is None:
             metadatas = [{} for _ in texts]
 
-        for i, (cid, did, text, meta) in enumerate(zip(chunk_ids, document_ids, texts, metadatas)):
+        if not (len(chunk_ids) == len(document_ids) == len(texts) == len(metadatas)):
+            raise ValueError("Sparse index batch lengths do not match")
+        rows = [(cid, did, text, meta.model_dump() if hasattr(meta, "model_dump") else dict(meta))
+                for cid, did, text, meta in zip(chunk_ids, document_ids, texts, metadatas)]
+        with self._lock:
+            if self._storage_path:
+                with sqlite3.connect(self._storage_path, timeout=30) as db:
+                    db.executemany("INSERT OR REPLACE INTO chunks VALUES (?, ?, ?, ?)",
+                                   [(cid, did, text, json.dumps(meta)) for cid, did, text, meta in rows])
+                self._reload()
+            else:
+                existing = {cid: (cid, did, text, meta) for cid, did, text, meta in
+                            zip(self._chunk_ids, self._document_ids, self._texts, self._metadatas)}
+                existing.update({row[0]: row for row in rows})
+                self._rebuild(list(existing.values()))
 
-            doc_idx = len(self._chunk_ids)
+    def _reload(self) -> None:
+        if self._storage_path:
+            with sqlite3.connect(self._storage_path, timeout=30) as db:
+                rows = db.execute("SELECT chunk_id, document_id, content, metadata FROM chunks ORDER BY chunk_id").fetchall()
+            self._rebuild([(cid, did, text, json.loads(meta)) for cid, did, text, meta in rows])
+
+    def _rebuild(self, rows) -> None:
+        self._chunk_ids, self._document_ids, self._texts, self._metadatas = [], [], [], []
+        self._inverted_index = defaultdict(list)
+        self._doc_lengths = []
+        for idx, (cid, did, text, meta) in enumerate(rows):
             self._chunk_ids.append(cid)
             self._document_ids.append(did)
             self._texts.append(text)
             self._metadatas.append(meta)
-
             tokens = self._tokenize(text)
             self._doc_lengths.append(len(tokens))
-            term_counts = Counter(tokens)
-
-            for term, freq in term_counts.items():
-                self._inverted_index[term].append((doc_idx, freq))
-
-        self._corpus_size = len(self._chunk_ids)
+            for term, frequency in Counter(tokens).items():
+                self._inverted_index[term].append((idx, frequency))
+        self._corpus_size = len(rows)
         self._avg_doc_length = sum(self._doc_lengths) / max(1, self._corpus_size)
+
+    def delete(self, document_id: str) -> None:
+        """Delete an authorized document's sparse chunks durably."""
+        with self._lock:
+            if self._storage_path:
+                with sqlite3.connect(self._storage_path, timeout=30) as db:
+                    db.execute("DELETE FROM chunks WHERE document_id = ?", (document_id,))
+                self._reload()
+            else:
+                self._rebuild([row for row in zip(self._chunk_ids, self._document_ids, self._texts, self._metadatas)
+                               if row[1] != document_id])
 
     def _idf(self, term: str) -> float:
         n_docs_with_term = len(self._inverted_index.get(term, []))
@@ -89,7 +131,13 @@ class BM25Retriever(BaseRetriever):
         )
         return idf * tf_norm
 
-    def retrieve(
+    def retrieve(self, query: str, top_k: int = 5, min_score: float = 0.0,
+                 filters: Optional[Dict[str, Any]] = None) -> List[VectorSearchResult]:
+        with self._lock:
+            self._reload()
+            return self._retrieve(query, top_k, min_score, filters)
+
+    def _retrieve(
         self,
         query: str,
         top_k: int = 5,

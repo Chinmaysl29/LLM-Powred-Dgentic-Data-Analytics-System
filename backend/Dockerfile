@@ -43,7 +43,7 @@ COPY . .
 # start-period=90s: sentence-transformers downloads model weights on first import
 # which can take 30-60 s inside a fresh container.
 HEALTHCHECK --interval=30s --timeout=15s --start-period=90s --retries=5 \
-  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')" || exit 1
+  CMD python -c "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/api/v1/health', timeout=10).getcode() == 200 else 1)" || exit 1
 
 EXPOSE 8000
 

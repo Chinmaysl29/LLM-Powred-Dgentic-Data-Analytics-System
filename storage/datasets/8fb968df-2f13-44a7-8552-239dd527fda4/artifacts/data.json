@@ -1,0 +1,24 @@
+{
+  "dataset_id": "8fb968df-2f13-44a7-8552-239dd527fda4",
+  "dataset_name": "Live Product Catalog JSON",
+  "columns": [
+    "sku",
+    "name",
+    "tier",
+    "monthly_cost"
+  ],
+  "records": [
+    {
+      "sku": "SKU-001",
+      "name": "Cloud DB",
+      "tier": "Enterprise",
+      "monthly_cost": 299.99
+    },
+    {
+      "sku": "SKU-002",
+      "name": "AI Gateway",
+      "tier": "Standard",
+      "monthly_cost": 99.99
+    }
+  ]
+}

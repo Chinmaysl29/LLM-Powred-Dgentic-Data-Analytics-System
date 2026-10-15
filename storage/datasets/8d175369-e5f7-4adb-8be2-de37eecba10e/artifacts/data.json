@@ -1,0 +1,18 @@
+{
+  "dataset_id": "8d175369-e5f7-4adb-8be2-de37eecba10e",
+  "dataset_name": "events",
+  "columns": [
+    "timestamp",
+    "event"
+  ],
+  "records": [
+    {
+      "timestamp": "2026-01-01T00:00:00.000",
+      "event": "click"
+    },
+    {
+      "timestamp": "2026-01-01T00:01:00.000",
+      "event": "purchase"
+    }
+  ]
+}

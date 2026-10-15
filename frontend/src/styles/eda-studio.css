@@ -1,0 +1,1135 @@
+/**
+ * EDA Visualization Studio — Design System
+ * 
+ * Color tokens from design brief:
+ *   Primary dark surface:    #101313
+ *   Primary light surface:   #F0F0E9
+ *   Lime accent:             #D6FA43
+ *   Primary dark text:       #161A16
+ *   Primary light text:      #F4F5F0
+ *   Secondary muted text:    #AEB5AF
+ *
+ * Layout: Asymmetric 12-column CSS bento grid.
+ * Cards alternate charcoal / off-white surfaces.
+ * Lime accent highlights key metrics only.
+ */
+
+/* =========================================================================
+   EDA PAGE SHELL
+   ========================================================================= */
+
+.eda-studio {
+  min-height: 100vh;
+  background: #0e1111;
+  font-family: 'Inter', system-ui, 'Segoe UI', sans-serif;
+  color: #F4F5F0;
+  padding: 0 0 80px 0;
+}
+
+/* =========================================================================
+   EDA HEADER
+   ========================================================================= */
+
+.eda-header {
+  border-bottom: 1px solid rgba(214, 250, 67, 0.12);
+  padding: 28px 32px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .eda-header {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+}
+
+.eda-header-eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: #D6FA43;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.eda-header-title {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: #F4F5F0;
+  margin: 0 0 4px;
+  line-height: 1.1;
+}
+
+.eda-header-sub {
+  font-size: 12px;
+  color: #AEB5AF;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* =========================================================================
+   DATASET SELECTOR TOOLBAR
+   ========================================================================= */
+
+.eda-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.eda-dataset-select {
+  background: #181C1C;
+  border: 1px solid #2A3030;
+  color: #F4F5F0;
+  font-size: 12px;
+  font-family: inherit;
+  padding: 8px 12px;
+  border-radius: 6px;
+  outline: none;
+  cursor: pointer;
+  min-width: 200px;
+  transition: border-color 0.15s;
+}
+
+.eda-dataset-select:focus {
+  border-color: #D6FA43;
+}
+
+.eda-run-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #D6FA43;
+  color: #101313;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 8px 18px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  font-family: inherit;
+}
+
+.eda-run-btn:hover {
+  background: #c8f030;
+}
+
+.eda-run-btn:active {
+  transform: scale(0.98);
+}
+
+.eda-run-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.eda-secondary-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid #2A3030;
+  color: #AEB5AF;
+  font-size: 12px;
+  font-family: inherit;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.eda-secondary-btn:hover {
+  border-color: #AEB5AF;
+  color: #F4F5F0;
+}
+
+/* =========================================================================
+   STATUS / META BAR
+   ========================================================================= */
+
+.eda-meta-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 32px;
+  background: #141818;
+  border-bottom: 1px solid #1E2424;
+  font-size: 11px;
+  color: #AEB5AF;
+  flex-wrap: wrap;
+}
+
+.eda-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.eda-meta-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #D6FA43;
+  flex-shrink: 0;
+}
+
+.eda-meta-dot.warn { background: #f59e0b; }
+.eda-meta-dot.muted { background: #3A4040; }
+
+/* =========================================================================
+   STATE PANELS
+   ========================================================================= */
+
+.eda-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 480px;
+  gap: 16px;
+  text-align: center;
+  padding: 40px;
+}
+
+.eda-empty-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: #181C1C;
+  border: 1px solid #2A3030;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3A4040;
+}
+
+.eda-empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #F4F5F0;
+  margin: 0;
+}
+
+.eda-empty-sub {
+  font-size: 12px;
+  color: #AEB5AF;
+  margin: 0;
+  max-width: 340px;
+  line-height: 1.6;
+}
+
+.eda-error-banner {
+  margin: 24px 32px;
+  padding: 14px 18px;
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 8px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 12px;
+  color: #fca5a5;
+}
+
+.eda-loading-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 480px;
+  gap: 14px;
+}
+
+.eda-spinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid #1E2424;
+  border-top-color: #D6FA43;
+  border-radius: 50%;
+  animation: eda-spin 0.75s linear infinite;
+}
+
+@keyframes eda-spin {
+  to { transform: rotate(360deg); }
+}
+
+.eda-loading-text {
+  font-size: 12px;
+  color: #AEB5AF;
+  font-family: ui-monospace, Consolas, monospace;
+}
+
+/* =========================================================================
+   BENTO GRID SYSTEM — 12-COLUMN ASYMMETRIC
+   ========================================================================= */
+
+.eda-canvas {
+  padding: 24px 32px;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+@media (max-width: 1200px) {
+  .eda-canvas {
+    grid-template-columns: repeat(8, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .eda-canvas {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .eda-canvas {
+    grid-template-columns: 1fr;
+    padding: 16px;
+    gap: 10px;
+  }
+}
+
+/* Column span utilities */
+.eda-span-12 { grid-column: span 12; }
+.eda-span-8  { grid-column: span 8;  }
+.eda-span-7  { grid-column: span 7;  }
+.eda-span-6  { grid-column: span 6;  }
+.eda-span-5  { grid-column: span 5;  }
+.eda-span-4  { grid-column: span 4;  }
+.eda-span-3  { grid-column: span 3;  }
+
+@media (max-width: 1200px) {
+  .eda-span-12, .eda-span-8, .eda-span-7 { grid-column: span 8; }
+  .eda-span-6, .eda-span-5              { grid-column: span 4; }
+  .eda-span-4, .eda-span-3              { grid-column: span 4; }
+}
+
+@media (max-width: 900px) {
+  .eda-span-12, .eda-span-8, .eda-span-7,
+  .eda-span-6, .eda-span-5, .eda-span-4, .eda-span-3 { grid-column: span 4; }
+}
+
+@media (max-width: 600px) {
+  .eda-span-12, .eda-span-8, .eda-span-7,
+  .eda-span-6, .eda-span-5, .eda-span-4, .eda-span-3 { grid-column: span 1; }
+}
+
+/* =========================================================================
+   VISUALIZATION CARDS
+   ========================================================================= */
+
+/* Dark surface card (primary) */
+.eda-card {
+  background: #141818;
+  border: 1px solid #1E2828;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.2s;
+}
+
+.eda-card:hover {
+  border-color: #2A3838;
+}
+
+/* Light surface card (alternating) */
+.eda-card-light {
+  background: #F0F0E9;
+  border: 1px solid #D8D8D0;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.eda-card-light .eda-card-eyebrow { color: #6B7280; }
+.eda-card-light .eda-card-title   { color: #161A16; }
+.eda-card-light .eda-card-body    { color: #374151; }
+.eda-card-light .eda-stat-value   { color: #101313; }
+.eda-card-light .eda-stat-label   { color: #6B7280; }
+.eda-card-light .eda-section-divider { background: #D8D8D0; }
+
+/* Lime accent card */
+.eda-card-lime {
+  background: #D6FA43;
+  border: 1px solid #c8f030;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.eda-card-lime .eda-card-eyebrow { color: #4a5a00; }
+.eda-card-lime .eda-card-title   { color: #101313; }
+.eda-card-lime .eda-stat-value   { color: #101313; }
+.eda-card-lime .eda-stat-label   { color: #4a5a00; }
+
+/* =========================================================================
+   CARD ANATOMY
+   ========================================================================= */
+
+.eda-card-header {
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid #1E2828;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.eda-card-light .eda-card-header { border-bottom-color: #D8D8D0; }
+.eda-card-lime  .eda-card-header { border-bottom-color: rgba(0,0,0,0.12); }
+
+.eda-card-header-left { flex: 1; min-width: 0; }
+
+.eda-card-eyebrow {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #AEB5AF;
+  margin-bottom: 4px;
+}
+
+.eda-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #F4F5F0;
+  margin: 0;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.eda-card-desc {
+  font-size: 10px;
+  color: #5A6A6A;
+  margin: 3px 0 0;
+  line-height: 1.4;
+}
+
+.eda-card-light .eda-card-desc { color: #9CA3AF; }
+
+.eda-card-badge {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 3px 7px;
+  border-radius: 3px;
+  background: rgba(214, 250, 67, 0.1);
+  color: #D6FA43;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.eda-card-body {
+  padding: 16px 18px;
+  flex: 1;
+  color: #AEB5AF;
+  font-size: 12px;
+}
+
+.eda-section-divider {
+  height: 1px;
+  background: #1E2828;
+  margin: 0;
+}
+
+/* =========================================================================
+   KPI STAT ATOMS
+   ========================================================================= */
+
+.eda-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: #1E2828;
+}
+
+.eda-stat-grid-2 { grid-template-columns: repeat(2, 1fr); }
+.eda-stat-grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+.eda-stat-cell {
+  background: #141818;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.eda-card-light .eda-stat-cell { background: #F0F0E9; }
+.eda-card-lime  .eda-stat-cell { background: #D6FA43; }
+
+.eda-stat-value {
+  font-size: 22px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  color: #F4F5F0;
+  line-height: 1;
+}
+
+.eda-stat-value-sm {
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #F4F5F0;
+  line-height: 1.2;
+}
+
+.eda-stat-value-lime { color: #D6FA43; }
+.eda-stat-value-warn { color: #f59e0b; }
+.eda-stat-value-ok   { color: #6ee7b7; }
+
+.eda-stat-label {
+  font-size: 10px;
+  color: #5A6A6A;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+/* =========================================================================
+   INLINE MINI CHARTS (SVG-based, no dependencies)
+   ========================================================================= */
+
+.eda-chart-wrap {
+  width: 100%;
+  overflow: hidden;
+}
+
+.eda-chart-svg {
+  width: 100%;
+  display: block;
+}
+
+.eda-chart-caption {
+  font-size: 10px;
+  color: #3A4A4A;
+  padding: 6px 18px 14px;
+  line-height: 1.4;
+}
+
+.eda-card-light .eda-chart-caption { color: #9CA3AF; }
+
+/* =========================================================================
+   CORRELATION HEATMAP GRID
+   ========================================================================= */
+
+.eda-heatmap-wrap {
+  overflow-x: auto;
+  padding: 0 18px 16px;
+}
+
+.eda-heatmap-table {
+  border-collapse: collapse;
+  font-size: 9px;
+  color: #AEB5AF;
+  font-family: ui-monospace, Consolas, monospace;
+  min-width: 100%;
+}
+
+.eda-heatmap-table th {
+  padding: 4px 6px;
+  text-align: center;
+  font-weight: 500;
+  white-space: nowrap;
+  max-width: 70px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.eda-heatmap-table td {
+  width: 36px;
+  height: 30px;
+  text-align: center;
+  font-size: 9px;
+  font-weight: 600;
+  border: 1px solid #0e1111;
+  border-radius: 2px;
+  cursor: default;
+  transition: filter 0.1s;
+}
+
+.eda-heatmap-table td:hover {
+  filter: brightness(1.3);
+}
+
+/* =========================================================================
+   BAR CHART ROWS (horizontal, category comparison)
+   ========================================================================= */
+
+.eda-bar-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px 0 4px;
+}
+
+.eda-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.eda-bar-label {
+  font-size: 10px;
+  color: #AEB5AF;
+  min-width: 80px;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.eda-card-light .eda-bar-label { color: #6B7280; }
+
+.eda-bar-track {
+  flex: 1;
+  height: 18px;
+  background: #1A2020;
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.eda-card-light .eda-bar-track { background: #E5E5DC; }
+
+.eda-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: #2A3838;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.eda-bar-fill-lime { background: #D6FA43; }
+.eda-bar-fill-teal { background: #14b8a6; }
+.eda-bar-fill-muted { background: #2A3838; }
+
+.eda-bar-value {
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #6A8080;
+  min-width: 44px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.eda-card-light .eda-bar-value { color: #9CA3AF; }
+
+/* =========================================================================
+   QUALITY METER
+   ========================================================================= */
+
+.eda-quality-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 2px 0;
+}
+
+.eda-quality-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.eda-quality-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.eda-quality-name {
+  font-size: 11px;
+  font-weight: 500;
+  color: #AEB5AF;
+}
+
+.eda-quality-score {
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #F4F5F0;
+}
+
+.eda-quality-track {
+  height: 4px;
+  background: #1A2020;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.eda-quality-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: #D6FA43;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.eda-quality-fill-warn { background: #f59e0b; }
+.eda-quality-fill-err  { background: #ef4444; }
+
+/* =========================================================================
+   DATA TABLE (scrollable, compact)
+   ========================================================================= */
+
+.eda-table-wrap {
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.eda-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+  font-family: ui-monospace, Consolas, monospace;
+}
+
+.eda-table th {
+  padding: 7px 10px;
+  text-align: left;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #5A6A6A;
+  border-bottom: 1px solid #1E2828;
+  white-space: nowrap;
+}
+
+.eda-card-light .eda-table th {
+  color: #9CA3AF;
+  border-bottom-color: #D8D8D0;
+}
+
+.eda-table td {
+  padding: 6px 10px;
+  color: #AEB5AF;
+  border-bottom: 1px solid #181C1C;
+  white-space: nowrap;
+}
+
+.eda-card-light .eda-table td {
+  color: #374151;
+  border-bottom-color: #E5E5DC;
+}
+
+.eda-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.eda-table td.lime { color: #D6FA43; font-weight: 600; }
+.eda-table td.ok   { color: #6ee7b7; }
+.eda-table td.warn { color: #fbbf24; }
+.eda-table td.err  { color: #f87171; }
+
+/* =========================================================================
+   INSIGHT CARDS (EDA Findings)
+   ========================================================================= */
+
+.eda-insight-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.eda-insight-item {
+  padding: 10px 12px;
+  background: #0e1111;
+  border: 1px solid #1E2828;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.eda-card-light .eda-insight-item {
+  background: #E8E8E0;
+  border-color: #D0D0C8;
+}
+
+.eda-insight-category {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #D6FA43;
+}
+
+.eda-insight-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #F4F5F0;
+  line-height: 1.3;
+}
+
+.eda-card-light .eda-insight-title { color: #161A16; }
+
+.eda-insight-text {
+  font-size: 11px;
+  color: #7A8A8A;
+  line-height: 1.5;
+}
+
+.eda-card-light .eda-insight-text { color: #6B7280; }
+
+.eda-insight-impact {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.eda-insight-impact.high  { color: #f87171; }
+.eda-insight-impact.medium { color: #fbbf24; }
+.eda-insight-impact.low   { color: #6ee7b7; }
+
+/* =========================================================================
+   MISSING VALUES MATRIX
+   ========================================================================= */
+
+.eda-missing-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.eda-missing-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.eda-missing-col-name {
+  font-size: 10px;
+  font-family: ui-monospace, Consolas, monospace;
+  color: #7A8A8A;
+  min-width: 110px;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eda-missing-bar-track {
+  flex: 1;
+  height: 14px;
+  background: #1A2020;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.eda-missing-bar-fill {
+  height: 100%;
+  background: #f59e0b;
+  border-radius: 2px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.eda-missing-pct {
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #f59e0b;
+  min-width: 38px;
+  text-align: right;
+}
+
+/* =========================================================================
+   DISTRIBUTION HISTOGRAM (inline SVG)
+   ========================================================================= */
+
+.eda-dist-select {
+  background: #0e1111;
+  border: 1px solid #2A3030;
+  color: #AEB5AF;
+  font-size: 11px;
+  font-family: inherit;
+  padding: 5px 8px;
+  border-radius: 5px;
+  outline: none;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.eda-dist-select:focus { border-color: #D6FA43; }
+
+/* =========================================================================
+   TREND INDICATOR
+   ========================================================================= */
+
+.eda-trend-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eda-trend-item {
+  padding: 10px 12px;
+  background: #0e1111;
+  border: 1px solid #1E2828;
+  border-radius: 6px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.eda-trend-dir {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+.eda-trend-dir.growth     { background: rgba(110, 231, 183, 0.1); color: #6ee7b7; }
+.eda-trend-dir.decline    { background: rgba(248, 113, 113, 0.1); color: #f87171; }
+.eda-trend-dir.stable     { background: rgba(214, 250, 67, 0.1);  color: #D6FA43; }
+.eda-trend-dir.fluctuating { background: rgba(251, 191, 36, 0.1); color: #fbbf24; }
+
+.eda-trend-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.eda-trend-col {
+  font-size: 11px;
+  font-weight: 600;
+  color: #F4F5F0;
+}
+
+.eda-trend-desc {
+  font-size: 10px;
+  color: #7A8A8A;
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+.eda-trend-rate {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #D6FA43;
+  flex-shrink: 0;
+}
+
+/* =========================================================================
+   OUTLIER PANEL
+   ========================================================================= */
+
+.eda-outlier-col-select {
+  background: #0e1111;
+  border: 1px solid #2A3030;
+  color: #AEB5AF;
+  font-size: 11px;
+  font-family: inherit;
+  padding: 5px 8px;
+  border-radius: 5px;
+  outline: none;
+  margin-bottom: 10px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.eda-outlier-col-select:focus { border-color: #D6FA43; }
+
+.eda-outlier-methods {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.eda-outlier-method {
+  background: #0e1111;
+  border: 1px solid #1E2828;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.eda-outlier-method-name {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #5A6A6A;
+  margin-bottom: 6px;
+}
+
+.eda-outlier-count {
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #f59e0b;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.eda-outlier-pct {
+  font-size: 10px;
+  color: #7A8A8A;
+}
+
+/* =========================================================================
+   CARD CONTROLS (expand, inspect, export)
+   ========================================================================= */
+
+.eda-card-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.eda-ctrl-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  border: 1px solid #1E2828;
+  background: transparent;
+  color: #5A6A6A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  font-family: inherit;
+  padding: 0;
+}
+
+.eda-ctrl-btn:hover {
+  border-color: #D6FA43;
+  color: #D6FA43;
+  background: rgba(214, 250, 67, 0.06);
+}
+
+.eda-card-light .eda-ctrl-btn {
+  border-color: #D0D0C8;
+  color: #9CA3AF;
+}
+
+.eda-card-light .eda-ctrl-btn:hover {
+  border-color: #101313;
+  color: #101313;
+  background: rgba(0,0,0,0.06);
+}
+
+/* =========================================================================
+   SEGMENTATION / CATEGORY PILLS
+   ========================================================================= */
+
+.eda-pill-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.eda-pill {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 3px;
+  background: #1A2020;
+  border: 1px solid #2A3030;
+  color: #7A8A8A;
+}
+
+.eda-pill-lime {
+  background: rgba(214, 250, 67, 0.08);
+  border-color: rgba(214, 250, 67, 0.25);
+  color: #D6FA43;
+}
+
+/* =========================================================================
+   RESPONSIVE OVERRIDES
+   ========================================================================= */
+
+@media (max-width: 600px) {
+  .eda-header {
+    padding: 20px 16px 16px;
+  }
+
+  .eda-header-title {
+    font-size: 20px;
+  }
+
+  .eda-meta-bar {
+    padding: 8px 16px;
+  }
+
+  .eda-stat-value {
+    font-size: 18px;
+  }
+
+  .eda-stat-grid,
+  .eda-stat-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .eda-heatmap-wrap {
+    padding: 0 12px 12px;
+  }
+
+  .eda-bar-label {
+    min-width: 60px;
+    max-width: 60px;
+  }
+}
+
+/* =========================================================================
+   SKELETON LOADER
+   ========================================================================= */
+
+.eda-skeleton {
+  background: linear-gradient(90deg, #1A2020 25%, #222828 50%, #1A2020 75%);
+  background-size: 200% 100%;
+  animation: eda-shimmer 1.4s infinite;
+  border-radius: 4px;
+}
+
+@keyframes eda-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.eda-skeleton-h12 { height: 12px; }
+.eda-skeleton-h20 { height: 20px; }
+.eda-skeleton-h32 { height: 32px; }
+.eda-skeleton-h80 { height: 80px; }
+.eda-skeleton-h140 { height: 140px; }
+.eda-skeleton-w60  { width: 60%;  }
+.eda-skeleton-w80  { width: 80%;  }
+.eda-skeleton-w100 { width: 100%; }
+
+/* =========================================================================
+   FOCUS / ACCESSIBILITY
+   ========================================================================= */
+
+.eda-run-btn:focus-visible,
+.eda-secondary-btn:focus-visible,
+.eda-ctrl-btn:focus-visible,
+.eda-dataset-select:focus-visible {
+  outline: 2px solid #D6FA43;
+  outline-offset: 2px;
+}

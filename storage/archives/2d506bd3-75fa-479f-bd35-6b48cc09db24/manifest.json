@@ -1,0 +1,15 @@
+{
+  "dataset_id": "2d506bd3-75fa-479f-bd35-6b48cc09db24",
+  "archived_at": "2026-10-11T18:05:51Z",
+  "reason": "deleted",
+  "archived_files": [
+    "2d506bd3-75fa-479f-bd35-6b48cc09db24.json",
+    "2d506bd3-75fa-479f-bd35-6b48cc09db24.json",
+    "2d506bd3-75fa-479f-bd35-6b48cc09db24.json",
+    "2d506bd3-75fa-479f-bd35-6b48cc09db24.json",
+    "2d506bd3-75fa-479f-bd35-6b48cc09db24.json",
+    "2d506bd3-75fa-479f-bd35-6b48cc09db24_products.csv",
+    "2d506bd3-75fa-479f-bd35-6b48cc09db24_products.csv"
+  ],
+  "archive_path": "/app/storage/archives/2d506bd3-75fa-479f-bd35-6b48cc09db24"
+}

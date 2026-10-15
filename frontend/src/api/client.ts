@@ -1,3 +1,4 @@
+import { fetchWithRecovery } from './recovery';
 /**
  * Shared API client using the native fetch API.
  *
@@ -7,9 +8,7 @@
  * - Consistent error normalization
  * - Timeout handling
  *
- * Authentication-specific logic (token injection, credential handling)
- * is NOT included here. It will be added in a later phase via a clean
- * extension point (e.g. request interceptor or auth header injection).
+ * Authenticated requests use the token maintained by AuthContext.
  */
 
 // ---------------------------------------------------------------------------
@@ -17,11 +16,24 @@
 // ---------------------------------------------------------------------------
 
 function getApiBaseUrl(): string {
-  const url = import.meta.env.VITE_API_BASE_URL;
-  if (!url) {
-    return 'http://localhost:8000';
+  const envUrl = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || '').trim();
+
+  if (import.meta.env.PROD) {
+    // In production, if envUrl is missing or points to localhost/127.0.0.1, use same-origin
+    if (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1')) {
+      if (typeof window !== 'undefined' && window.location?.origin) {
+        return window.location.origin;
+      }
+      return '';
+    }
+    return envUrl.replace(/\/api\/v1\/?$/, '');
   }
-  return url as string;
+
+  // In development, target the local backend port 8000
+  if (envUrl) {
+    return envUrl.replace(/\/api\/v1\/?$/, '');
+  }
+  return 'http://localhost:8000';
 }
 
 const API_BASE_URL: string = getApiBaseUrl();
@@ -35,9 +47,9 @@ const DEFAULT_TIMEOUT_MS = 30_000;
 /**
  * Normalized API error thrown by all client methods.
  *
- * - `status`  — HTTP status code, or 0 for network/timeout errors.
- * - `code`    — Machine-readable error code for programmatic handling.
- * - `message` — Human-readable description safe to display in UI.
+ * - `status`  â€” HTTP status code, or 0 for network/timeout errors.
+ * - `code`    â€” Machine-readable error code for programmatic handling.
+ * - `message` â€” Human-readable description safe to display in UI.
  */
 export class ApiError extends Error {
   readonly status: number;
@@ -109,6 +121,7 @@ export function clearAuthToken(): void {
 // ---------------------------------------------------------------------------
 
 interface RequestOptions {
+  responseType?: 'json' | 'blob';
   /** Query parameters appended to the URL. */
   params?: Record<string, string>;
   /** Additional headers merged with defaults. */
@@ -130,7 +143,9 @@ async function request<T>(
   body?: unknown,
   options: RequestOptions = {},
 ): Promise<T> {
-  const url = new URL(path, API_BASE_URL);
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  const base = API_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+  const url = new URL(normalizedPath, base);
 
   if (options.params) {
     for (const [key, value] of Object.entries(options.params)) {
@@ -160,19 +175,21 @@ async function request<T>(
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   // If the caller provided an external signal, abort when it fires.
+  const abortFromCaller = () => controller.abort();
   if (options.signal) {
-    options.signal.addEventListener('abort', () => controller.abort(), {
+    if (options.signal.aborted) controller.abort();
+    options.signal.addEventListener('abort', abortFromCaller, {
       once: true,
     });
   }
 
   try {
-    const response = await fetch(url.toString(), {
+    const response = await fetchWithRecovery(url.toString(), {
       method,
       headers,
       body: isFormData ? (body as FormData) : (body !== undefined ? JSON.stringify(body) : undefined),
       signal: controller.signal,
-    });
+    }, { timeoutMs });
 
     // --- Success path ---
     if (response.ok) {
@@ -180,13 +197,17 @@ async function request<T>(
       if (response.status === 204) {
         return undefined as T;
       }
+      if (options.responseType === 'blob') return await response.blob() as T;
       return (await response.json()) as T;
     }
 
     // --- Error path: attempt to parse backend error body ---
     let message = response.statusText || 'Request failed';
+    let errorCode = errorCodeFromStatus(response.status);
     try {
       const errorBody: unknown = await response.json();
+      if (typeof errorBody === 'object' && errorBody !== null && 'message' in errorBody && typeof errorBody.message === 'string') message = errorBody.message;
+      if (typeof errorBody === 'object' && errorBody !== null && 'error_code' in errorBody && typeof errorBody.error_code === 'string') errorCode = errorBody.error_code;
       if (
         typeof errorBody === 'object' &&
         errorBody !== null &&
@@ -196,12 +217,12 @@ async function request<T>(
         message = typeof detail === 'string' ? detail : JSON.stringify(detail);
       }
     } catch {
-      // Body is not JSON — use statusText as the message.
+      // Body is not JSON â€” use statusText as the message.
     }
 
     throw new ApiError(
       response.status,
-      errorCodeFromStatus(response.status),
+      errorCode,
       message,
     );
   } catch (error: unknown) {
@@ -212,6 +233,7 @@ async function request<T>(
 
     // Network failure or abort
     if (error instanceof DOMException && error.name === 'AbortError') {
+      if (options.signal?.aborted) throw new ApiError(0, 'CANCELLED', 'Request cancelled');
       throw new ApiError(0, 'TIMEOUT', 'Request timed out');
     }
 
@@ -222,6 +244,7 @@ async function request<T>(
     throw new ApiError(0, 'UNKNOWN_ERROR', 'An unexpected error occurred');
   } finally {
     clearTimeout(timeoutId);
+    options.signal?.removeEventListener('abort', abortFromCaller);
   }
 }
 
@@ -230,6 +253,9 @@ async function request<T>(
 // ---------------------------------------------------------------------------
 
 export const apiClient = {
+  getBlob(path: string, options?: RequestOptions): Promise<Blob> {
+    return request<Blob>('GET', path, undefined, { ...options, responseType: 'blob' });
+  },
   get<T>(path: string, options?: RequestOptions): Promise<T> {
     return request<T>('GET', path, undefined, options);
   },

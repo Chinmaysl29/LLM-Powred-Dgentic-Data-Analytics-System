@@ -1,0 +1,15 @@
+{
+  "dataset_id": "f131ff97-e03b-4a71-8969-f3cce9afedc9",
+  "dataset_name": "data",
+  "columns": [
+    "x"
+  ],
+  "records": [
+    {
+      "x": 1
+    },
+    {
+      "x": 2
+    }
+  ]
+}

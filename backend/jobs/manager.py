@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import inspect
+import asyncio
 import logging
 import uuid
 from datetime import datetime, timezone
@@ -39,6 +40,9 @@ class BackgroundJob(BaseModel):
     job_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     job_type: JobType
     tenant_id: str
+    actor_id: str | None = None
+    workspace_id: str | None = None
+    retry_safe: bool = False
     payload: Dict[str, Any] = Field(default_factory=dict)
     status: JobStatus = JobStatus.QUEUED
     attempts: int = 0
@@ -68,11 +72,67 @@ class BackgroundJobManager:
     JOB_PREFIX = "ai-analyst:jobs:item"
     JOB_TTL_SECONDS = 7 * 24 * 60 * 60
 
-    def __init__(self, redis_cache: RedisCache | None = None) -> None:
+    def __init__(self, redis_cache: RedisCache | None = None, authorizer=None, session_factory=None) -> None:
         self._redis = redis_cache
+        self._authorizer = authorizer
         self._handlers: dict[JobType, JobHandler] = {}
         self._memory_jobs: dict[str, BackgroundJob] = {}
         self._memory_queue: list[str] = []
+        from backend.jobs.persistence import PersistentJobStore
+        self.durable = PersistentJobStore(session_factory) if session_factory else None
+        self._durable_handlers = {}
+
+    def register_durable(self, kind, handler):
+        self._durable_handlers[kind] = handler
+
+    async def run_next_durable(self, worker_id):
+        """Execute one SQL-claimed job; stale workers cannot publish completion."""
+        from backend.jobs.persistence import LostLeaseError
+        if self.durable is None:
+            raise RuntimeError('Persistent session factory required')
+        job = self.durable.claim(worker_id, list(self._durable_handlers))
+        if job is None:
+            return None
+        token = job['lease_token']
+        def progress(status):
+            self.durable.advance(job['id'], token, status)
+        async def heartbeat():
+            while True:
+                await asyncio.sleep(self.durable.lease_seconds / 3)
+                self.durable.heartbeat(job['id'], token)
+        renewal = asyncio.create_task(heartbeat())
+        try:
+            handler = self._durable_handlers[job['kind']]
+            if asyncio.iscoroutinefunction(handler):
+                import inspect as py_inspect
+                sig = py_inspect.signature(handler)
+                if len(sig.parameters) >= 2 and list(sig.parameters.keys())[0] in ('store', 'job_store'):
+                    result = await handler(self.durable, job)
+                else:
+                    result = await handler(job, progress)
+            else:
+                result = await asyncio.to_thread(handler, job, progress)
+            self.durable.advance(job['id'], token, 'READY', result=result)
+        except LostLeaseError:
+            pass  # Cancellation or replacement worker owns the authoritative state.
+        except Exception as exc:
+            from backend.app.core.exceptions import ChromaConnectionError
+            from backend.app.services.document_indexing_service import DocumentSourceError
+            retryable = isinstance(exc, (ChromaConnectionError, ConnectionError, TimeoutError))
+            code = 'INDEX_DEPENDENCY_UNAVAILABLE' if retryable else 'JOB_EXECUTION_FAILED'
+            if isinstance(exc, DocumentSourceError):
+                code = exc.error_code
+            elif isinstance(exc, ChromaConnectionError) and getattr(exc, 'error_code', None) == 'CHROMA_VERSION_INCOMPATIBLE':
+                code = 'CHROMA_VERSION_INCOMPATIBLE'
+            self.durable.fail(job['id'], token, code, retryable)
+            logger.warning('Durable job failed job_id=%s code=%s', job['id'], code)
+        finally:
+            renewal.cancel()
+            try:
+                await renewal
+            except (asyncio.CancelledError, LostLeaseError):
+                pass
+        return self.durable.get(job['id'])
 
     def register(self, job_type: JobType, handler: JobHandler) -> None:
         if not callable(handler):
@@ -86,12 +146,16 @@ class BackgroundJobManager:
         payload: Dict[str, Any] | None = None,
         max_attempts: int = 3,
         priority: int = 5,
+        actor_id: str | None = None,
+        workspace_id: str | None = None,
+        retry_safe: bool = False,
     ) -> BackgroundJob:
         if max_attempts < 1:
             raise ValueError("max_attempts must be at least 1")
         if not tenant_id:
             raise ValueError("tenant_id is required")
-        job = BackgroundJob(job_type=job_type, tenant_id=tenant_id, payload=payload or {}, max_attempts=max_attempts, priority=priority)
+        job = BackgroundJob(job_type=job_type, tenant_id=tenant_id, payload=payload or {}, max_attempts=max_attempts, priority=priority, actor_id=actor_id, workspace_id=workspace_id, retry_safe=retry_safe)
+        await self._authorize(job)
         await self._save(job)
         await self._enqueue_id(job.job_id)
         platform_metrics.record_job_event(job.job_type.value, job.status.value)
@@ -103,7 +167,7 @@ class BackgroundJobManager:
                 raw = await self._redis.get(self._job_key(job_id))
                 return BackgroundJob.model_validate_json(raw) if raw else None
             except (RedisConnectionError, ValueError):
-                pass
+                raise RedisConnectionError('Job storage is unavailable or invalid') from None
         return self._memory_jobs.get(job_id)
 
     async def list_jobs(
@@ -160,8 +224,18 @@ class BackgroundJobManager:
             return await self.execute(job)
 
     async def execute(self, job: BackgroundJob) -> BackgroundJob:
+        try:
+            await self._authorize(job)
+        except Exception:
+            # Revoked/missing membership is terminal, never automatically retried.
+            job.status = JobStatus.FAILED
+            job.error = 'Job authorization denied or unavailable'
+            job.completed_at = datetime.now(timezone.utc).isoformat()
+            await self._save(job)
+            return job
         handler = self._handlers.get(job.job_type)
         if handler is None:
+            job.attempts = job.max_attempts
             return await self._fail(job, f"No handler registered for {job.job_type.value}")
 
         job.status = JobStatus.RUNNING
@@ -189,6 +263,9 @@ class BackgroundJobManager:
         job = await self.get_job(job_id)
         if job is None:
             raise KeyError(f"Job not found: {job_id}")
+        await self._authorize(job)
+        if not job.retry_safe:
+            raise ValueError('Job replay requires an explicitly retry-safe handler')
         if job.status != JobStatus.FAILED:
             raise ValueError("Only failed jobs may be retried")
         if job.attempts >= job.max_attempts:
@@ -203,10 +280,17 @@ class BackgroundJobManager:
         """Explicit API name used by services; retained alongside ``retry``."""
         return await self.retry(job_id)
 
+    async def _authorize(self, job: BackgroundJob) -> None:
+        if self._authorizer is None:
+            raise PermissionError('A persisted job authorization provider is required')
+        result = self._authorizer(job)
+        if inspect.isawaitable(result):
+            await result
+
     async def _fail(self, job: BackgroundJob, error: str) -> BackgroundJob:
         job.error = error[:2000]
         job.completed_at = datetime.now(timezone.utc).isoformat()
-        if job.attempts < job.max_attempts:
+        if job.retry_safe and job.attempts < job.max_attempts:
             job.status = JobStatus.QUEUED
             await self._save(job)
             await self._enqueue_id(job.job_id)
@@ -219,32 +303,24 @@ class BackgroundJobManager:
         return job
 
     async def _save(self, job: BackgroundJob) -> None:
-        self._memory_jobs[job.job_id] = job
         if self._redis is not None:
-            try:
-                await self._redis.set(self._job_key(job.job_id), job.model_dump_json(), self.JOB_TTL_SECONDS)
-            except RedisConnectionError:
-                pass
+            await self._redis.set(self._job_key(job.job_id), job.model_dump_json(), self.JOB_TTL_SECONDS)
+        self._memory_jobs[job.job_id] = job
 
     async def _enqueue_id(self, job_id: str) -> None:
         if self._redis is not None:
-            try:
-                await self._redis.push(self._queue_key(self._memory_jobs[job_id].priority), job_id)
-                return
-            except RedisConnectionError:
-                pass
+            await self._redis.push(self._queue_key(self._memory_jobs[job_id].priority), job_id)
+            return
         self._memory_queue.append(job_id)
         self._memory_queue.sort(key=lambda item: self._memory_jobs[item].priority, reverse=True)
 
     async def _dequeue_id(self) -> str | None:
         if self._redis is not None:
-            try:
-                for priority in range(9, -1, -1):
-                    job_id = await self._redis.pop(self._queue_key(priority))
-                    if job_id:
-                        return job_id
-            except RedisConnectionError:
-                pass
+            for priority in range(9, -1, -1):
+                job_id = await self._redis.pop(self._queue_key(priority))
+                if job_id:
+                    return job_id
+            return None
         return self._memory_queue.pop(0) if self._memory_queue else None
 
     @classmethod

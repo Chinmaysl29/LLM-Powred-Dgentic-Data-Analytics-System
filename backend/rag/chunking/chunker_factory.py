@@ -1,6 +1,7 @@
 """Chunker Factory and Registry (Phase 5.2)."""
 
-from typing import Dict, Type
+from typing import Dict, List, Optional, Type
+from backend.app.core.exceptions import InvalidChunkingStrategyError
 from backend.app.schemas.chunking import ChunkingStrategy
 from backend.rag.chunking.base_chunker import BaseChunker
 from backend.rag.chunking.fixed_chunker import FixedSizeChunker
@@ -20,15 +21,38 @@ class ChunkerFactory:
     }
 
     @classmethod
+    def supported_strategies(cls) -> List[str]:
+        """Return list of registered chunking strategy identifiers."""
+        return list(cls._REGISTRY.keys())
+
+    @classmethod
     def get_chunker(
         cls,
-        strategy: str | ChunkingStrategy = ChunkingStrategy.RECURSIVE,
+        strategy: Optional[str | ChunkingStrategy] = None,
         chunk_size: int = 1000,
         chunk_overlap: int = 200,
     ) -> BaseChunker:
-        strat_key = strategy.value if isinstance(strategy, ChunkingStrategy) else str(strategy).lower()
+        # Strategy omitted -> use explicit documented default (RECURSIVE)
+        if strategy is None:
+            strat_key = ChunkingStrategy.RECURSIVE.value
+        elif isinstance(strategy, ChunkingStrategy):
+            strat_key = strategy.value
+        elif isinstance(strategy, str):
+            strat_key = strategy.strip().lower()
+            if not strat_key:
+                raise InvalidChunkingStrategyError(
+                    f"Unknown chunking strategy: '{strategy}'. Supported: {cls.supported_strategies()}"
+                )
+        else:
+            raise InvalidChunkingStrategyError(
+                f"Unknown chunking strategy: '{strategy}'. Supported: {cls.supported_strategies()}"
+            )
+
         chunker_cls = cls._REGISTRY.get(strat_key)
         if not chunker_cls:
-            chunker_cls = cls._REGISTRY.get(ChunkingStrategy.RECURSIVE.value, RecursiveCharacterChunker)
+            raise InvalidChunkingStrategyError(
+                f"Unknown chunking strategy: '{strategy}'. Supported: {cls.supported_strategies()}"
+            )
         return chunker_cls(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+
 

@@ -1,0 +1,94 @@
+{
+  "dataset_id": "3adc5617-0a47-42ca-b60c-aedacc2fd20f",
+  "dataset_name": "recovery_authorized_fixture_v2",
+  "columns": [
+    "order_id",
+    "date",
+    "category",
+    "region",
+    "revenue",
+    "units"
+  ],
+  "records": [
+    {
+      "order_id": 1,
+      "date": "2026-01-01",
+      "category": "A",
+      "region": "East",
+      "revenue": 100.0,
+      "units": 2
+    },
+    {
+      "order_id": 2,
+      "date": "2026-01-02",
+      "category": "B",
+      "region": "West",
+      "revenue": 200.0,
+      "units": 4
+    },
+    {
+      "order_id": 3,
+      "date": "2026-01-03",
+      "category": "A",
+      "region": "East",
+      "revenue": -50.0,
+      "units": 1
+    },
+    {
+      "order_id": 4,
+      "date": "2026-01-04",
+      "category": "B",
+      "region": "West",
+      "revenue": 0.0,
+      "units": 0
+    },
+    {
+      "order_id": 5,
+      "date": "2026-01-05",
+      "category": "A",
+      "region": "East",
+      "revenue": 125.5,
+      "units": 3
+    },
+    {
+      "order_id": 6,
+      "date": "2026-01-06",
+      "category": "B",
+      "region": "West",
+      "revenue": 80.0,
+      "units": 2
+    },
+    {
+      "order_id": 7,
+      "date": "2026-01-07",
+      "category": "A",
+      "region": "East",
+      "revenue": 300.0,
+      "units": 6
+    },
+    {
+      "order_id": 8,
+      "date": "2026-01-08",
+      "category": "B",
+      "region": "West",
+      "revenue": 120.0,
+      "units": 3
+    },
+    {
+      "order_id": 9,
+      "date": "2026-01-09",
+      "category": "A",
+      "region": "East",
+      "revenue": 60.0,
+      "units": 2
+    },
+    {
+      "order_id": 10,
+      "date": "2026-01-10",
+      "category": "B",
+      "region": "West",
+      "revenue": 40.0,
+      "units": 1
+    }
+  ]
+}

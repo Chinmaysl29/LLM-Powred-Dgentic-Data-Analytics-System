@@ -1,0 +1,14 @@
+[
+  {
+    "id": 101,
+    "customer_name": "John Doe",
+    "email": "john@acme.com",
+    "spent": 1250.5
+  },
+  {
+    "id": 102,
+    "customer_name": "Jane Smith",
+    "email": "jane@globex.com",
+    "spent": 3400.0
+  }
+]

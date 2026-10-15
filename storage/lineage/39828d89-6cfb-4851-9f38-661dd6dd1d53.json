@@ -1,0 +1,15 @@
+{
+  "dataset_id": "39828d89-6cfb-4851-9f38-661dd6dd1d53",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "c9326106-4703-4663-ae84-44743c5a9a8b",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-10-15 08:25:54.339613+00:00",
+      "author": "system",
+      "description": "Initial ingestion of sales_categories.csv"
+    }
+  ]
+}

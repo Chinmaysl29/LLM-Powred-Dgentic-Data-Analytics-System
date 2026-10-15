@@ -58,7 +58,24 @@ class ReportGenerator:
         file_path = self.output_dir / filename
 
         report_title = title or clean_type.replace("_", " ").title()
-        report_data = data or self._get_default_report_data(clean_type)
+        report_data = data if data is not None else self._get_default_report_data(clean_type)
+        # Any chart image is generated from supplied computed observations only.
+        chart_image = None
+        if report_data.get("chart"):
+            import io
+            from matplotlib.figure import Figure
+            from matplotlib.backends.backend_agg import FigureCanvasAgg
+            points = report_data["chart"]
+            figure = Figure(figsize=(7, 3.5), layout="constrained")
+            FigureCanvasAgg(figure)
+            axis = figure.subplots()
+            axis.bar([str(p["label"]) for p in points], [float(p["value"]) for p in points], color="#9ab52f")
+            axis.set_ylabel(report_data.get("chart_label", "Source units"))
+            axis.tick_params(axis="x", labelrotation=35)
+            chart_image = io.BytesIO()
+            figure.savefig(chart_image, format="png", dpi=140)
+            chart_image.seek(0)
+        report_data = {**report_data, "_chart_image": chart_image}
 
         if clean_format == "pdf":
             self._generate_pdf(file_path, report_title, clean_type, report_data)
@@ -84,46 +101,7 @@ class ReportGenerator:
 
     def _get_default_report_data(self, report_type: str) -> dict[str, Any]:
         """Provide default structured content for each report type."""
-        if "executive" in report_type:
-            return {
-                "summary": "Enterprise performance has grown 18.5% YoY with healthy unit margins.",
-                "kpis": {"Annual Recurring Revenue": "$14.2M", "Gross Margin": "76.4%", "Customer Retention": "94.2%"},
-                "insights": [
-                    "Operating costs stabilized with 12% server efficiency improvement.",
-                    "North American market is outperforming targets by 22%.",
-                ],
-                "action_items": [
-                    "Accelerate high-tier enterprise marketing campaigns.",
-                    "Review inventory allocation for top Q3 demand nodes.",
-                ],
-            }
-        elif "forecast" in report_type:
-            return {
-                "summary": "30-day demand forecast indicates an upward trajectory with 95% confidence interval.",
-                "kpis": {"Predicted Mean": 128400, "Lower Bound": 115000, "Upper Bound": 142000, "MAPE": "4.2%"},
-                "insights": ["Trend exhibits weekly seasonality with peaks on Thursdays.", "No significant change points detected."],
-                "action_items": ["Procure raw inventory 10 days in advance of mid-month spike."],
-            }
-        elif "recommendation" in report_type:
-            return {
-                "summary": "Decision intelligence engine generated 4 high-impact action recommendations.",
-                "kpis": {"Identified Savings": "$240,000", "Revenue Upside": "$580,000", "ROI": "3.8x"},
-                "insights": [
-                    "Cloud instance downsizing offers immediate $18k/month recurring savings.",
-                    "Dynamic pricing tier adjustment projected to increase conversion by 4.5%.",
-                ],
-                "action_items": [
-                    "Approve cloud instance resizing plan.",
-                    "A/B test premium subscription pricing increase by 6%.",
-                ],
-            }
-        else:  # analytics report
-            return {
-                "summary": "Deep-dive dataset analysis across 45,000 records and 18 attributes.",
-                "kpis": {"Total Rows": 45000, "Completeness": "99.8%", "Outliers": 124},
-                "insights": ["Strong correlation (r=0.81) between customer engagement score and lifetime value."],
-                "action_items": ["Target customer onboarding sessions to raise 7-day engagement."],
-            }
+        return {"summary": "No source-backed analysis was supplied.", "kpis": {}, "insights": [], "action_items": []}
 
     def _generate_pdf(
         self, path: Path, title: str, report_type: str, data: dict[str, Any]
@@ -136,11 +114,18 @@ class ReportGenerator:
 
         doc = SimpleDocTemplate(str(path), pagesize=letter, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
         styles = getSampleStyleSheet()
+        from xml.sax.saxutils import escape
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
+        from matplotlib import get_data_path
+        font_path = Path(get_data_path()) / "fonts/ttf/DejaVuSans.ttf"
+        pdfmetrics.registerFont(TTFont("ReportUnicode", str(font_path)))
+        for style in styles.byName.values(): style.fontName = "ReportUnicode"
         elements = []
 
         # Title
         title_style = ParagraphStyle("ReportTitle", parent=styles["Heading1"], fontSize=20, leading=24, textColor=colors.HexColor("#1e293b"))
-        elements.append(Paragraph(title, title_style))
+        elements.append(Paragraph(escape(title), title_style))
         elements.append(Spacer(1, 10))
 
         # Metadata
@@ -153,7 +138,7 @@ class ReportGenerator:
         body_style = ParagraphStyle("Body", parent=styles["Normal"], fontSize=10, leading=14, textColor=colors.HexColor("#334155"))
         elements.append(Paragraph("Executive Overview", h2_style))
         elements.append(Spacer(1, 6))
-        elements.append(Paragraph(data.get("summary", ""), body_style))
+        elements.append(Paragraph(escape(data.get("summary", "")), body_style))
         elements.append(Spacer(1, 15))
 
         # KPIs Table
@@ -171,7 +156,7 @@ class ReportGenerator:
                     ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2563eb")),
                     ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
                     ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTNAME", (0, 0), (-1, -1), "ReportUnicode"),
                     ("FONTSIZE", (0, 0), (-1, -1), 9),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
                     ("TOPPADDING", (0, 0), (-1, -1), 6),
@@ -197,6 +182,9 @@ class ReportGenerator:
             for action in actions:
                 elements.append(Paragraph(f"✓ {action}", body_style))
 
+        if data.get("_chart_image"):
+            from reportlab.platypus import Image
+            elements.append(Image(data["_chart_image"], width=480, height=240))
         doc.build(elements)
 
     def _generate_docx(
@@ -236,6 +224,9 @@ class ReportGenerator:
             for action in actions:
                 doc.add_paragraph(action, style="List Bullet")
 
+        if data.get("_chart_image"):
+            from docx.shared import Inches
+            doc.add_picture(data["_chart_image"], width=Inches(6))
         doc.save(str(path))
 
     def _generate_excel(
@@ -282,6 +273,21 @@ class ReportGenerator:
             ws.cell(row=row, column=1, value=f"- {item}")
             row += 1
 
+        if data.get("chart"):
+            from openpyxl.chart import BarChart, Reference
+            chart_sheet = wb.create_sheet("Chart evidence")
+            chart_sheet.append(["Dimension", "Value"])
+            for point in data["chart"]: chart_sheet.append([str(point["label"]), float(point["value"])])
+            chart = BarChart(); chart.title = data.get("chart_label", "Source units")
+            chart.add_data(Reference(chart_sheet, min_col=2, min_row=1, max_row=chart_sheet.max_row), titles_from_data=True)
+            chart.set_categories(Reference(chart_sheet, min_col=1, min_row=2, max_row=chart_sheet.max_row))
+            chart_sheet.add_chart(chart, "D2")
+        # Source-provided strings are always literal cells, never formulas.
+        for sheet in wb:
+            for row_cells in sheet:
+                for cell in row_cells:
+                    if isinstance(cell.value, str): cell.data_type = "s"
+        ws.column_dimensions["A"].width = 60; ws.column_dimensions["B"].width = 30
         wb.save(str(path))
 
     def _generate_pptx(
@@ -321,6 +327,10 @@ class ReportGenerator:
             p.text = item
             p.level = 1
 
+        if data.get("_chart_image"):
+            slide = prs.slides.add_slide(prs.slide_layouts[5])
+            slide.shapes.title.text = data.get("chart_label", "Source observations")
+            slide.shapes.add_picture(data["_chart_image"], Inches(1), Inches(1.5), width=Inches(8))
         prs.save(str(path))
 
 

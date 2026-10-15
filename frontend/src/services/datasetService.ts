@@ -8,6 +8,7 @@
  */
 
 import { apiClient } from '../api/client';
+import { supabase, isSupabaseConfigured } from '../lib/supabase/client';
 import type {
   Dataset,
   DatasetStatus,
@@ -23,12 +24,7 @@ import type {
   DatasetPreview,
   CellValue,
 } from '../types/datasets';
-import {
-  INITIAL_DB_CONNECTIONS,
-  INITIAL_API_CONNECTIONS,
-  INITIAL_WAREHOUSE_CATALOG,
-  getExtension,
-} from '../datasetUtils';
+import { getExtension } from '../datasetUtils';
 
 export interface BackendDatasetResponse {
   dataset_id: string;
@@ -57,9 +53,10 @@ export function mapBackendDatasetToFrontend(backend: BackendDatasetResponse): Da
   const inferredType = backend.file_type || getExtension(filename);
   const rows = backend.row_count ?? 0;
   const cols = backend.column_count ?? 0;
-  const quality = backend.quality_score ?? 100;
+  const quality = backend.quality_score ?? undefined;
 
   return {
+    version: backend.version,
     dataset_id: backend.dataset_id,
     filename,
     name: backend.dataset_name || filename.replace(/\.[^/.]+$/, ''),
@@ -75,39 +72,31 @@ export function mapBackendDatasetToFrontend(backend: BackendDatasetResponse): Da
       ? new Date(backend.updated_at).toISOString()
       : new Date().toISOString(),
     status: (backend.status as DatasetStatus) || 'Ready',
-    raw_path: backend.original_path || backend.file_path || `storage/raw/${filename}`,
-    processed_path: backend.canonical_path || backend.json_path || `storage/processed/${backend.dataset_id}.json`,
+    raw_path: backend.original_path || backend.file_path || '',
+    processed_path: backend.canonical_path || backend.json_path || '',
   };
 }
 
-const sessionDbConnections: DatabaseConnection[] = [...INITIAL_DB_CONNECTIONS];
-const sessionApiConnections: ApiConnection[] = [...INITIAL_API_CONNECTIONS];
-
-let sessionWarehouse: DataWarehouseCatalog = { ...INITIAL_WAREHOUSE_CATALOG };
-
 export const datasetService = {
   /**
-   * List all datasets directly from backend PostgreSQL database.
+   * List all datasets from Supabase PostgreSQL (with RLS isolation) or backend database.
    * Never injects mock datasets.
    */
   async list(skip = 0, limit = 50): Promise<Dataset[]> {
-    try {
-      const data = await apiClient.get<BackendDatasetResponse[]>('/api/v1/datasets', {
-        params: {
-          skip: String(skip),
-          limit: String(limit),
-        },
-      });
+    // The backend owns dataset authorization, versions and preview records.
+    // Hosted mirror metadata must never replace its authoritative registry.
+    const data = await apiClient.get<BackendDatasetResponse[]>('/api/v1/datasets', {
+      params: {
+        skip: String(skip),
+        limit: String(limit),
+      },
+    });
 
-      if (!Array.isArray(data)) {
-        return [];
-      }
-
-      return data.map(mapBackendDatasetToFrontend);
-    } catch (err) {
-      console.error('Failed to list datasets from backend:', err);
-      return [];
+    if (!Array.isArray(data)) {
+      throw new Error('The dataset registry returned an invalid response. Please retry.');
     }
+
+    return data.map(mapBackendDatasetToFrontend);
   },
 
   /**
@@ -121,10 +110,33 @@ export const datasetService = {
   },
 
   /**
-   * Upload dataset file to backend processing pipeline.
+   * Upload dataset file to Supabase private storage and backend processing pipeline.
    * Throws on failure so UI displays authentic error message.
    */
   async upload(file: File, datasetName?: string): Promise<Dataset> {
+    let supabaseStoragePath: string | null = null;
+    let currentUserId: string | null = null;
+
+    if (isSupabaseConfigured()) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          currentUserId = user.id;
+          const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+          const path = `${user.id}/${Date.now()}_${cleanName}`;
+          const { error: storageErr } = await supabase.storage
+            .from('user-datasets')
+            .upload(path, file, { cacheControl: '3600', upsert: false });
+
+          if (!storageErr) {
+            supabaseStoragePath = path;
+          }
+        }
+      } catch (err) {
+        console.warn('Supabase storage upload skipped:', err);
+      }
+    }
+
     const formData = new FormData();
     formData.append('file', file);
     if (datasetName) {
@@ -134,35 +146,55 @@ export const datasetService = {
       '/api/v1/datasets/upload',
       formData,
     );
-    return mapBackendDatasetToFrontend(data);
+    const mapped = mapBackendDatasetToFrontend(data);
+
+    // Record dataset metadata in Supabase datasets table if user is authenticated
+    if (isSupabaseConfigured() && currentUserId) {
+      try {
+        await supabase.from('datasets').insert({
+          id: mapped.dataset_id,
+          user_id: currentUserId,
+          name: mapped.name,
+          original_filename: mapped.filename,
+          storage_path: supabaseStoragePath || mapped.raw_path || 'local',
+          file_type: mapped.file_type,
+          file_size: mapped.size_bytes,
+          row_count: mapped.row_count,
+          column_count: mapped.column_count,
+          processing_status: 'Ready',
+        } as Record<string, unknown>);
+      } catch {
+        // Table will be populated once remote SQL migration is applied
+      }
+    }
+
+    return mapped;
   },
 
   /**
    * Delete dataset from database and disk storage.
    */
   async delete(datasetId: string): Promise<void> {
+    if (isSupabaseConfigured()) {
+      try {
+        await supabase.from('datasets').delete().eq('id', datasetId);
+      } catch {
+        // Ignore if table not present
+      }
+    }
     await apiClient.delete(`/api/v1/datasets/${encodeURIComponent(datasetId)}`);
   },
 
   /**
    * Fetch real preview records directly from canonical JSON or source storage.
    */
-  async getPreview(datasetId: string, limit = 50): Promise<DatasetPreview | null> {
-    try {
-      const res = await apiClient.get<{ columns: string[]; rows: Record<string, CellValue>[]; total_rows: number }>(
-        `/api/v1/datasets/${encodeURIComponent(datasetId)}/preview?limit=${limit}`,
-      );
-      if (res && res.columns) {
-        return {
-          columns: res.columns,
-          rows: res.rows || [],
-          totalRows: res.total_rows || 0,
-        };
-      }
-    } catch (err) {
-      console.warn(`Preview not available for dataset ${datasetId}:`, err);
-    }
-    return null;
+  async getPreview(datasetId: string, limit = 50): Promise<DatasetPreview> {
+    const res = await apiClient.get<{ columns: string[]; rows: Record<string, CellValue>[]; total_rows: number | null; preview_rows?: number; count_status?: 'exact' | 'unknown' }>(
+      `/api/v1/datasets/${encodeURIComponent(datasetId)}/preview?limit=${limit}`,
+    );
+    if (!res || !Array.isArray(res.columns) || !Array.isArray(res.rows)) throw new Error('The preview service returned invalid data. Please retry.');
+    return { columns: res.columns, rows: res.rows, totalRows: res.total_rows ?? null,
+      previewRows: res.preview_rows ?? res.rows.length, countStatus: res.count_status ?? (res.total_rows == null ? 'unknown' : 'exact') };
   },
 
   /**
@@ -187,7 +219,7 @@ export const datasetService = {
           uniqueValues: col.unique_count ?? 0,
           nullCount: col.null_count ?? 0,
           nullPercentage: Math.round((col.null_percentage ?? 0) * 100),
-          sampleValues: ['Sample 1', 'Sample 2'],
+          sampleValues: [],
         }));
       }
     } catch (err) {
@@ -325,22 +357,24 @@ export const datasetService = {
         versions: Array<{
           version_number: number;
           created_at: string;
-          changelog?: string;
-          row_count?: number;
+          change_type: string;
+          created_by: string;
+          is_active: boolean;
+          metadata_snapshot: { row_count?: number; column_count?: number; size_bytes?: number };
         }>;
       }>(`/api/v1/datasets/${encodeURIComponent(datasetId)}/versions`);
 
       if (data && Array.isArray(data.versions)) {
-        return data.versions.map((v, idx) => ({
+        return data.versions.map((v) => ({
           version_number: v.version_number,
           label: `Version ${v.version_number}`,
           created_at: v.created_at,
-          author: 'Data Platform',
-          changelog: v.changelog || 'Dataset registered in platform',
-          rows: v.row_count ?? 0,
-          columns: 0,
-          size_bytes: 0,
-          isActive: idx === data.versions.length - 1,
+          author: v.created_by,
+          changelog: v.change_type,
+          rows: v.metadata_snapshot?.row_count ?? 0,
+          columns: v.metadata_snapshot?.column_count ?? 0,
+          size_bytes: v.metadata_snapshot?.size_bytes ?? 0,
+          isActive: v.is_active,
         }));
       }
     } catch (err) {
@@ -364,122 +398,16 @@ export const datasetService = {
 
   async getLineage(dataset: Dataset): Promise<DatasetLineageNode[]> {
     return [
-      {
-        id: 'node-source',
-        type: 'source',
-        title: `Source: ${dataset.filename}`,
-        description: `Original ${dataset.file_type} file stored in storage/raw/`,
-        path: dataset.raw_path,
-        status: 'ready',
-      },
-      {
-        id: 'node-raw',
-        type: 'raw_storage',
-        title: 'Raw Enterprise Storage',
-        description: 'Immutably persisted in storage/raw/',
-        path: dataset.raw_path,
-        status: 'ready',
-      },
-      {
-        id: 'node-engine',
-        type: 'engine',
-        title: 'Canonical Processing Engine',
-        description: 'Automatic conversion into canonical JSON and validation',
-        status: 'active',
-      },
-      {
-        id: 'node-processed',
-        type: 'processed_storage',
-        title: 'Processed Canonical JSON',
-        description: 'Materialized in storage/processed/ for instant agent querying',
-        path: dataset.processed_path,
-        status: 'synced',
-      },
-      {
-        id: 'node-registry',
-        type: 'registry',
-        title: 'Dataset Catalog Registry',
-        description: 'Metadata, statistical profiling, and quality score indexed in PostgreSQL',
-        status: 'ready',
-      },
-      {
-        id: 'node-agents',
-        type: 'ai_agent',
-        title: 'AI Pipeline Availability',
-        description: 'Active for EDA Agent, SQL Agent, Visualization, Forecast, and Recommendations',
-        status: 'active',
-      },
+      ...(dataset.raw_path ? [{ id: 'source', type: 'source' as const, title: dataset.filename, description: 'Registered source path', path: dataset.raw_path, status: 'ready' as const }] : []),
+      ...(dataset.processed_path ? [{ id: 'processed', type: 'processed_storage' as const, title: 'Canonical dataset', description: 'Registered canonical path', path: dataset.processed_path, status: 'ready' as const }] : []),
     ];
   },
-
-  // -------------------------------------------------------------------------
-  // Connections & Warehouse
-  // -------------------------------------------------------------------------
-
-  async listDatabaseConnections(): Promise<DatabaseConnection[]> {
-    return sessionDbConnections;
-  },
-
-  async testDatabaseConnection(conn: Partial<DatabaseConnection>): Promise<{ success: boolean; latencyMs: number; message: string }> {
-    await new Promise((res) => setTimeout(res, 500));
-    return {
-      success: true,
-      latencyMs: 16,
-      message: `Successfully connected to ${conn.engine || 'database'} on ${conn.host || 'localhost'}:${conn.port || 5432}. Schema parsed cleanly.`,
-    };
-  },
-
-  async saveDatabaseConnection(conn: Omit<DatabaseConnection, 'id' | 'lastTestedAt'>): Promise<DatabaseConnection> {
-    const newConn: DatabaseConnection = {
-      ...conn,
-      id: `conn-${Date.now()}`,
-      status: 'connected',
-      latencyMs: 18,
-      tablesCount: 24,
-      lastTestedAt: new Date().toISOString(),
-    };
-    sessionDbConnections.unshift(newConn);
-    return newConn;
-  },
-
-  async listApiConnections(): Promise<ApiConnection[]> {
-    return sessionApiConnections;
-  },
-
-  async testApiConnection(conn: Partial<ApiConnection>): Promise<{ success: boolean; latencyMs: number; message: string }> {
-    await new Promise((res) => setTimeout(res, 400));
-    return {
-      success: true,
-      latencyMs: 65,
-      message: `200 OK — Endpoint ${conn.baseUrl || ''} responded in valid JSON schema.`,
-    };
-  },
-
-  async saveApiConnection(conn: Omit<ApiConnection, 'id' | 'lastTestedAt'>): Promise<ApiConnection> {
-    const newConn: ApiConnection = {
-      ...conn,
-      id: `api-${Date.now()}`,
-      status: 'connected',
-      latencyMs: 80,
-      lastTestedAt: new Date().toISOString(),
-    };
-    sessionApiConnections.unshift(newConn);
-    return newConn;
-  },
-
-  async getWarehouseCatalog(): Promise<DataWarehouseCatalog> {
-    return sessionWarehouse;
-  },
-
-  async refreshMaterializedView(mvId: string): Promise<void> {
-    await new Promise((res) => setTimeout(res, 800));
-    sessionWarehouse = {
-      ...sessionWarehouse,
-      materializedViews: sessionWarehouse.materializedViews.map((mv) =>
-        mv.id === mvId
-          ? { ...mv, lastRefreshed: new Date().toISOString(), status: 'ready' as const }
-          : mv,
-      ),
-    };
-  },
+  async listDatabaseConnections(): Promise<DatabaseConnection[]> { throw new Error('Database connection API is unavailable.'); },
+  async testDatabaseConnection(_conn: Partial<DatabaseConnection>): Promise<{ success: boolean; latencyMs: number; message: string }> { throw new Error('Database connection testing is unavailable.'); },
+  async saveDatabaseConnection(_conn: Omit<DatabaseConnection, 'id' | 'lastTestedAt'>): Promise<DatabaseConnection> { throw new Error('Database connection persistence is unavailable.'); },
+  async listApiConnections(): Promise<ApiConnection[]> { throw new Error('API connection registry is unavailable.'); },
+  async testApiConnection(_conn: Partial<ApiConnection>): Promise<{ success: boolean; latencyMs: number; message: string }> { throw new Error('API connection testing is unavailable.'); },
+  async saveApiConnection(_conn: Omit<ApiConnection, 'id' | 'lastTestedAt'>): Promise<ApiConnection> { throw new Error('API connection persistence is unavailable.'); },
+  async getWarehouseCatalog(): Promise<DataWarehouseCatalog> { throw new Error('Warehouse catalog API is unavailable.'); },
+  async refreshMaterializedView(_mvId: string): Promise<void> { throw new Error('Materialized-view refresh API is unavailable.'); },
 };

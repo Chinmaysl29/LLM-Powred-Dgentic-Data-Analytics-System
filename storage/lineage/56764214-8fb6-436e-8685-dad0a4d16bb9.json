@@ -1,0 +1,15 @@
+{
+  "dataset_id": "56764214-8fb6-436e-8685-dad0a4d16bb9",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "bc6c44a0-59d2-4a6d-a9f4-bb00e5026de7",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-10-15 08:05:38.849995+00:00",
+      "author": "system",
+      "description": "Initial ingestion of retail_sample.csv"
+    }
+  ]
+}

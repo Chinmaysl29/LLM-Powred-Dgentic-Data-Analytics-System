@@ -1,0 +1,202 @@
+[
+  {
+    "order_id": "ORD-0001",
+    "product_name": "MacBook Pro 16",
+    "category": "Computers",
+    "sales": 2899.0,
+    "quantity": 12,
+    "order_date": "2024-01-07"
+  },
+  {
+    "order_id": "ORD-0002",
+    "product_name": "Dell XPS 15",
+    "category": "Computers",
+    "sales": 2199.0,
+    "quantity": 18,
+    "order_date": "2024-01-14"
+  },
+  {
+    "order_id": "ORD-0003",
+    "product_name": "ThinkPad X1",
+    "category": "Computers",
+    "sales": 1850.0,
+    "quantity": 15,
+    "order_date": "2024-01-21"
+  },
+  {
+    "order_id": "ORD-0004",
+    "product_name": "iPad Pro",
+    "category": "Tablets",
+    "sales": 1099.0,
+    "quantity": 30,
+    "order_date": "2024-01-28"
+  },
+  {
+    "order_id": "ORD-0005",
+    "product_name": "LG UltraFine 4K",
+    "category": "Displays",
+    "sales": 699.99,
+    "quantity": 25,
+    "order_date": "2024-02-04"
+  },
+  {
+    "order_id": "ORD-0006",
+    "product_name": "Sony WH-1000XM5",
+    "category": "Audio",
+    "sales": 399.99,
+    "quantity": 45,
+    "order_date": "2024-02-11"
+  },
+  {
+    "order_id": "ORD-0007",
+    "product_name": "AirPods Max",
+    "category": "Audio",
+    "sales": 549.0,
+    "quantity": 20,
+    "order_date": "2024-02-18"
+  },
+  {
+    "order_id": "ORD-0008",
+    "product_name": "Keychron K2",
+    "category": "Accessories",
+    "sales": 99.0,
+    "quantity": 80,
+    "order_date": "2024-02-25"
+  },
+  {
+    "order_id": "ORD-0009",
+    "product_name": "Logitech MX Master 3",
+    "category": "Accessories",
+    "sales": 99.99,
+    "quantity": 120,
+    "order_date": "2024-03-03"
+  },
+  {
+    "order_id": "ORD-0010",
+    "product_name": "Ergonomic Desk",
+    "category": "Furniture",
+    "sales": 750.0,
+    "quantity": 14,
+    "order_date": "2024-03-10"
+  },
+  {
+    "order_id": "ORD-0011",
+    "product_name": "Samsung 49 Odyssey",
+    "category": "Displays",
+    "sales": 1299.99,
+    "quantity": 16,
+    "order_date": "2024-03-17"
+  },
+  {
+    "order_id": "ORD-0012",
+    "product_name": "Apple Studio Display",
+    "category": "Displays",
+    "sales": 1599.0,
+    "quantity": 22,
+    "order_date": "2024-03-24"
+  },
+  {
+    "order_id": "ORD-0013",
+    "product_name": "Steelcase Chair",
+    "category": "Furniture",
+    "sales": 950.0,
+    "quantity": 10,
+    "order_date": "2024-03-31"
+  },
+  {
+    "order_id": "ORD-0014",
+    "product_name": "Bose QC45",
+    "category": "Audio",
+    "sales": 329.0,
+    "quantity": 35,
+    "order_date": "2024-04-07"
+  },
+  {
+    "order_id": "ORD-0015",
+    "product_name": "CalDigit TS4",
+    "category": "Accessories",
+    "sales": 399.95,
+    "quantity": 40,
+    "order_date": "2024-04-14"
+  },
+  {
+    "order_id": "ORD-0016",
+    "product_name": "Magic Trackpad",
+    "category": "Accessories",
+    "sales": 129.0,
+    "quantity": 65,
+    "order_date": "2024-04-21"
+  },
+  {
+    "order_id": "ORD-0017",
+    "product_name": "Anker Docking Station",
+    "category": "Accessories",
+    "sales": 249.99,
+    "quantity": 50,
+    "order_date": "2024-04-28"
+  },
+  {
+    "order_id": "ORD-0018",
+    "product_name": "Shure SM7B",
+    "category": "Audio",
+    "sales": 399.0,
+    "quantity": 28,
+    "order_date": "2024-05-05"
+  },
+  {
+    "order_id": "ORD-0019",
+    "product_name": "Focusrite 2i2",
+    "category": "Audio",
+    "sales": 179.99,
+    "quantity": 42,
+    "order_date": "2024-05-12"
+  },
+  {
+    "order_id": "ORD-0020",
+    "product_name": "Elgato StreamDeck",
+    "category": "Accessories",
+    "sales": 149.99,
+    "quantity": 55,
+    "order_date": "2024-05-19"
+  },
+  {
+    "order_id": "ORD-0021",
+    "product_name": "Rode PodMic",
+    "category": "Audio",
+    "sales": 99.0,
+    "quantity": 30,
+    "order_date": "2024-05-26"
+  },
+  {
+    "order_id": "ORD-0022",
+    "product_name": "SanDisk 2TB SSD",
+    "category": "Storage",
+    "sales": 179.99,
+    "quantity": 90,
+    "order_date": "2024-06-02"
+  },
+  {
+    "order_id": "ORD-0023",
+    "product_name": "Synology NAS 4-Bay",
+    "category": "Storage",
+    "sales": 599.99,
+    "quantity": 15,
+    "order_date": "2024-06-09"
+  },
+  {
+    "order_id": "ORD-0024",
+    "product_name": "Ubiquiti Dream Machine",
+    "category": "Networking",
+    "sales": 379.0,
+    "quantity": 20,
+    "order_date": "2024-06-16"
+  },
+  {
+    "order_id": "ORD-0025",
+    "product_name": "APC UPS 1500VA",
+    "category": "Power",
+    "sales": 219.99,
+    "quantity": 35,
+    "order_date": "2024-06-23"
+  }
+]

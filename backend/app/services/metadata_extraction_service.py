@@ -27,22 +27,12 @@ class MetadataExtractionService:
     def _load_dataframe(self, file_path: str, file_type: str) -> pd.DataFrame:
         """Load a file into a pandas DataFrame based on file_type."""
         absolute_path = self.storage_service.retrieve_file(file_path)
-        
+        normalized_type = file_type.lower().lstrip(".")
+        if normalized_type in {"pdf", "txt", "text", "md", "markdown"}:
+            return pd.DataFrame()
         try:
-            if file_type == "csv":
-                return pd.read_csv(absolute_path)
-            elif file_type in {"xlsx", "xls"}:
-                return pd.read_excel(absolute_path)
-            elif file_type == "json":
-                return pd.read_json(absolute_path)
-            elif file_type == "parquet":
-                return pd.read_parquet(absolute_path)
-            elif file_type == "pdf":
-                return pd.DataFrame()
-            else:
-                raise MetadataExtractionError(f"Unsupported file type for extraction: {file_type}")
-        except MetadataExtractionError:
-            raise
+            from backend.app.services.tabular_loader import load_tabular_dataframe
+            return load_tabular_dataframe(absolute_path, normalized_type)
         except Exception as exc:
             logger.error("Failed to parse file %s into DataFrame: %s", absolute_path, exc)
             raise MetadataExtractionError(f"Failed to parse dataset file: {exc}") from exc

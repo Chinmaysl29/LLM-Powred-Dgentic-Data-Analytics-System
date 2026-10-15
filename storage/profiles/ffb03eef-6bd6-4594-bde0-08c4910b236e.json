@@ -1,0 +1,65 @@
+{
+  "dataset_id": "ffb03eef-6bd6-4594-bde0-08c4910b236e",
+  "duplicate_rows": 0,
+  "duplicate_percentage": 0.0,
+  "missing_data_profile": {
+    "null_count": 0,
+    "null_percentage": 0.0,
+    "columns_with_missing": []
+  },
+  "cardinality_profile": {
+    "high_cardinality_columns": [],
+    "low_cardinality_columns": [
+      "order_id",
+      "date",
+      "category",
+      "region",
+      "revenue",
+      "units"
+    ]
+  },
+  "numeric_columns_profile": {
+    "order_id": {
+      "mean": 5.5,
+      "median": 5.5,
+      "mode": 1.0,
+      "min": 1.0,
+      "max": 10.0,
+      "std": 3.0276503540974917,
+      "variance": 9.166666666666666,
+      "p25": 3.25,
+      "p50": 5.5,
+      "p75": 7.75,
+      "skewness": 0.0,
+      "kurtosis": -1.2000000000000002
+    },
+    "revenue": {
+      "mean": 97.55,
+      "median": 90.0,
+      "mode": -50.0,
+      "min": -50.0,
+      "max": 300.0,
+      "std": 99.49328564726812,
+      "variance": 9898.91388888889,
+      "p25": 45.0,
+      "p50": 90.0,
+      "p75": 124.125,
+      "skewness": 0.7074416113945794,
+      "kurtosis": 0.9360998736727257
+    },
+    "units": {
+      "mean": 2.4,
+      "median": 2.0,
+      "mode": 2.0,
+      "min": 0.0,
+      "max": 6.0,
+      "std": 1.7126976771553506,
+      "variance": 2.9333333333333336,
+      "p25": 1.25,
+      "p50": 2.0,
+      "p75": 3.0,
+      "skewness": 0.8758113121817136,
+      "kurtosis": 1.1323051948051939
+    }
+  }
+}

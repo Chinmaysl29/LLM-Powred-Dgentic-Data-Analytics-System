@@ -12,7 +12,7 @@ from backend.app.models.dataset_recommendation import DatasetRecommendation
 from backend.app.models.dataset_profile import DatasetProfile
 from backend.app.models.dataset_quality import DatasetQuality
 from backend.app.repositories.dataset_recommendation_repository import DatasetRecommendationRepository
-from backend.app.repositories.dataset_repository import DatasetRepository
+from backend.app.repositories.dataset_repository import DatasetRepository, get_dataset_repository
 from backend.app.repositories.dataset_version_repository import DatasetVersionRepository
 from backend.config.cleaning_config import CLEANING_THRESHOLDS, PRIORITY_WEIGHTS, TYPE_STRATEGIES
 
@@ -38,11 +38,15 @@ class DataCleaningRecommendationService:
         if ext == '.csv':
             # Use nrows=100000 to prevent OOM on very large files for recommendations
             return pd.read_csv(file_path, nrows=100000)
+        elif ext == '.tsv':
+            return pd.read_csv(file_path, sep='\t', nrows=100000)
         elif ext in ['.xlsx', '.xls']:
             return pd.read_excel(file_path, nrows=100000)
         elif ext == '.json':
             return pd.read_json(file_path)
-        elif ext == '.pdf':
+        elif ext in ['.jsonl', '.ndjson']:
+            return pd.read_json(file_path, lines=True)
+        elif ext in ['.pdf', '.txt', '.text', '.md', '.markdown']:
             return pd.DataFrame()
         elif ext == '.parquet':
             return pd.read_parquet(file_path)
@@ -396,6 +400,7 @@ class DataCleaningRecommendationService:
 
 def get_data_cleaning_recommendation_service(
     db: Session = Depends(get_db_session),
+    dataset_repository: DatasetRepository = Depends(get_dataset_repository),
 ) -> DataCleaningRecommendationService:
     from backend.app.repositories.dataset_recommendation_repository import DatasetRecommendationRepository
     from backend.app.repositories.dataset_repository import DatasetRepository
@@ -403,7 +408,7 @@ def get_data_cleaning_recommendation_service(
 
     return DataCleaningRecommendationService(
         recommendation_repo=DatasetRecommendationRepository(db=db),
-        dataset_repo=DatasetRepository(db=db),
+        dataset_repo=dataset_repository,
         version_repo=DatasetVersionRepository(db=db),
         db=db,
     )

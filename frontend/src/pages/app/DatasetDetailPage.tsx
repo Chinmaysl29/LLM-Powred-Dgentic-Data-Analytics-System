@@ -18,7 +18,9 @@ import {
   GitCompare,
   Bot,
 } from 'lucide-react';
+import { apiClient } from '../../api/client';
 import { datasetService } from '../../services/datasetService';
+import PdfDocumentPanel from '../../components/datasets/PdfDocumentPanel';
 import {
   formatFileSize,
   formatDate,
@@ -50,6 +52,12 @@ export default function DatasetDetailPage() {
   const [versions, setVersions] = useState<DatasetVersionItem[]>([]);
   const [lineage, setLineage] = useState<DatasetLineageNode[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [retry, setRetry] = useState(0);
+  const [comparison, setComparison] = useState<{ rows_added: number; rows_removed: number; columns_added: string[]; columns_removed: string[] } | null>(null);
+  const [comparisonError, setComparisonError] = useState('');
+  const [comparisonLoading, setComparisonLoading] = useState(false);
+  const [rollbackLoading, setRollbackLoading] = useState(false);
 
   // Preview table controls
   const [previewSearch, setPreviewSearch] = useState('');
@@ -62,11 +70,23 @@ export default function DatasetDetailPage() {
 
   useEffect(() => {
     async function loadDatasetDetails() {
-      if (!datasetId) return;
+      if (!datasetId) { setError('Dataset identifier is missing.'); setIsLoading(false); return; }
       setIsLoading(true);
+      setError('');
       try {
         const ds = await datasetService.getById(datasetId);
         setDataset(ds);
+
+        // PDFs are documents, not canonical tables. Their indexing lifecycle
+        // remains accessible even while extraction is queued or has failed.
+        if (ds.file_type?.toLowerCase() === 'pdf' || ds.filename.toLowerCase().endsWith('.pdf')) {
+          setPreview(null); setMetadata([]); setProfile(null); setQuality(null);
+          const [verData, linData] = await Promise.all([
+            datasetService.getVersions(datasetId), datasetService.getLineage(ds),
+          ]);
+          setVersions(verData); setLineage(linData);
+          return;
+        }
 
         // Preview records from backend
         const previewData = await datasetService.getPreview(datasetId);
@@ -86,12 +106,16 @@ export default function DatasetDetailPage() {
         setQuality(qualData);
         setVersions(verData);
         setLineage(linData);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unable to load dataset details.');
       } finally {
         setIsLoading(false);
       }
     }
     loadDatasetDetails();
-  }, [datasetId]);
+  }, [datasetId, retry]);
+
+  if (error) return <div className="ws-page" role="alert"><h1 className="ws-page-heading">Dataset unavailable</h1><p>{error}</p><button className="reports-btn-secondary" onClick={() => setRetry(n => n + 1)}>Try again</button><Link to="/datasets">Back to datasets</Link></div>;
 
   if (isLoading || !dataset) {
     return (
@@ -101,6 +125,8 @@ export default function DatasetDetailPage() {
       </div>
     );
   }
+
+  const isPdf = dataset.file_type?.toLowerCase() === 'pdf' || dataset.filename.toLowerCase().endsWith('.pdf');
 
   // Filtered Preview Rows
   const filteredRows = (preview?.rows || []).filter((row) => {
@@ -113,17 +139,23 @@ export default function DatasetDetailPage() {
   const totalPages = Math.ceil(filteredRows.length / pageSize);
 
   async function handleRollback(versionNumber: number) {
-    if (!dataset) return;
+    if (!dataset || !window.confirm('Activate version ' + versionNumber + '? This changes the dataset used by future analyses.')) return;
+    setRollbackLoading(true);
     const res = await datasetService.rollbackVersion(dataset.dataset_id, versionNumber);
     setRollbackStatus(res.message);
-    setVersions((prev) =>
-      prev.map((v) => ({
-        ...v,
-        isActive: v.version_number === versionNumber,
-        label: v.version_number === versionNumber ? `${v.label.split(' ')[0]} (Current Active)` : v.label.replace(' (Current Active)', ''),
-      }))
-    );
-    setTimeout(() => setRollbackStatus(null), 4000);
+    setRollbackLoading(false);
+    if (res.success) setRetry(n => n + 1);
+  }
+
+  async function compareVersions(versionNumber?: number) {
+    if (!dataset || versions.length < 2) return;
+    const active = versions.find(v => v.isActive) ?? versions[0];
+    const other = versions.find(v => v.version_number === versionNumber && v.version_number !== active.version_number) ?? versions.find(v => v.version_number !== active.version_number)!;
+    setComparingVersions(true); setComparison(null); setComparisonError(''); setComparisonLoading(true);
+    try {
+      setComparison(await apiClient.get('/api/v1/datasets/' + encodeURIComponent(dataset.dataset_id) + '/versions/compare', { params: { v1: String(active.version_number), v2: String(other.version_number) } }));
+    } catch (err) { setComparisonError(err instanceof Error ? err.message : 'Unable to compare versions.'); }
+    finally { setComparisonLoading(false); }
   }
 
   return (
@@ -184,7 +216,7 @@ export default function DatasetDetailPage() {
           { id: 'quality', label: 'Quality', icon: ShieldCheck },
           { id: 'versions', label: 'Versions', icon: GitBranch },
           { id: 'lineage', label: 'Lineage', icon: Network },
-        ].map((tab) => {
+        ].filter(tab => !isPdf || ['overview', 'versions', 'lineage'].includes(tab.id)).map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           return (
@@ -207,20 +239,24 @@ export default function DatasetDetailPage() {
       {/* =================================================================== */}
       {/* TAB 1: OVERVIEW                                                     */}
       {/* =================================================================== */}
-      {activeTab === 'overview' && (
+      {activeTab === 'overview' && isPdf && <PdfDocumentPanel
+        key={`${dataset.dataset_id}:${dataset.version ?? 1}`} datasetId={dataset.dataset_id}
+        initialVersion={dataset.version ?? versions.find(v => v.isActive)?.version_number ?? 1}
+        versions={versions} filename={dataset.filename} />}
+      {activeTab === 'overview' && !isPdf && (
         <div className="space-y-6">
           {/* Top Key Metrics Card */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             <div className="p-4 bg-zinc-900/70 border border-zinc-800/80 rounded-2xl">
               <span className="text-[11px] text-zinc-500 block mb-1">Total Rows</span>
               <span className="text-xl font-bold font-mono text-zinc-100">
-                {dataset.pages ? `${dataset.pages} Pages` : (dataset.row_count ?? 15000).toLocaleString()}
+                {dataset.pages ? `${dataset.pages} Pages` : (dataset.row_count ?? 0).toLocaleString()}
               </span>
             </div>
             <div className="p-4 bg-zinc-900/70 border border-zinc-800/80 rounded-2xl">
               <span className="text-[11px] text-zinc-500 block mb-1">Columns</span>
               <span className="text-xl font-bold font-mono text-zinc-100">
-                {dataset.pages ? '—' : dataset.column_count ?? 25}
+                {dataset.pages ? '—' : dataset.column_count ?? 'Unavailable'}
               </span>
             </div>
             <div className="p-4 bg-zinc-900/70 border border-zinc-800/80 rounded-2xl">
@@ -229,7 +265,7 @@ export default function DatasetDetailPage() {
             </div>
             <div className="p-4 bg-zinc-900/70 border border-zinc-800/80 rounded-2xl">
               <span className="text-[11px] text-zinc-500 block mb-1">Quality Score</span>
-              <span className="text-xl font-bold font-mono text-emerald-400">{dataset.quality_score ?? 92}%</span>
+              <span className="text-xl font-bold font-mono text-emerald-400">{dataset.quality_score == null ? 'Unavailable' : dataset.quality_score + '%'}</span>
             </div>
             <div className="p-4 bg-zinc-900/70 border border-zinc-800/80 rounded-2xl">
               <span className="text-[11px] text-zinc-500 block mb-1">Created Date</span>
@@ -253,21 +289,21 @@ export default function DatasetDetailPage() {
               <div className="p-3 bg-zinc-950/80 rounded-xl border border-zinc-800">
                 <span className="text-zinc-500 text-[11px] block">Raw Storage</span>
                 <span className="font-mono text-xs text-emerald-400 truncate block mt-0.5">
-                  {dataset.raw_path || `storage/raw/${dataset.filename}`}
+                  {dataset.raw_path || 'Not recorded'}
                 </span>
-                <span className="text-[10px] text-zinc-500 mt-1 block">Immutable original upload payload</span>
+                <span className="text-[10px] text-zinc-500 mt-1 block">Registered upload path</span>
               </div>
               <div className="p-3 bg-zinc-950/80 rounded-xl border border-zinc-800">
                 <span className="text-zinc-500 text-[11px] block">Processed Storage</span>
                 <span className="font-mono text-xs text-sky-400 truncate block mt-0.5">
-                  {dataset.processed_path || `storage/processed/${dataset.name}_cleaned.parquet`}
+                  {dataset.processed_path || 'Not recorded'}
                 </span>
-                <span className="text-[10px] text-zinc-500 mt-1 block">Columnar compressed snappy Parquet</span>
+                <span className="text-[10px] text-zinc-500 mt-1 block">Canonical storage path</span>
               </div>
               <div className="p-3 bg-zinc-950/80 rounded-xl border border-zinc-800">
                 <span className="text-zinc-500 text-[11px] block">Registry Artifacts</span>
                 <span className="font-mono text-xs text-purple-400 truncate block mt-0.5">
-                  datasets/{dataset.name || 'data'}/ (*.json)
+                  {dataset.dataset_id}
                 </span>
                 <span className="text-[10px] text-zinc-500 mt-1 block">metadata, profile, quality, lineage</span>
               </div>
@@ -275,17 +311,17 @@ export default function DatasetDetailPage() {
           </div>
 
           {/* AI Integration Hub */}
-          <div className="p-5 bg-gradient-to-r from-sky-950/30 via-zinc-900 to-indigo-950/30 border border-sky-500/20 rounded-2xl space-y-3">
+          <div className="p-5 bg-zinc-900 border border-sky-500/20 rounded-2xl space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <Bot className="w-5 h-5 text-sky-400" />
-                <h3 className="text-sm font-semibold text-zinc-100">AI Agents Active on Dataset</h3>
+                <h3 className="text-sm font-semibold text-zinc-100">Explore this dataset</h3>
               </div>
-              <span className="text-xs text-emerald-400 font-medium">Ready for Zero-ETL Execution</span>
+              <span className="text-xs text-emerald-400 font-medium">Choose an analytical workflow</span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 pt-1">
               {[
-                { name: 'EDA Agent', desc: 'Auto Exploratory Analysis', route: '/analysis' },
+                { name: 'EDA Agent', desc: 'Auto Exploratory Analysis', route: '/eda' },
                 { name: 'SQL Agent', desc: 'Text-to-SQL Querying', route: '/analysis' },
                 { name: 'Visualization Agent', desc: 'Intelligent Chart Engine', route: '/visualizations' },
                 { name: 'Forecast Agent', desc: 'Prophet / XGBoost Models', route: '/analysis' },
@@ -298,7 +334,7 @@ export default function DatasetDetailPage() {
                   className="p-3 bg-zinc-950/70 hover:bg-zinc-800 border border-zinc-800/80 hover:border-sky-500/40 rounded-xl text-left transition-all group"
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="w-2 h-2 rounded-full bg-sky-400" />
                     <Sparkles className="w-3 h-3 text-zinc-500 group-hover:text-sky-400" />
                   </div>
                   <h4 className="text-xs font-semibold text-zinc-200 group-hover:text-sky-300 transition-colors">
@@ -316,10 +352,10 @@ export default function DatasetDetailPage() {
               <div>
                 <h3 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
                   <Table className="w-4 h-4 text-sky-400" />
-                  <span>Preview: First 100 Records</span>
+                  <span>Preview: First 50 Records</span>
                 </h3>
                 <p className="text-xs text-zinc-400">
-                  Showing {filteredRows.length} sample rows from {dataset.filename}
+                  Showing {filteredRows.length} matching preview rows of {preview?.rows.length ?? 0} loaded; dataset total: {preview?.totalRows == null ? 'unknown' : preview.totalRows.toLocaleString()}. Source: {dataset.filename}
                 </p>
               </div>
 
@@ -327,6 +363,7 @@ export default function DatasetDetailPage() {
                 <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-zinc-500" />
                 <input
                   type="text"
+                  aria-label="Filter preview rows"
                   placeholder="Filter preview rows..."
                   value={previewSearch}
                   onChange={(e) => {
@@ -439,7 +476,7 @@ export default function DatasetDetailPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-zinc-400 text-[11px]">
-                      {col.sampleValues.join(', ')}
+                      {col.sampleValues.length ? col.sampleValues.join(', ') : 'Not provided'}
                     </td>
                     <td className="px-4 py-3">
                       {col.isPrimaryKey && (
@@ -465,6 +502,8 @@ export default function DatasetDetailPage() {
       {/* =================================================================== */}
       {/* TAB 3: PROFILE                                                      */}
       {/* =================================================================== */}
+      {activeTab === 'profile' && !profile && <p role="status">Profile is unavailable. Retry loading the dataset to check again.</p>}
+      {activeTab === 'quality' && !quality && <p role="status">Quality assessment is unavailable.</p>}
       {activeTab === 'profile' && profile && (
         <div className="space-y-6">
           {/* Summary Statistics Table */}
@@ -506,119 +545,7 @@ export default function DatasetDetailPage() {
             </div>
           </div>
 
-          {/* Charts: Histogram & Box Plot */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Histogram Distribution Chart */}
-            <div className="p-5 bg-zinc-900/70 border border-zinc-800/80 rounded-2xl shadow-xl space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-semibold text-zinc-200">Value Distribution (Histogram)</h4>
-                <span className="text-[11px] font-mono text-sky-400">total_amount</span>
-              </div>
-
-              <div className="h-48 flex items-end justify-between gap-3 pt-4 border-b border-zinc-800 px-2">
-                {(profile.summary['total_amount']?.distribution || []).map((bin) => {
-                  const maxCount = 5420;
-                  const heightPct = Math.round((bin.count / maxCount) * 100);
-                  return (
-                    <div key={bin.bucket} className="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
-                      <div className="opacity-0 group-hover:opacity-100 text-[10px] font-mono text-sky-300 transition-opacity">
-                        {bin.count}
-                      </div>
-                      <div
-                        className="w-full bg-gradient-to-t from-sky-600 to-sky-400 rounded-t-lg transition-all duration-300 group-hover:brightness-125"
-                        style={{ height: `${heightPct}%` }}
-                      />
-                      <span className="text-[10px] text-zinc-500 font-mono rotate-[-25deg] origin-top-left mt-2 block whitespace-nowrap">
-                        {bin.bucket}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Box Plot Representation */}
-            <div className="p-5 bg-zinc-900/70 border border-zinc-800/80 rounded-2xl shadow-xl space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-semibold text-zinc-200">Box Plot & Whiskers</h4>
-                <span className="text-[11px] font-mono text-emerald-400">Quantiles & IQR</span>
-              </div>
-
-              <div className="space-y-6 pt-2">
-                {Object.entries(profile.summary).slice(0, 2).map(([col, s]) => {
-                  if (!s.boxplot) return null;
-                  return (
-                    <div key={col} className="space-y-1.5">
-                      <div className="flex justify-between text-xs font-mono">
-                        <span className="text-zinc-300 font-semibold">{col}</span>
-                        <span className="text-zinc-500">Median: {s.boxplot.median}</span>
-                      </div>
-                      <div className="relative h-7 bg-zinc-950/80 rounded-xl border border-zinc-800 flex items-center px-4">
-                        {/* Whiskers line */}
-                        <div className="w-full h-0.5 bg-zinc-700 relative">
-                          {/* Box IQR */}
-                          <div
-                            className="absolute top-1/2 -translate-y-1/2 h-5 bg-emerald-500/20 border-2 border-emerald-500/60 rounded"
-                            style={{ left: '20%', width: '50%' }}
-                          />
-                          {/* Median Line */}
-                          <div
-                            className="absolute top-1/2 -translate-y-1/2 h-6 w-1 bg-amber-400"
-                            style={{ left: '42%' }}
-                          />
-                        </div>
-                      </div>
-                      <div className="flex justify-between text-[10px] font-mono text-zinc-500">
-                        <span>Min: {s.boxplot.min}</span>
-                        <span>Q1: {s.boxplot.q1}</span>
-                        <span>Q3: {s.boxplot.q3}</span>
-                        <span>Max: {s.boxplot.max}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Correlation Heatmap Matrix */}
-          <div className="p-5 bg-zinc-900/70 border border-zinc-800/80 rounded-2xl shadow-xl space-y-4">
-            <h4 className="text-xs font-semibold text-zinc-200">Pearson Correlation Heatmap</h4>
-            <div className="overflow-x-auto">
-              <table className="text-center text-xs font-mono border-collapse mx-auto">
-                <thead>
-                  <tr>
-                    <th className="p-2 text-zinc-500"></th>
-                    {profile.correlation.columns.map((c) => (
-                      <th key={c} className="p-2 font-medium text-zinc-300">
-                        {c}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {profile.correlation.columns.map((rowName, rIdx) => (
-                    <tr key={rowName}>
-                      <td className="p-2 font-medium text-left text-zinc-300">{rowName}</td>
-                      {profile.correlation.matrix[rIdx].map((val, cIdx) => {
-                        let bg = 'bg-zinc-800 text-zinc-400';
-                        if (val > 0.6) bg = 'bg-emerald-500/30 text-emerald-300 font-bold';
-                        else if (val > 0.2) bg = 'bg-emerald-500/10 text-emerald-400';
-                        else if (val < -0.4) bg = 'bg-rose-500/30 text-rose-300 font-bold';
-                        else if (val < 0) bg = 'bg-rose-500/10 text-rose-400';
-
-                        return (
-                          <td key={cIdx} className={`p-3 rounded-lg border border-zinc-900 ${bg}`}>
-                            {val.toFixed(2)}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <p className="text-sm text-zinc-400">Distribution and correlation plots are not supplied by the profile API. Summary statistics above are computed by the backend.</p>
         </div>
       )}
 
@@ -654,44 +581,10 @@ export default function DatasetDetailPage() {
                   {quality.qualityScore}%
                 </span>
               </div>
-              <span className="text-[11px] text-emerald-400 font-medium mt-2">Production Certified</span>
+              <span className="text-[11px] text-emerald-400 font-medium mt-2">Backend quality assessment</span>
             </div>
 
-            <div className="p-5 bg-zinc-900/70 border border-zinc-800/80 rounded-2xl flex flex-col justify-between">
-              <span className="text-xs font-medium text-zinc-400">Missing Values</span>
-              <div className="my-2">
-                <span className="text-2xl font-bold font-mono text-zinc-100">{quality.missingValuesCount}</span>
-                <span className="text-xs text-zinc-500 ml-1.5">(0.02% total cells)</span>
-              </div>
-              <span className="text-[11px] text-emerald-400 flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Well under 2% threshold</span>
-              </span>
-            </div>
 
-            <div className="p-5 bg-zinc-900/70 border border-zinc-800/80 rounded-2xl flex flex-col justify-between">
-              <span className="text-xs font-medium text-zinc-400">Duplicates Detected</span>
-              <div className="my-2">
-                <span className="text-2xl font-bold font-mono text-emerald-400">{quality.duplicateRowsCount}</span>
-                <span className="text-xs text-zinc-500 ml-1.5">rows</span>
-              </div>
-              <span className="text-[11px] text-emerald-400 flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Zero duplicate keys</span>
-              </span>
-            </div>
-
-            <div className="p-5 bg-zinc-900/70 border border-zinc-800/80 rounded-2xl flex flex-col justify-between">
-              <span className="text-xs font-medium text-zinc-400">Statistical Outliers</span>
-              <div className="my-2">
-                <span className="text-2xl font-bold font-mono text-amber-400">{quality.outliersCount}</span>
-                <span className="text-xs text-zinc-500 ml-1.5">records</span>
-              </div>
-              <span className="text-[11px] text-amber-400 flex items-center gap-1">
-                <AlertTriangle className="w-3.5 h-3.5" />
-                <span>Flagged for robust scaling</span>
-              </span>
-            </div>
           </div>
 
           {/* Data Hygiene Rules Checklist */}
@@ -733,7 +626,8 @@ export default function DatasetDetailPage() {
               <p className="text-xs text-zinc-400">Track mutations, schema modifications, and audit rollback history.</p>
             </div>
             <button
-              onClick={() => setComparingVersions((prev) => !prev)}
+              onClick={() => comparingVersions ? setComparingVersions(false) : void compareVersions()}
+              disabled={versions.length < 2 || comparisonLoading}
               className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/20 rounded-xl transition-all"
             >
               <GitCompare className="w-3.5 h-3.5" />
@@ -748,27 +642,9 @@ export default function DatasetDetailPage() {
             </div>
           )}
 
-          {/* Compare Drawer */}
-          {comparingVersions && (
-            <div className="p-4 bg-zinc-950 border border-zinc-800 rounded-xl space-y-3 font-mono text-xs">
-              <div className="flex items-center justify-between text-zinc-300 border-b border-zinc-800 pb-2">
-                <span>Version 3 vs Version 2 Comparison</span>
-                <span className="text-emerald-400">Delta: +0 rows, +1 column, +4% quality</span>
-              </div>
-              <div className="grid grid-cols-2 gap-4 text-[11px]">
-                <div className="p-3 bg-zinc-900/60 rounded-lg">
-                  <span className="text-zinc-500 block">Version 2 (Cleaned)</span>
-                  <p className="text-zinc-300 mt-1">Columns: 24 • Quality: 88%</p>
-                  <p className="text-zinc-400">Median null imputation on discount.</p>
-                </div>
-                <div className="p-3 bg-zinc-900/60 rounded-lg border border-sky-500/30">
-                  <span className="text-sky-400 block">Version 3 (Active)</span>
-                  <p className="text-zinc-200 mt-1">Columns: 25 • Quality: 92%</p>
-                  <p className="text-zinc-300">Engineered feature: normalized profit margin.</p>
-                </div>
-              </div>
-            </div>
-          )}
+          {comparingVersions && <div className="p-4 bg-zinc-950 border border-zinc-800 rounded-xl" aria-live="polite">
+            {comparisonLoading ? <p>Comparing versions…</p> : comparisonError ? <p role="alert">{comparisonError}</p> : comparison && <><p>Changes from the active version to the selected version:</p><p>Rows added: {comparison.rows_added}; rows removed: {comparison.rows_removed}</p><p>Columns added: {comparison.columns_added.join(', ') || 'None'}</p><p>Columns removed: {comparison.columns_removed.join(', ') || 'None'}</p></>}
+          </div>}
 
           {/* Version Cards */}
           <div className="space-y-3">
@@ -804,7 +680,8 @@ export default function DatasetDetailPage() {
                   <div className="flex items-center gap-2">
                     {!ver.isActive && (
                       <button
-                        onClick={() => handleRollback(ver.version_number)}
+                        disabled={rollbackLoading}
+                        onClick={() => void handleRollback(ver.version_number)}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-xl transition-all"
                       >
                         <RotateCcw className="w-3.5 h-3.5" />
@@ -812,7 +689,8 @@ export default function DatasetDetailPage() {
                       </button>
                     )}
                     <button
-                      onClick={() => setComparingVersions(true)}
+                      disabled={versions.length < 2 || comparisonLoading}
+                      onClick={() => void compareVersions(ver.version_number)}
                       className="px-3 py-1.5 text-xs font-medium text-zinc-300 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-all"
                     >
                       Inspect
@@ -833,10 +711,10 @@ export default function DatasetDetailPage() {
           <div>
             <h3 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
               <Network className="w-4 h-4 text-sky-400" />
-              <span>End-to-End Data Lineage & Agent Execution Graph</span>
+              <span>Registered dataset storage</span>
             </h3>
             <p className="text-xs text-zinc-400 mt-0.5">
-              Source file ingestion, raw storage isolation, Parquet transformation, metadata generation, and downstream AI integration.
+              Source and canonical paths supplied by the dataset registry. This is not an execution lineage trace.
             </p>
           </div>
 
@@ -856,26 +734,7 @@ export default function DatasetDetailPage() {
                 ))}
             </div>
 
-            {/* Downstream Agents Tier */}
-            <div className="p-5 bg-zinc-950/60 border border-zinc-800 rounded-2xl space-y-3">
-              <div className="flex items-center gap-2 text-xs font-semibold text-zinc-300">
-                <Bot className="w-4 h-4 text-sky-400" />
-                <span>Consuming AI Agents (Immediate Zero-ETL Availability):</span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-                {lineage
-                  .filter((n) => n.type === 'ai_agent')
-                  .map((agent) => (
-                    <div
-                      key={agent.id}
-                      className="p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-center"
-                    >
-                      <span className="text-xs font-semibold text-zinc-200 block">{agent.title}</span>
-                      <span className="text-[10px] text-emerald-400">Live Attached</span>
-                    </div>
-                  ))}
-              </div>
-            </div>
+
           </div>
         </div>
       )}

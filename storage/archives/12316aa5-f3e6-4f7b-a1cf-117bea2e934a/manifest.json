@@ -1,0 +1,15 @@
+{
+  "dataset_id": "12316aa5-f3e6-4f7b-a1cf-117bea2e934a",
+  "archived_at": "2026-10-12T17:11:20Z",
+  "reason": "deleted",
+  "archived_files": [
+    "12316aa5-f3e6-4f7b-a1cf-117bea2e934a.json",
+    "12316aa5-f3e6-4f7b-a1cf-117bea2e934a.json",
+    "12316aa5-f3e6-4f7b-a1cf-117bea2e934a.json",
+    "12316aa5-f3e6-4f7b-a1cf-117bea2e934a.json",
+    "12316aa5-f3e6-4f7b-a1cf-117bea2e934a.json",
+    "12316aa5-f3e6-4f7b-a1cf-117bea2e934a_inventory.csv",
+    "12316aa5-f3e6-4f7b-a1cf-117bea2e934a_inventory.csv"
+  ],
+  "archive_path": "C:\\data analyst\\ai-data-analyst-os\\storage\\archives\\12316aa5-f3e6-4f7b-a1cf-117bea2e934a"
+}

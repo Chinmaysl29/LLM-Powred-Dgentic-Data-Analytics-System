@@ -1,0 +1,57 @@
+{
+  "id": "rep-abc4fff63d",
+  "workspace_id": "ws-12c1fff2ed",
+  "title": "Merger Strategic Assessment",
+  "report_type": "Executive Report",
+  "created_at": "2026-10-11T18:01:33.799473+00:00",
+  "summary": "This Executive Report synthesizes empirical findings across 0 operational transactions. Primary performance indicators reflect disciplined capital allocation, strategic customer retention, and sustainable operating leverage.",
+  "metrics": {},
+  "recommendations": [
+    "Scale marketing spend across highest-converting regional channels (+15% budget reallocation).",
+    "Accelerate enterprise pipeline conversion by standardizing contractual sales playbooks.",
+    "Implement automated anomaly alerts on inventory reorder levels to prevent stockouts."
+  ],
+  "markdown": "# Merger Strategic Assessment\n**Report Type:** Executive Report  \n**Date:** October 11, 2026  \n**Workspace:** ws-12c1fff2ed  \n\n---\n\n## 1. Executive Summary\nThis Executive Report synthesizes empirical findings across 0 operational transactions. Primary performance indicators reflect disciplined capital allocation, strategic customer retention, and sustainable operating leverage.\n\n## 2. Key Performance Indicators\n\n## 3. Strategic Recommendations\n1. Scale marketing spend across highest-converting regional channels (+15% budget reallocation).\n2. Accelerate enterprise pipeline conversion by standardizing contractual sales playbooks.\n3. Implement automated anomaly alerts on inventory reorder levels to prevent stockouts.\n\n---\n*Certified Enterprise Report Engine*\n",
+  "slides": [
+    {
+      "slide_number": 1,
+      "title": "Merger Strategic Assessment",
+      "subtitle": "Executive Report \u2014 Executive Briefing",
+      "bullets": [
+        "Published: October 2026",
+        "Workspace: ws-12c1fff2ed"
+      ]
+    },
+    {
+      "slide_number": 2,
+      "title": "Executive Summary & Macro Context",
+      "bullets": [
+        "This Executive Report synthesizes empirical findings across 0 operational transactions. Primary performance indicators reflect disciplined c...",
+        "Enterprise-grade data provenance verified."
+      ]
+    },
+    {
+      "slide_number": 3,
+      "title": "Key Performance Indicators",
+      "bullets": []
+    },
+    {
+      "slide_number": 4,
+      "title": "Actionable Strategic Roadmap",
+      "bullets": [
+        "Scale marketing spend across highest-converting regional channels (+15% budget reallocation).",
+        "Accelerate enterprise pipeline conversion by standardizing contractual sales playbooks.",
+        "Implement automated anomaly alerts on inventory reorder levels to prevent stockouts."
+      ]
+    }
+  ],
+  "pdf_path": "storage/reports/studio/rep-abc4fff63d.pdf",
+  "pdf_size_bytes": 11339,
+  "report_quality_score": 100,
+  "embedded_elements": {
+    "charts_embedded": true,
+    "tables_embedded": true,
+    "unicode_support": true,
+    "pagination_verified": true
+  }
+}

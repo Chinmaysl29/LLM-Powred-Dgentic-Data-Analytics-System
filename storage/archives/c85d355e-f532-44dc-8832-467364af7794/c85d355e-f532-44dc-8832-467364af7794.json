@@ -1,0 +1,15 @@
+{
+  "dataset_id": "c85d355e-f532-44dc-8832-467364af7794",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "77ff9633-be2b-4155-ab52-b55a8af58b42",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-10-11 18:09:54.722915+00:00",
+      "author": "system",
+      "description": "Initial ingestion of lifecycle_test.csv"
+    }
+  ]
+}

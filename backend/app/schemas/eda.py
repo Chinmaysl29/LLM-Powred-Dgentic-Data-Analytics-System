@@ -161,9 +161,32 @@ class BusinessInsight(BaseModel):
     impact: str = Field("medium", description="Business impact level: low, medium, high")
 
 
+class ChartManifest(BaseModel):
+    chart_id: str
+    chart_type: Literal["histogram", "scatter", "time_series", "grouped_bar"]
+    dataset_id: str | None = None
+    version: int | None = None
+    analysis_run_id: str | None = None
+    source_data_reference: str | None = None
+    source_checksum: str | None = None
+    metric: str
+    dimension: str
+    aggregation: str
+    applied_filters: dict[str, Any] = Field(default_factory=dict)
+    total_source_rows: int
+    rendered_rows: int
+    sampling_method: str = "none"
+    coordinate_data: list[dict[str, Any]] = Field(default_factory=list)
+    units: str = "source units"
+    null_handling: str = "Exclude null and non-finite coordinates"
+    computation_metadata: dict[str, Any] = Field(default_factory=dict)
+    warnings: list[str] = Field(default_factory=list)
+
+
 class EDAResults(BaseModel):
     """Standardized output structure for the EDA Agent."""
 
+    chart_manifest: list[ChartManifest] = Field(default_factory=list)
     dataset_summary: DatasetSummary = Field(..., description="High-level understanding and metadata")
     statistics: dict[str, NumericColumnStatistics] = Field(
         default_factory=dict, description="Statistical summary for numeric columns"

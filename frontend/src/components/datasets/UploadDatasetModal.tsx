@@ -21,7 +21,20 @@ interface UploadDatasetModalProps {
   onSuccess: (newDataset: Dataset) => void;
 }
 
-const ALLOWED_EXTENSIONS = ['.csv', '.xlsx', '.xls', '.json', '.pdf', '.parquet'];
+const ALLOWED_EXTENSIONS = [
+  '.csv',
+  '.tsv',
+  '.xlsx',
+  '.xls',
+  '.json',
+  '.jsonl',
+  '.ndjson',
+  '.parquet',
+  '.pdf',
+  '.txt',
+  '.md',
+  '.markdown',
+];
 
 export function UploadDatasetModal({ isOpen, onClose, onSuccess }: UploadDatasetModalProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -39,8 +52,16 @@ export function UploadDatasetModal({ isOpen, onClose, onSuccess }: UploadDataset
   function validateAndSelectFile(file: File) {
     setError(null);
     const ext = '.' + (file.name.split('.').pop()?.toLowerCase() ?? '');
+    if (ext === '.docx' || ext === '.doc') {
+      setError(
+        'Microsoft Word (.docx) files are explicitly unsupported. Please upload structured datasets (CSV, TSV, XLS, XLSX, JSON, JSONL, Parquet) or document files (PDF, TXT, Markdown).'
+      );
+      return;
+    }
     if (!ALLOWED_EXTENSIONS.includes(ext)) {
-      setError(`Unsupported file type '${ext}'. Please upload CSV, Excel, JSON, PDF, or Parquet.`);
+      setError(
+        `Unsupported file type '${ext}'. Accepted types: CSV, TSV, XLS, XLSX, JSON, JSONL, Parquet, PDF, TXT, Markdown.`
+      );
       return;
     }
 

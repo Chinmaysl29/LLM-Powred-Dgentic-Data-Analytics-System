@@ -4,8 +4,20 @@ import sys
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
+from sqlalchemy import String, inspect, text
+from alembic.ddl.postgresql import PostgresqlImpl
 
 from alembic import context
+
+
+class ProjectPostgresqlImpl(PostgresqlImpl):
+    """Preserve published revision IDs, including those longer than 32 chars."""
+    __dialect__ = "postgresql"
+
+    def version_table_impl(self, **kwargs):
+        table = super().version_table_impl(**kwargs)
+        table.c.version_num.type = String(128)
+        return table
 
 # Ensure root workspace is in sys.path
 sys.path.insert(0, os.path.abspath("."))
@@ -79,6 +91,14 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
+        # Widen existing bookkeeping without changing or stamping its revision.
+        # This also supports databases left at revision 002 by the old 32-char limit.
+        with connection.begin():
+            inspector = inspect(connection)
+            if connection.dialect.name == "postgresql" and inspector.has_table("alembic_version"):
+                column = next(c for c in inspector.get_columns("alembic_version") if c["name"] == "version_num")
+                if getattr(column["type"], "length", 128) < 128:
+                    connection.execute(text("ALTER TABLE alembic_version ALTER COLUMN version_num TYPE VARCHAR(128)"))
         context.configure(
             connection=connection,
             target_metadata=target_metadata,

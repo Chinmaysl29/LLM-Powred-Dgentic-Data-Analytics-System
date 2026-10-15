@@ -1,0 +1,48 @@
+{
+  "dataset_id": "7ead23a6-feb0-45da-86e6-cc4a6726a903",
+  "duplicate_rows": 0,
+  "duplicate_percentage": 0.0,
+  "missing_data_profile": {
+    "null_count": 0,
+    "null_percentage": 0.0,
+    "columns_with_missing": []
+  },
+  "cardinality_profile": {
+    "high_cardinality_columns": [],
+    "low_cardinality_columns": [
+      "company_name",
+      "revenue",
+      "profit_margin"
+    ]
+  },
+  "numeric_columns_profile": {
+    "revenue": {
+      "mean": 1166.6666666666667,
+      "median": 1200.0,
+      "mode": 800.0,
+      "min": 800.0,
+      "max": 1500.0,
+      "std": 351.1884584284246,
+      "variance": 123333.33333333333,
+      "p25": 1000.0,
+      "p50": 1200.0,
+      "p75": 1350.0,
+      "skewness": -0.4232731602680082,
+      "kurtosis": 0.0
+    },
+    "profit_margin": {
+      "mean": 24.566666666666666,
+      "median": 25.5,
+      "mode": 18.2,
+      "min": 18.2,
+      "max": 30.0,
+      "std": 5.955109850652072,
+      "variance": 35.46333333333334,
+      "p25": 21.85,
+      "p50": 25.5,
+      "p75": 27.75,
+      "skewness": -0.6879524495442197,
+      "kurtosis": 0.0
+    }
+  }
+}

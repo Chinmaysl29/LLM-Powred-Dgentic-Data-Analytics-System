@@ -10,6 +10,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from backend.app.database.postgres import get_db_session
+from backend.app.core.security import get_current_user
+from backend.app.core.workspace_authorization import authorize_tenant, authorize_workspace
 from backend.app.repositories.workspace_repository import WorkspaceRepository, get_workspace_repository
 from backend.app.schemas.workspace import (
     WorkspaceCreate,
@@ -40,8 +42,11 @@ def get_workspace_service(
 def create_workspace(
     payload: WorkspaceCreate,
     service: WorkspaceService = Depends(get_workspace_service),
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db_session),
 ) -> Any:
     """Create a new workspace within an enterprise tenant."""
+    authorize_tenant(db, user.id, payload.tenant_id, 'manage')
     try:
         return service.create_workspace(
             tenant_id=payload.tenant_id,
@@ -63,9 +68,20 @@ def list_workspaces(
     limit: int = Query(default=100, ge=1, le=500),
     status: str | None = Query(default=None),
     service: WorkspaceService = Depends(get_workspace_service),
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db_session),
 ) -> Any:
     """List all workspaces for a given tenant."""
-    items = service.list_workspaces(tenant_id=tenant_id, skip=skip, limit=limit, status=status)
+    authorize_tenant(db, user.id, tenant_id)
+    candidates = service.list_workspaces(tenant_id=tenant_id, skip=skip, limit=limit, status=status)
+    items = []
+    for item in candidates:
+        try:
+            authorize_workspace(db, user.id, item.id)
+            items.append(item)
+        except HTTPException as exc:
+            if exc.status_code != 404:
+                raise
     return {
         "items": items,
         "total": len(items),
@@ -74,12 +90,34 @@ def list_workspaces(
     }
 
 
+@router.get('/mine')
+def my_workspaces(db: Session = Depends(get_db_session), user=Depends(get_current_user)):
+    from sqlalchemy import select
+    from backend.app.models.workspace import Workspace
+    from backend.app.core.workspace_authorization import workspace_memberships
+    candidates = db.scalars(select(Workspace).join(workspace_memberships,
+        workspace_memberships.c.workspace_id == Workspace.id).where(workspace_memberships.c.user_id == user.id,
+        workspace_memberships.c.active.is_(True))).all()
+    result = []
+    for item in candidates:
+        try:
+            authorize_workspace(db, user.id, item.id)
+            result.append({'id': str(item.id), 'workspace_name': item.workspace_name, 'tenant_id': str(item.tenant_id)})
+        except HTTPException as exc:
+            if exc.status_code != 404:
+                raise
+    return result
+
+
 @router.get("/{workspace_id}", response_model=WorkspaceResponse)
 def get_workspace(
     workspace_id: uuid.UUID,
     service: WorkspaceService = Depends(get_workspace_service),
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db_session),
 ) -> Any:
     """Retrieve details of a single workspace by ID."""
+    authorize_workspace(db, user.id, workspace_id)
     try:
         return service.get_workspace(workspace_id)
     except WorkspaceNotFoundException as exc:
@@ -91,8 +129,11 @@ def update_workspace(
     workspace_id: uuid.UUID,
     payload: WorkspaceUpdate,
     repo: WorkspaceRepository = Depends(get_workspace_repository),
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db_session),
 ) -> Any:
     """Update metadata or status of an existing workspace."""
+    authorize_workspace(db, user.id, workspace_id, 'manage')
     updated = repo.update_workspace(
         workspace_id=workspace_id,
         workspace_name=payload.workspace_name,
@@ -111,12 +152,10 @@ def update_workspace(
 def delete_workspace(
     workspace_id: uuid.UUID,
     repo: WorkspaceRepository = Depends(get_workspace_repository),
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db_session),
 ) -> dict[str, Any]:
     """Delete a workspace and all nested departmental/project assets."""
-    deleted = repo.delete_workspace(workspace_id)
-    if not deleted:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Workspace '{workspace_id}' not found",
-        )
-    return {"status": "success", "deleted_workspace_id": str(workspace_id)}
+    authorize_workspace(db, user.id, workspace_id, 'manage')
+    # Cascades may contain retained customer assets; use status=archived instead.
+    raise HTTPException(409, 'Archive the workspace; permanent deletion requires a reviewed retention operation')

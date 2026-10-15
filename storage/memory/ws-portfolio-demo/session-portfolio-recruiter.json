@@ -98,6 +98,38 @@
       "ai_response": "Total gross revenue reached $4,850,000 (+14.2% YoY). The Cloud Infrastructure segment was the primary driver (48% volume share).",
       "intent": "revenue_analysis",
       "context": {}
+    },
+    {
+      "id": "turn-22763c19",
+      "timestamp": "2026-10-11T18:01:12.030887+00:00",
+      "user_message": "Analyze our quarterly revenue and top growth drivers.",
+      "ai_response": "Total gross revenue reached $4,850,000 (+14.2% YoY). The Cloud Infrastructure segment was the primary driver (48% volume share).",
+      "intent": "revenue_analysis",
+      "context": {}
+    },
+    {
+      "id": "turn-ece385bd",
+      "timestamp": "2026-10-11T18:01:48.937785+00:00",
+      "user_message": "Analyze our quarterly revenue and top growth drivers.",
+      "ai_response": "Total gross revenue reached $4,850,000 (+14.2% YoY). The Cloud Infrastructure segment was the primary driver (48% volume share).",
+      "intent": "revenue_analysis",
+      "context": {}
+    },
+    {
+      "id": "turn-f3769bee",
+      "timestamp": "2026-10-11T18:03:14.994001+00:00",
+      "user_message": "Analyze our quarterly revenue and top growth drivers.",
+      "ai_response": "Total gross revenue reached $4,850,000 (+14.2% YoY). The Cloud Infrastructure segment was the primary driver (48% volume share).",
+      "intent": "revenue_analysis",
+      "context": {}
+    },
+    {
+      "id": "turn-9e079377",
+      "timestamp": "2026-10-11T18:04:32.102652+00:00",
+      "user_message": "Analyze our quarterly revenue and top growth drivers.",
+      "ai_response": "Total gross revenue reached $4,850,000 (+14.2% YoY). The Cloud Infrastructure segment was the primary driver (48% volume share).",
+      "intent": "revenue_analysis",
+      "context": {}
     }
   ],
   "analytics": [],
@@ -447,6 +479,130 @@
     {
       "id": "fc-b3ca8c92",
       "timestamp": "2026-09-27T12:38:28.069275+00:00",
+      "target_column": "sales",
+      "model_name": "Prophet_XGBoost_Ensemble",
+      "horizon_periods": 12,
+      "historical_summary": {
+        "mean": 125000,
+        "count": 1200
+      },
+      "forecast_values": [
+        135000,
+        142000,
+        148000,
+        155000,
+        162000,
+        170000,
+        178000,
+        185000,
+        192000,
+        201000,
+        210000,
+        222000
+      ],
+      "metrics": {
+        "MAE": 3200.0,
+        "RMSE": 4100.0,
+        "MAPE": 2.8
+      },
+      "confidence_interval": {}
+    },
+    {
+      "id": "fc-d4e1ccfe",
+      "timestamp": "2026-10-11T18:01:12.043902+00:00",
+      "target_column": "sales",
+      "model_name": "Prophet_XGBoost_Ensemble",
+      "horizon_periods": 12,
+      "historical_summary": {
+        "mean": 125000,
+        "count": 1200
+      },
+      "forecast_values": [
+        135000,
+        142000,
+        148000,
+        155000,
+        162000,
+        170000,
+        178000,
+        185000,
+        192000,
+        201000,
+        210000,
+        222000
+      ],
+      "metrics": {
+        "MAE": 3200.0,
+        "RMSE": 4100.0,
+        "MAPE": 2.8
+      },
+      "confidence_interval": {}
+    },
+    {
+      "id": "fc-7e4d2210",
+      "timestamp": "2026-10-11T18:01:48.949225+00:00",
+      "target_column": "sales",
+      "model_name": "Prophet_XGBoost_Ensemble",
+      "horizon_periods": 12,
+      "historical_summary": {
+        "mean": 125000,
+        "count": 1200
+      },
+      "forecast_values": [
+        135000,
+        142000,
+        148000,
+        155000,
+        162000,
+        170000,
+        178000,
+        185000,
+        192000,
+        201000,
+        210000,
+        222000
+      ],
+      "metrics": {
+        "MAE": 3200.0,
+        "RMSE": 4100.0,
+        "MAPE": 2.8
+      },
+      "confidence_interval": {}
+    },
+    {
+      "id": "fc-cd0854c8",
+      "timestamp": "2026-10-11T18:03:15.003286+00:00",
+      "target_column": "sales",
+      "model_name": "Prophet_XGBoost_Ensemble",
+      "horizon_periods": 12,
+      "historical_summary": {
+        "mean": 125000,
+        "count": 1200
+      },
+      "forecast_values": [
+        135000,
+        142000,
+        148000,
+        155000,
+        162000,
+        170000,
+        178000,
+        185000,
+        192000,
+        201000,
+        210000,
+        222000
+      ],
+      "metrics": {
+        "MAE": 3200.0,
+        "RMSE": 4100.0,
+        "MAPE": 2.8
+      },
+      "confidence_interval": {}
+    },
+    {
+      "id": "fc-3bfd8430",
+      "timestamp": "2026-10-11T18:04:32.111494+00:00",
       "target_column": "sales",
       "model_name": "Prophet_XGBoost_Ensemble",
       "horizon_periods": 12,

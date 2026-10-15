@@ -1,0 +1,26 @@
+order_id,product_name,category,sales,quantity,order_date
+ORD-0001,MacBook Pro 16,Computers,2899.0,12,2024-01-07
+ORD-0002,Dell XPS 15,Computers,2199.0,18,2024-01-14
+ORD-0003,ThinkPad X1,Computers,1850.0,15,2024-01-21
+ORD-0004,iPad Pro,Tablets,1099.0,30,2024-01-28
+ORD-0005,LG UltraFine 4K,Displays,699.99,25,2024-02-04
+ORD-0006,Sony WH-1000XM5,Audio,399.99,45,2024-02-11
+ORD-0007,AirPods Max,Audio,549.0,20,2024-02-18
+ORD-0008,Keychron K2,Accessories,99.0,80,2024-02-25
+ORD-0009,Logitech MX Master 3,Accessories,99.99,120,2024-03-03
+ORD-0010,Ergonomic Desk,Furniture,750.0,14,2024-03-10
+ORD-0011,Samsung 49 Odyssey,Displays,1299.99,16,2024-03-17
+ORD-0012,Apple Studio Display,Displays,1599.0,22,2024-03-24
+ORD-0013,Steelcase Chair,Furniture,950.0,10,2024-03-31
+ORD-0014,Bose QC45,Audio,329.0,35,2024-04-07
+ORD-0015,CalDigit TS4,Accessories,399.95,40,2024-04-14
+ORD-0016,Magic Trackpad,Accessories,129.0,65,2024-04-21
+ORD-0017,Anker Docking Station,Accessories,249.99,50,2024-04-28
+ORD-0018,Shure SM7B,Audio,399.0,28,2024-05-05
+ORD-0019,Focusrite 2i2,Audio,179.99,42,2024-05-12
+ORD-0020,Elgato StreamDeck,Accessories,149.99,55,2024-05-19
+ORD-0021,Rode PodMic,Audio,99.0,30,2024-05-26
+ORD-0022,SanDisk 2TB SSD,Storage,179.99,90,2024-06-02
+ORD-0023,Synology NAS 4-Bay,Storage,599.99,15,2024-06-09
+ORD-0024,Ubiquiti Dream Machine,Networking,379.0,20,2024-06-16
+ORD-0025,APC UPS 1500VA,Power,219.99,35,2024-06-23

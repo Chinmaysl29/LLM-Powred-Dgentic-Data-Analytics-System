@@ -61,53 +61,10 @@ const DEFAULT_SETTINGS: AppSettings = {
   },
 };
 
-// In-memory development store
-let currentSettings: AppSettings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
-
+function unavailable(): never { throw new Error('Settings APIs are unavailable. No changes were saved or applied.'); }
 export const settingsService = {
-  /**
-   * Fetch current application settings.
-   * Future: GET /api/settings
-   */
-  async getSettings(): Promise<AppSettings> {
-    await new Promise((resolve) => setTimeout(resolve, 120));
-    return JSON.parse(JSON.stringify(currentSettings));
-  },
-
-  /**
-   * Update category or full settings.
-   * Future: PUT /api/settings
-   */
-  async updateSettings(partial: Partial<AppSettings>): Promise<AppSettings> {
-    await new Promise((resolve) => setTimeout(resolve, 250));
-    currentSettings = {
-      ...currentSettings,
-      ...partial,
-      general: { ...currentSettings.general, ...(partial.general || {}) },
-      appearance: { ...currentSettings.appearance, ...(partial.appearance || {}) },
-      ai: { ...currentSettings.ai, ...(partial.ai || {}) },
-      data: { ...currentSettings.data, ...(partial.data || {}) },
-      notifications: { ...currentSettings.notifications, ...(partial.notifications || {}) },
-      privacy: { ...currentSettings.privacy, ...(partial.privacy || {}) },
-      advanced: { ...currentSettings.advanced, ...(partial.advanced || {}) },
-    };
-    return JSON.parse(JSON.stringify(currentSettings));
-  },
-
-  /**
-   * Reset application settings to factory defaults.
-   * Future: POST /api/settings/reset
-   */
-  async resetSettings(): Promise<AppSettings> {
-    await new Promise((resolve) => setTimeout(resolve, 350));
-    currentSettings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
-    return JSON.parse(JSON.stringify(currentSettings));
-  },
-
-  /**
-   * Return default settings reference.
-   */
-  getDefaultSettings(): AppSettings {
-    return JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
-  },
+ async getSettings(): Promise<AppSettings> { return unavailable(); },
+ async updateSettings(_partial: Partial<AppSettings>): Promise<AppSettings> { return unavailable(); },
+ async resetSettings(): Promise<AppSettings> { return unavailable(); },
+ getDefaultSettings(): AppSettings { return structuredClone(DEFAULT_SETTINGS); },
 };

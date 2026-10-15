@@ -1,0 +1,15 @@
+{
+  "dataset_id": "8c6d5233-d39d-4e90-b3b3-f46e1f1769fe",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "e7524033-7a95-4513-a380-a2e09fb478de",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-10-14 20:59:36.516726+00:00",
+      "author": "system",
+      "description": "Initial ingestion of products.tsv"
+    }
+  ]
+}

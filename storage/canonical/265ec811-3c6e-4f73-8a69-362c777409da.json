@@ -1,0 +1,170 @@
+[
+  {
+    "Bluestock Fintech — Nifty 100  |  Analysis  |  20 records": "id",
+    "Unnamed: 1": "company_id",
+    "Unnamed: 2": "compounded_sales_growth",
+    "Unnamed: 3": "compounded_profit_growth",
+    "Unnamed: 4": "stock_price_cagr",
+    "Unnamed: 5": "roe"
+  },
+  {
+    "Bluestock Fintech — Nifty 100  |  Analysis  |  20 records": "1",
+    "Unnamed: 1": "HDFCBANK",
+    "Unnamed: 2": "10 Years: 21%",
+    "Unnamed: 3": "10 Years: 22%",
+    "Unnamed: 4": "10 Years:     15%",
+    "Unnamed: 5": "10 Years:     17%"
+  },
+  {
+    "Bluestock Fintech — Nifty 100  |  Analysis  |  20 records": "10",
+    "Unnamed: 1": "SBILIFE",
+    "Unnamed: 2": "5 Years:       24%",
+    "Unnamed: 3": "5 Years:            6%",
+    "Unnamed: 4": "     5 Years:       8%",
+    "Unnamed: 5": "5 Years          14%"
+  },
+  {
+    "Bluestock Fintech — Nifty 100  |  Analysis  |  20 records": "11",
+    "Unnamed: 1": "SBILIFE",
+    "Unnamed: 2": "3 Years:       17%",
+    "Unnamed: 3": "3 Years:            9%",
+    "Unnamed: 4": "     3 Years:       7%",
+    "Unnamed: 5": "3 Years:         13%"
+  },
+  {
+    "Bluestock Fintech — Nifty 100  |  Analysis  |  20 records": "12",
+    "Unnamed: 1": "SBILIFE",
+    "Unnamed: 2": "TTM:            43%",
+    "Unnamed: 3": "TTM:                 18%",
+    "Unnamed: 4": "     1 Year:         -2%",
+    "Unnamed: 5": "Last Year:      12%"
+  },
+  {
+    "Bluestock Fintech — Nifty 100  |  Analysis  |  20 records": "13",
+    "Unnamed: 1": "TCS",
+    "Unnamed: 2": "10 Years:     11%             ",
+    "Unnamed: 3": "10 Years:          9%",
+    "Unnamed: 4": "    10 Years:      14%",
+    "Unnamed: 5": "10 Years:       40%"
+  },
+  {
+    "Bluestock Fintech — Nifty 100  |  Analysis  |  20 records": "14",
+    "Unnamed: 1": "TCS",
+    "Unnamed: 2": "5 Years:       10%             ",
+    "Unnamed: 3": "5 Years:            8%",
+    "Unnamed: 4": "      5 Years:      16%",
+    "Unnamed: 5": "5 Years:          44%"
+  },
+  {
+    "Bluestock Fintech — Nifty 100  |  Analysis  |  20 records": "15",
+    "Unnamed: 1": "TCS",
+    "Unnamed: 2": "3 Years:       14%             ",
+    "Unnamed: 3": "3 Years:            12%",
+    "Unnamed: 4": "      3 Years:      8%",
+    "Unnamed: 5": "3 Years:          47%"
+  },
+  {
+    "Bluestock Fintech — Nifty 100  |  Analysis  |  20 records": "16",
+    "Unnamed: 1": "TCS",
+    "Unnamed: 2": "TTM:            5%             ",
+    "Unnamed: 3": "TTM:                 8%",
+    "Unnamed: 4": "      1 Year:       16%",
+    "Unnamed: 5": "Last Year:       52%"
+  },
+  {
+    "Bluestock Fintech — Nifty 100  |  Analysis  |  20 records": "17",
+    "Unnamed: 1": "WIPRO",
+    "Unnamed: 2": "10 Years:     8%",
+    "Unnamed: 3": "10 Years:          3%",
+    "Unnamed: 4": "    10 Years:     12%",
+    "Unnamed: 5": "10 Years:        18%"
+  },
+  {
+    "Bluestock Fintech — Nifty 100  |  Analysis  |  20 records": "18",
+    "Unnamed: 1": "WIPRO",
+    "Unnamed: 2": "5 Years:       9%",
+    "Unnamed: 3": "5 Years:            4%",
+    "Unnamed: 4": "      5 Years:     20%",
+    "Unnamed: 5": "5 Years:          17%"
+  },
+  {
+    "Bluestock Fintech — Nifty 100  |  Analysis  |  20 records": "19",
+    "Unnamed: 1": "WIPRO",
+    "Unnamed: 2": "3 Years:      13%",
+    "Unnamed: 3": "3 Years:            0%",
+    "Unnamed: 4": "      3 Years:      -1%",
+    "Unnamed: 5": "3 Years:          17%"
+  },
+  {
+    "Bluestock Fintech — Nifty 100  |  Analysis  |  20 records": "2",
+    "Unnamed: 1": "HDFCBANK",
+    "Unnamed: 2": "5 Years:       22%",
+    "Unnamed: 3": "5 Years:           23%",
+    "Unnamed: 4": "      5 Years:       8%",
+    "Unnamed: 5": "5 Years:       17%"
+  },
+  {
+    "Bluestock Fintech — Nifty 100  |  Analysis  |  20 records": "20",
+    "Unnamed: 1": "WIPRO",
+    "Unnamed: 2": "TTM:           -3%",
+    "Unnamed: 3": "TTM:                 1%",
+    "Unnamed: 4": "      1 Year:       39%",
+    "Unnamed: 5": "Last Year:       14%"
+  },
+  {
+    "Bluestock Fintech — Nifty 100  |  Analysis  |  20 records": "3",
+    "Unnamed: 1": "HDFCBANK",
+    "Unnamed: 2": "3 Years:       30%",
+    "Unnamed: 3": "3 Years:           26%",
+    "Unnamed: 4": "      3 Years:       8%",
+    "Unnamed: 5": "3 Years:       17%"
+  },
+  {
+    "Bluestock Fintech — Nifty 100  |  Analysis  |  20 records": "4",
+    "Unnamed: 1": "HDFCBANK",
+    "Unnamed: 2": "TTM:            47%",
+    "Unnamed: 3": "TTM:                27%",
+    "Unnamed: 4": "      1 Year:        13%",
+    "Unnamed: 5": "Last Year:    17%"
+  },
+  {
+    "Bluestock Fintech — Nifty 100  |  Analysis  |  20 records": "5",
+    "Unnamed: 1": "INFY",
+    "Unnamed: 2": "10 Years:     12%",
+    "Unnamed: 3": "10 Years:         9%",
+    "Unnamed: 4": "     10 Years:     15%",
+    "Unnamed: 5": "10 Years:      27%"
+  },
+  {
+    "Bluestock Fintech — Nifty 100  |  Analysis  |  20 records": "6",
+    "Unnamed: 1": "INFY",
+    "Unnamed: 2": "5 Years:       13%",
+    "Unnamed: 3": "5 Years:           11%",
+    "Unnamed: 4": "       5 Years:     22%",
+    "Unnamed: 5": "5 Years:        29%"
+  },
+  {
+    "Bluestock Fintech — Nifty 100  |  Analysis  |  20 records": "7",
+    "Unnamed: 1": "INFY",
+    "Unnamed: 2": "3 Years:       5%",
+    "Unnamed: 3": "3 Years:           10%",
+    "Unnamed: 4": "       3 Years:     4%",
+    "Unnamed: 5": "3 Years:        31%"
+  },
+  {
+    "Bluestock Fintech — Nifty 100  |  Analysis  |  20 records": "8",
+    "Unnamed: 1": "INFY",
+    "Unnamed: 2": "TTM:            3%",
+    "Unnamed: 3": "TTM:                 8%",
+    "Unnamed: 4": "       1 Year:       27%",
+    "Unnamed: 5": "Last Year:     32%"
+  },
+  {
+    "Bluestock Fintech — Nifty 100  |  Analysis  |  20 records": "9",
+    "Unnamed: 1": "SBILIFE",
+    "Unnamed: 2": "10 Years:     23%",
+    "Unnamed: 3": "10 Years:          9%",
+    "Unnamed: 4": "    10 Years:      9%",
+    "Unnamed: 5": "10 Years:      16%"
+  }
+]

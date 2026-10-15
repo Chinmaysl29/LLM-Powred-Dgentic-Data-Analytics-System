@@ -30,6 +30,118 @@
         },
         "confidence": 0.85
       }
+    },
+    {
+      "id": "turn-b5f770ee",
+      "timestamp": "2026-10-11T18:01:35.803337+00:00",
+      "user_message": "Analyze revenue trends and forecast next 6 periods.",
+      "ai_response": "Based on full-lifecycle analysis across 40 records, Revenue stands at 108,686.31. Time-series projection across a 6-period forward horizon forecasts cumulative expansion of -30.3%. Ensemble models indicate peak momentum in intermediate quarters with robust model confidence (MAPE: 4.5%).",
+      "intent": "autonomous_ai_analyst",
+      "context": {
+        "plan": {
+          "query": "Analyze revenue trends and forecast next 6 periods.",
+          "agents_required": {
+            "semantic_layer": true,
+            "sql_agent": false,
+            "eda_agent": false,
+            "kpi_engine": true,
+            "forecasting_agent": true,
+            "visualization_agent": true,
+            "storytelling_engine": true,
+            "dashboard_builder": false,
+            "anomaly_detector": false,
+            "root_cause_engine": false
+          },
+          "primary_metric": "revenue",
+          "forecast_horizon": 6,
+          "execution_strategy": "concurrent_hybrid"
+        },
+        "confidence": 0.85
+      }
+    },
+    {
+      "id": "turn-aaafd4cc",
+      "timestamp": "2026-10-11T18:02:09.509131+00:00",
+      "user_message": "Analyze revenue trends and forecast next 6 periods.",
+      "ai_response": "Based on full-lifecycle analysis across 40 records, Revenue stands at 108,686.31. Time-series projection across a 6-period forward horizon forecasts cumulative expansion of -30.3%. Ensemble models indicate peak momentum in intermediate quarters with robust model confidence (MAPE: 4.5%).",
+      "intent": "autonomous_ai_analyst",
+      "context": {
+        "plan": {
+          "query": "Analyze revenue trends and forecast next 6 periods.",
+          "agents_required": {
+            "semantic_layer": true,
+            "sql_agent": false,
+            "eda_agent": false,
+            "kpi_engine": true,
+            "forecasting_agent": true,
+            "visualization_agent": true,
+            "storytelling_engine": true,
+            "dashboard_builder": false,
+            "anomaly_detector": false,
+            "root_cause_engine": false
+          },
+          "primary_metric": "revenue",
+          "forecast_horizon": 6,
+          "execution_strategy": "concurrent_hybrid"
+        },
+        "confidence": 0.85
+      }
+    },
+    {
+      "id": "turn-1e3d4cd1",
+      "timestamp": "2026-10-11T18:03:34.630556+00:00",
+      "user_message": "Analyze revenue trends and forecast next 6 periods.",
+      "ai_response": "Based on full-lifecycle analysis across 40 records, Revenue stands at 108,686.31. Time-series projection across a 6-period forward horizon forecasts cumulative expansion of -30.3%. Ensemble models indicate peak momentum in intermediate quarters with robust model confidence (MAPE: 4.5%).",
+      "intent": "autonomous_ai_analyst",
+      "context": {
+        "plan": {
+          "query": "Analyze revenue trends and forecast next 6 periods.",
+          "agents_required": {
+            "semantic_layer": true,
+            "sql_agent": false,
+            "eda_agent": false,
+            "kpi_engine": true,
+            "forecasting_agent": true,
+            "visualization_agent": true,
+            "storytelling_engine": true,
+            "dashboard_builder": false,
+            "anomaly_detector": false,
+            "root_cause_engine": false
+          },
+          "primary_metric": "revenue",
+          "forecast_horizon": 6,
+          "execution_strategy": "concurrent_hybrid"
+        },
+        "confidence": 0.85
+      }
+    },
+    {
+      "id": "turn-c3f2b15f",
+      "timestamp": "2026-10-11T18:04:47.370610+00:00",
+      "user_message": "Analyze revenue trends and forecast next 6 periods.",
+      "ai_response": "Based on full-lifecycle analysis across 40 records, Revenue stands at 108,686.31. Time-series projection across a 6-period forward horizon forecasts cumulative expansion of -30.3%. Ensemble models indicate peak momentum in intermediate quarters with robust model confidence (MAPE: 4.5%).",
+      "intent": "autonomous_ai_analyst",
+      "context": {
+        "plan": {
+          "query": "Analyze revenue trends and forecast next 6 periods.",
+          "agents_required": {
+            "semantic_layer": true,
+            "sql_agent": false,
+            "eda_agent": false,
+            "kpi_engine": true,
+            "forecasting_agent": true,
+            "visualization_agent": true,
+            "storytelling_engine": true,
+            "dashboard_builder": false,
+            "anomaly_detector": false,
+            "root_cause_engine": false
+          },
+          "primary_metric": "revenue",
+          "forecast_horizon": 6,
+          "execution_strategy": "concurrent_hybrid"
+        },
+        "confidence": 0.85
+      }
     }
   ],
   "analytics": [
@@ -42,6 +154,54 @@
       "key_metrics": {
         "revenue_growth": 14.2,
         "aov": 2761.07
+      },
+      "filters": {}
+    },
+    {
+      "id": "ana-6923dd54",
+      "timestamp": "2026-10-11T18:01:35.789106+00:00",
+      "question": "Analyze revenue trends and forecast next 6 periods.",
+      "sql_query": null,
+      "data_summary": {},
+      "key_metrics": {
+        "revenue_growth": 14.2,
+        "aov": 2717.16
+      },
+      "filters": {}
+    },
+    {
+      "id": "ana-38aef981",
+      "timestamp": "2026-10-11T18:02:09.495041+00:00",
+      "question": "Analyze revenue trends and forecast next 6 periods.",
+      "sql_query": null,
+      "data_summary": {},
+      "key_metrics": {
+        "revenue_growth": 14.2,
+        "aov": 2717.16
+      },
+      "filters": {}
+    },
+    {
+      "id": "ana-9f291fbc",
+      "timestamp": "2026-10-11T18:03:34.620485+00:00",
+      "question": "Analyze revenue trends and forecast next 6 periods.",
+      "sql_query": null,
+      "data_summary": {},
+      "key_metrics": {
+        "revenue_growth": 14.2,
+        "aov": 2717.16
+      },
+      "filters": {}
+    },
+    {
+      "id": "ana-0c8597fe",
+      "timestamp": "2026-10-11T18:04:47.351811+00:00",
+      "question": "Analyze revenue trends and forecast next 6 periods.",
+      "sql_query": null,
+      "data_summary": {},
+      "key_metrics": {
+        "revenue_growth": 14.2,
+        "aov": 2717.16
       },
       "filters": {}
     }
@@ -72,11 +232,111 @@
         "MAPE": 4.5
       },
       "confidence_interval": {}
+    },
+    {
+      "id": "fc-642b7ef9",
+      "timestamp": "2026-10-11T18:01:35.765131+00:00",
+      "target_column": "revenue",
+      "model_name": "ARIMA Forecaster",
+      "horizon_periods": 6,
+      "historical_summary": {
+        "mean": 2717.157788162531,
+        "count": 40
+      },
+      "forecast_values": [
+        2554.0,
+        2791.79,
+        3308.87,
+        2809.28,
+        3002.07,
+        3044.15
+      ],
+      "metrics": {
+        "MAE": 18.2,
+        "RMSE": 24.8,
+        "MAPE": 4.5
+      },
+      "confidence_interval": {}
+    },
+    {
+      "id": "fc-ed3bce3d",
+      "timestamp": "2026-10-11T18:02:09.473806+00:00",
+      "target_column": "revenue",
+      "model_name": "ARIMA Forecaster",
+      "horizon_periods": 6,
+      "historical_summary": {
+        "mean": 2717.157788162531,
+        "count": 40
+      },
+      "forecast_values": [
+        2554.0,
+        2791.79,
+        3308.87,
+        2809.28,
+        3002.07,
+        3044.15
+      ],
+      "metrics": {
+        "MAE": 18.2,
+        "RMSE": 24.8,
+        "MAPE": 4.5
+      },
+      "confidence_interval": {}
+    },
+    {
+      "id": "fc-1e6aeb1b",
+      "timestamp": "2026-10-11T18:03:34.605260+00:00",
+      "target_column": "revenue",
+      "model_name": "ARIMA Forecaster",
+      "horizon_periods": 6,
+      "historical_summary": {
+        "mean": 2717.157788162531,
+        "count": 40
+      },
+      "forecast_values": [
+        2554.0,
+        2791.79,
+        3308.87,
+        2809.28,
+        3002.07,
+        3044.15
+      ],
+      "metrics": {
+        "MAE": 18.2,
+        "RMSE": 24.8,
+        "MAPE": 4.5
+      },
+      "confidence_interval": {}
+    },
+    {
+      "id": "fc-e8482cd1",
+      "timestamp": "2026-10-11T18:04:47.329869+00:00",
+      "target_column": "revenue",
+      "model_name": "ARIMA Forecaster",
+      "horizon_periods": 6,
+      "historical_summary": {
+        "mean": 2717.157788162531,
+        "count": 40
+      },
+      "forecast_values": [
+        2554.0,
+        2791.79,
+        3308.87,
+        2809.28,
+        3002.07,
+        3044.15
+      ],
+      "metrics": {
+        "MAE": 18.2,
+        "RMSE": 24.8,
+        "MAPE": 4.5
+      },
+      "confidence_interval": {}
     }
   ],
   "datasets": {
     "active-dataset": {
-      "updated_at": "2026-09-27T12:37:11.234931+00:00",
+      "updated_at": "2026-10-11T18:04:45.893900+00:00",
       "semantic_mapping": {
         "order_date": {
           "business_name": "Transaction Timestamp",

@@ -1,0 +1,64 @@
+{
+  "dataset_id": "fd985d16-675d-43d3-b8f9-fc121bd0fc0c",
+  "duplicate_rows": 0,
+  "duplicate_percentage": 0.0,
+  "missing_data_profile": {
+    "null_count": 0,
+    "null_percentage": 0.0,
+    "columns_with_missing": []
+  },
+  "cardinality_profile": {
+    "high_cardinality_columns": [],
+    "low_cardinality_columns": [
+      "sku",
+      "warehouse_location",
+      "stock_level",
+      "unit_cost",
+      "reorder_threshold"
+    ]
+  },
+  "numeric_columns_profile": {
+    "stock_level": {
+      "mean": 480.6,
+      "median": 410.0,
+      "mode": 50.0,
+      "min": 50.0,
+      "max": 1200.0,
+      "std": 349.8648310419326,
+      "variance": 122405.40000000004,
+      "p25": 190.0,
+      "p50": 410.0,
+      "p75": 725.0,
+      "skewness": 0.6049236552061364,
+      "kurtosis": -0.5810485840731245
+    },
+    "unit_cost": {
+      "mean": 125.01533333333333,
+      "median": 85.0,
+      "mode": 12.5,
+      "min": 12.5,
+      "max": 450.0,
+      "std": 119.59486944721014,
+      "variance": 14302.932798095238,
+      "p25": 49.0,
+      "p50": 85.0,
+      "p75": 160.0,
+      "skewness": 1.7659923198577199,
+      "kurtosis": 3.100590594054717
+    },
+    "reorder_threshold": {
+      "mean": 124.33333333333333,
+      "median": 100.0,
+      "mode": 100.0,
+      "min": 25.0,
+      "max": 300.0,
+      "std": 82.35087532422874,
+      "variance": 6781.666666666665,
+      "p25": 65.0,
+      "p50": 100.0,
+      "p75": 175.0,
+      "skewness": 0.803866328758517,
+      "kurtosis": -0.1505791912632337
+    }
+  }
+}

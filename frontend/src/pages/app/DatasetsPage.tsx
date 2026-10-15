@@ -69,6 +69,7 @@ type StatusFilterValue = 'all' | DatasetStatus;
 
 const STATUS_FILTER_OPTIONS: { value: StatusFilterValue; label: string }[] = [
   { value: 'all',        label: 'All statuses' },
+  { value: 'ready',      label: 'Ready' },
   { value: 'uploaded',   label: 'Uploaded' },
   { value: 'validating', label: 'Validating' },
   { value: 'validated',  label: 'Validated' },
@@ -100,7 +101,7 @@ function deriveVisibleDatasets(
   const filtered =
     statusFilter === 'all'
       ? searched
-      : searched.filter((ds) => ds.status === statusFilter);
+      : searched.filter((ds) => ds.status.toLowerCase() === statusFilter.toLowerCase());
 
   // 3. Sort - spread to avoid mutating the filtered array reference
   const sorted = [...filtered].sort((a, b) => {
@@ -559,12 +560,13 @@ export default function DatasetsPage() {
   const visibleCount = visibleDatasets.length;
 
   return (
-    <div>
+    <div className="ws-page dataset-workspace">
       {/* Page Header */}
       <header className="page-header">
         <div className="datasets-header-row">
           <div>
-            <h1 className="page-title">Datasets</h1>
+            <p className="eyebrow">DATA MANAGEMENT / DATASETS</p>
+            <h1 className="page-title">Your data, organized.</h1>
             <p className="page-description">
               Manage and inspect datasets available for analysis.
             </p>

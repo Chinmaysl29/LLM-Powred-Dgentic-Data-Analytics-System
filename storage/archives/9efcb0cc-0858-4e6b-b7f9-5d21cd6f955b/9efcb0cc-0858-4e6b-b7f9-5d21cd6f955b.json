@@ -1,0 +1,15 @@
+{
+  "dataset_id": "9efcb0cc-0858-4e6b-b7f9-5d21cd6f955b",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "efedb0b1-5cb0-413e-9120-42e88e32a51c",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-10-12 17:01:59.310380",
+      "author": "system",
+      "description": "Initial ingestion of inventory.csv"
+    }
+  ]
+}

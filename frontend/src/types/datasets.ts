@@ -3,6 +3,7 @@
  */
 
 export type DatasetStatus =
+  | 'ready'
   | 'uploaded'
   | 'validating'
   | 'validated'
@@ -15,6 +16,7 @@ export type DatasetStatus =
 export type DatasetFileType = 'CSV' | 'Excel' | 'JSON' | 'PDF' | 'Parquet';
 
 export interface Dataset {
+  version?: number;
   /** Unique identifier (UUID string from backend). */
   dataset_id: string;
   /** Original filename as uploaded (e.g. "Sales_Data_2025.csv"). */
@@ -53,7 +55,9 @@ export type PreviewRow = Record<string, CellValue>;
 export interface DatasetPreview {
   columns: string[];
   rows: PreviewRow[];
-  totalRows: number;
+  totalRows: number | null;
+  previewRows?: number;
+  countStatus?: 'exact' | 'unknown';
 }
 
 export interface UploadFileEntry {

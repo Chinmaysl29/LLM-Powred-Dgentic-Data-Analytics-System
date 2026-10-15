@@ -1,0 +1,37 @@
+[
+  {
+    "item_id": "ITM-01",
+    "service": "Enterprise Cloud Database",
+    "tier": "Tier-1",
+    "mrr": 2499,
+    "active_tenants": 48
+  },
+  {
+    "item_id": "ITM-02",
+    "service": "AI Inference Cluster",
+    "tier": "Tier-1",
+    "mrr": 4999,
+    "active_tenants": 24
+  },
+  {
+    "item_id": "ITM-03",
+    "service": "Vector Search Engine",
+    "tier": "Tier-2",
+    "mrr": 1299,
+    "active_tenants": 82
+  },
+  {
+    "item_id": "ITM-04",
+    "service": "Realtime PubSub Bus",
+    "tier": "Tier-3",
+    "mrr": 699,
+    "active_tenants": 115
+  },
+  {
+    "item_id": "ITM-05",
+    "service": "Automated ETL Pipeline",
+    "tier": "Tier-2",
+    "mrr": 1599,
+    "active_tenants": 63
+  }
+]

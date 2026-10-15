@@ -21,15 +21,25 @@ class DatasetParserService:
     def parse(self, path: str | Path, file_type: str) -> ParsedDataset:
         source = Path(path)
         normalized_type = file_type.lower().lstrip(".")
-        if normalized_type == "csv":
-            return ParsedDataset(pd.read_csv(source))
-        if normalized_type in {"xlsx", "xls"}:
-            return ParsedDataset(pd.read_excel(source))
-        if normalized_type == "json":
-            return ParsedDataset(pd.read_json(source))
+        if normalized_type in {"csv", "tsv", "xlsx", "xls", "json", "jsonl", "ndjson", "parquet"}:
+            from backend.app.services.tabular_loader import load_tabular_dataframe
+            return ParsedDataset(load_tabular_dataframe(source, normalized_type))
         if normalized_type == "pdf":
             return ParsedDataset(None, self._parse_pdf(source))
+        if normalized_type in {"txt", "text", "md", "markdown"}:
+            return ParsedDataset(None, self._parse_text(source))
         raise ValueError(f"Unsupported dataset file type: {file_type}")
+
+    @staticmethod
+    def _parse_text(source: Path) -> dict[str, Any]:
+        text_content = source.read_text(encoding="utf-8", errors="replace")
+        lines = text_content.splitlines()
+        return {
+            "pages": [{"page": 1, "text": text_content}],
+            "text": text_content,
+            "line_count": len(lines),
+            "tables": [],
+        }
 
     @staticmethod
     def _parse_pdf(source: Path) -> dict[str, Any]:

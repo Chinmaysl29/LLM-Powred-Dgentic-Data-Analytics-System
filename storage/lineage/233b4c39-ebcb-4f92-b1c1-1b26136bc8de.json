@@ -1,0 +1,15 @@
+{
+  "dataset_id": "233b4c39-ebcb-4f92-b1c1-1b26136bc8de",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "11b34da7-1ac9-4593-a6c4-a0abccdb9e77",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-10-15 09:15:40.280479+00:00",
+      "author": "system",
+      "description": "Initial ingestion of company_budgets.csv"
+    }
+  ]
+}

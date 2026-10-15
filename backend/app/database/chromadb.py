@@ -51,6 +51,16 @@ class ChromaDatabase:
         except ChromaConnectionError:
             return False, "ChromaDB is unavailable"
 
+    async def indexing_health_check(self) -> tuple[bool, str]:
+        """Reachability alone does not establish indexing protocol compatibility."""
+        from backend.rag.vectorstores.compatibility import verify_chroma_compatibility
+        try:
+            await self.connect()
+            versions = await asyncio.to_thread(verify_chroma_compatibility, self.client, chromadb.__version__)
+            return True, f"Verified Chroma {versions['client_version']} pairing; collection checked on use"
+        except ChromaConnectionError:
+            return False, 'RAG indexing unavailable: dependency incompatible or unreachable'
+
     async def get_or_create_collection(self, name: str, metadata: dict[str, Any] | None = None) -> Any:
         """Create a named collection lazily for a future RAG feature."""
         try:

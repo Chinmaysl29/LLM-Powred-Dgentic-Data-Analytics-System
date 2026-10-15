@@ -17,7 +17,9 @@ from __future__ import annotations
 
 import logging
 from typing import Any
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
+from pathlib import Path
+from backend.app.core.workspace_authorization import identifier
 from pydantic import BaseModel, Field
 import pandas as pd
 
@@ -35,6 +37,12 @@ from backend.memory.ai_memory_layer import get_ai_memory_layer
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/os", tags=["Enterprise AI Analytics OS (Phase 20)"])
+
+
+def scoped_storage(request: Request, kind: str) -> Path:
+    """Only the verified DB workspace selects storage; legacy roots stay quarantined."""
+    access = request.state.workspace_access
+    return Path('storage/authorized_workspaces') / str(access.workspace_id) / kind
 
 
 # -----------------------------------------------------------------------------
@@ -174,15 +182,19 @@ def get_workspace_resources(workspace_id: str) -> dict[str, Any]:
 # -----------------------------------------------------------------------------
 
 @router.post("/memory/resolve")
-def resolve_contextual_query(req: ContextResolveRequest) -> dict[str, Any]:
-    mem = get_ai_memory_layer()
-    return mem.resolve_contextual_query(req.query, req.workspace_id, req.session_id)
+def resolve_contextual_query(req: ContextResolveRequest, request: Request) -> dict[str, Any]:
+    from backend.memory.ai_memory_layer import AIMemoryLayer
+    session_id = str(identifier(req.session_id))
+    mem = AIMemoryLayer(storage_dir=scoped_storage(request, 'memory'))
+    return mem.resolve_contextual_query(req.query, str(request.state.workspace_access.workspace_id), session_id)
 
 
 @router.get("/memory/{workspace_id}/{session_id}")
-def get_session_memory(workspace_id: str, session_id: str) -> dict[str, Any]:
-    mem = get_ai_memory_layer()
-    return mem._ensure_session(workspace_id, session_id)
+def get_session_memory(workspace_id: str, session_id: str, request: Request) -> dict[str, Any]:
+    from backend.memory.ai_memory_layer import AIMemoryLayer
+    session_id = str(identifier(session_id))
+    mem = AIMemoryLayer(storage_dir=scoped_storage(request, 'memory'))
+    return mem._ensure_session(str(request.state.workspace_access.workspace_id), session_id)
 
 
 # -----------------------------------------------------------------------------
@@ -190,8 +202,11 @@ def get_session_memory(workspace_id: str, session_id: str) -> dict[str, Any]:
 # -----------------------------------------------------------------------------
 
 @router.post("/dashboards/generate")
-def generate_dashboard(req: DashboardGenerateRequest) -> dict[str, Any]:
-    svc = get_dashboard_builder_service()
+def generate_dashboard(req: DashboardGenerateRequest, request: Request) -> dict[str, Any]:
+    from backend.app.services.dashboard_builder_service import DashboardBuilderService
+    if not req.data_records:
+        raise HTTPException(422, 'Source records are required')
+    svc = DashboardBuilderService(storage_dir=scoped_storage(request, 'dashboards'))
     df = pd.DataFrame(req.data_records) if req.data_records else pd.DataFrame({
         "order_date": pd.date_range("2025-01-01", periods=12, freq="ME").strftime("%Y-%m-%d"),
 
@@ -211,8 +226,11 @@ def generate_dashboard(req: DashboardGenerateRequest) -> dict[str, Any]:
 # -----------------------------------------------------------------------------
 
 @router.post("/reports/studio/generate")
-def generate_executive_report(req: ReportGenerateRequest) -> dict[str, Any]:
-    svc = get_report_studio_service()
+def generate_executive_report(req: ReportGenerateRequest, request: Request) -> dict[str, Any]:
+    from backend.app.services.report_studio_service import ReportStudioService
+    if not req.data_records:
+        raise HTTPException(422, 'Source records are required')
+    svc = ReportStudioService(storage_dir=scoped_storage(request, 'reports'))
     df = pd.DataFrame(req.data_records) if req.data_records else pd.DataFrame({
         "revenue": [50000, 62000, 78000, 85000],
         "segment": ["Enterprise", "Mid-Market", "SMB", "Government"],
@@ -227,9 +245,10 @@ def generate_executive_report(req: ReportGenerateRequest) -> dict[str, Any]:
 
 
 @router.get("/reports/studio/history")
-def list_report_history(workspace_id: str | None = None) -> list[dict[str, Any]]:
-    svc = get_report_studio_service()
-    return svc.list_reports(workspace_id=workspace_id)
+def list_report_history(request: Request, workspace_id: str | None = None) -> list[dict[str, Any]]:
+    from backend.app.services.report_studio_service import ReportStudioService
+    svc = ReportStudioService(storage_dir=scoped_storage(request, 'reports'))
+    return svc.list_reports(workspace_id=str(request.state.workspace_access.workspace_id))
 
 
 # -----------------------------------------------------------------------------

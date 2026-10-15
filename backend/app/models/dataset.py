@@ -13,6 +13,9 @@ class Dataset(Base, TimestampMixin):
 
     __tablename__ = "datasets"
 
+    # NULL means quarantined legacy data, never a globally shared dataset.
+    owner_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+
     dataset_id: Mapped[str] = mapped_column(
         String(36), primary_key=True, default=lambda: str(uuid.uuid4())
     )

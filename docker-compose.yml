@@ -37,13 +37,12 @@ services:
       - ./migrations:/app/migrations
       - ./alembic.ini:/app/alembic.ini:ro
       - ./logs:/app/logs
-      - ./tests:/app/tests:ro
-      - ./pytest.ini:/app/pytest.ini:ro
       - ./storage:/app/storage
 
   frontend:
     build:
       context: ./frontend
+      target: development
 
     ports:
       - "5173:5173"
@@ -96,7 +95,8 @@ services:
     restart: unless-stopped
 
   chromadb:
-    image: chromadb/chroma
+    # Explicitly select a reviewed pin; never downgrade an existing volume implicitly.
+    image: ${CHROMA_IMAGE:?Set an approved pinned Chroma image after compatibility and backup verification}
 
     ports:
       - "8401:8000"

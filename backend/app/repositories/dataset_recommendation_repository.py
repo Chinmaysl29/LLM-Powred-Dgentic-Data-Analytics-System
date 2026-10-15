@@ -135,14 +135,17 @@ class DatasetRecommendationRepository:
         self,
         recommendation_id: str,
         session: Session | None = None,
+        *, dataset_id: str | None = None,
     ) -> DatasetRecommendation:
         """Mark a specific recommendation as resolved."""
         sess = self._resolve_session(session)
-        recommendation = (
+        query = (
             sess.query(DatasetRecommendation)
             .filter(DatasetRecommendation.recommendation_id == recommendation_id)
-            .first()
         )
+        if dataset_id is not None:
+            query = query.filter(DatasetRecommendation.dataset_id == dataset_id)
+        recommendation = query.first()
         if not recommendation:
             raise ValueError(f"Recommendation {recommendation_id} not found")
 

@@ -1,0 +1,15 @@
+{
+  "dataset_id": "055ad736-c63f-4d1c-8703-32a07a6efcae",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "81622b44-58ab-4b23-b8e0-361f34fda9fb",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-10-13 18:43:18.999379",
+      "author": "system",
+      "description": "Initial ingestion of data.json"
+    }
+  ]
+}

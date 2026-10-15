@@ -1,0 +1,30 @@
+{
+  "dataset_id": "06c2945c-438c-403f-b8af-5cf62d1f530b",
+  "dataset_name": "data",
+  "columns": [
+    "product_id",
+    "product_name",
+    "price",
+    "category"
+  ],
+  "records": [
+    {
+      "product_id": 101,
+      "product_name": "Widget",
+      "price": 19.99,
+      "category": "Tools"
+    },
+    {
+      "product_id": 102,
+      "product_name": "Gadget",
+      "price": 29.99,
+      "category": "Electronics"
+    },
+    {
+      "product_id": 103,
+      "product_name": "Doohickey",
+      "price": 9.99,
+      "category": "Misc"
+    }
+  ]
+}

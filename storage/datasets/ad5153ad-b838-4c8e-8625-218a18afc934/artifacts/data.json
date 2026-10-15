@@ -1,0 +1,26 @@
+{
+  "dataset_id": "ad5153ad-b838-4c8e-8625-218a18afc934",
+  "dataset_name": "quarterly_profit",
+  "columns": [
+    "quarter",
+    "profit"
+  ],
+  "records": [
+    {
+      "quarter": "Q1",
+      "profit": 100
+    },
+    {
+      "quarter": "Q2",
+      "profit": 150
+    },
+    {
+      "quarter": "Q3",
+      "profit": 120
+    },
+    {
+      "quarter": "Q4",
+      "profit": 210
+    }
+  ]
+}

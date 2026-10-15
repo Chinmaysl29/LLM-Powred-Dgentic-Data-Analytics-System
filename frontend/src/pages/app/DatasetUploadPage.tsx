@@ -43,7 +43,20 @@ import { datasetService } from '../../services/datasetService';
 // the file-picker filter and the client-side extension check on drag-and-drop.
 // ---------------------------------------------------------------------------
 
-const ACCEPTED_EXTENSIONS = ['.csv', '.xlsx', '.xls', '.json', '.pdf', '.parquet'] as const;
+const ACCEPTED_EXTENSIONS = [
+  '.csv',
+  '.tsv',
+  '.xlsx',
+  '.xls',
+  '.json',
+  '.jsonl',
+  '.ndjson',
+  '.parquet',
+  '.pdf',
+  '.txt',
+  '.md',
+  '.markdown',
+] as const;
 
 const ACCEPT_ATTR = ACCEPTED_EXTENSIONS.join(',');
 
@@ -204,9 +217,12 @@ export default function DatasetUploadPage() {
     for (const file of incoming) {
       if (!isAcceptedExtension(file.name)) {
         const ext = getFileExtension(file.name) ?? 'unknown';
+        const isDocx = ext === '.docx' || ext === '.doc';
         errors.push({
           filename: file.name,
-          reason: `"${ext}" is not supported. Accepted types: CSV, XLSX, JSON, PDF.`,
+          reason: isDocx
+            ? 'Microsoft Word (.docx) files are explicitly unsupported. Please upload structured datasets (CSV, TSV, XLS, XLSX, JSON, JSONL, Parquet) or document files (PDF, TXT, Markdown).'
+            : `"${ext}" is not supported. Accepted types: CSV, TSV, XLSX, JSON, JSONL, Parquet, PDF, TXT, Markdown.`,
         });
 
         continue;
