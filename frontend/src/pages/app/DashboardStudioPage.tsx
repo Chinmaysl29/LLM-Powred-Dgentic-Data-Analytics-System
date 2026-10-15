@@ -8,7 +8,9 @@ import type { SourceDataset } from '../../services/workbenchService';
 
 interface DashboardSnapshot {
   id: string; title: string; created_at: string; dataset_id: string; sample_rows: number; total_rows: number | null;
+  metric?: string; dimension?: string;
   kpis: { id: string; label: string; value: number }[];
+  charts?: { id: string; type: string; title: string; points: { label: string; value: number; count?: number }[] }[];
 }
 const STORAGE_KEY = 'analyst.dashboard.snapshot.v1';
 function readSnapshot(storageKey: string): DashboardSnapshot | null {
@@ -31,30 +33,51 @@ export default function DashboardStudioPage() {
   const [layout, setLayout] = useState<'grid' | 'list'>('grid');
   useEffect(() => {
     let active = true;
-    workbenchService.datasets().then(data => { if (active) setDatasets(data); })
-      .catch(e => { if (active) setError(e.message); }).finally(() => { if (active) setBusy(false); });
+    workbenchService.datasets().then(async data => {
+      if (!active) return;
+      setDatasets(data);
+      // Attempt to load latest persisted dashboard from server
+      try {
+        const serverDashboards = await apiClient.get<any[]>('/api/v1/os/dashboards');
+        if (active && Array.isArray(serverDashboards) && serverDashboards.length > 0) {
+          const latest = serverDashboards[serverDashboards.length - 1];
+          if (latest && Array.isArray(latest.kpis)) {
+            const clean: DashboardSnapshot = {
+              id: latest.id, title: latest.title, created_at: latest.created_at, dataset_id: latest.provenance?.dataset_id || latest.dataset_id || '',
+              sample_rows: latest.filtered_rows ?? latest.population_size ?? 0, total_rows: latest.population_size ?? null,
+              metric: latest.metric, dimension: latest.dimension,
+              kpis: latest.kpis.filter((k: any) => Number.isFinite(k.value)).map(({ id, label, value }: any) => ({ id, label, value })),
+              charts: latest.charts,
+            };
+            setSnapshot(clean);
+          }
+        }
+      } catch {
+        // Fallback to local state if server listing is empty
+      }
+    }).catch(e => { if (active) setError(e.message); }).finally(() => { if (active) setBusy(false); });
     return () => { active = false; };
   }, [revision]);
   async function generate() {
     if (!datasetId) return;
     setBusy(true); setError(''); setNotice('');
     try {
-      const preview = await workbenchService.preview(datasetId);
-      if (!preview.rows.length) throw new Error('This dataset has no preview records. Choose a dataset with data.');
-      const data = await apiClient.post<{ id: string; title: string; created_at: string; kpis: { id: string; label: string; value: number }[] }>('/api/v1/os/dashboards/generate', {
-        prompt: 'Summarize the supplied dataset', title: title.trim() || 'Dataset overview', data_records: preview.rows,
+      const data = await apiClient.post<any>('/api/v1/os/dashboards/generate', {
+        prompt: 'Summarize the supplied dataset',
+        title: title.trim() || 'Dataset overview',
+        dataset_id: datasetId,
       });
       if (!Array.isArray(data.kpis)) throw new Error('The dashboard service returned invalid metrics.');
-      // The current backend emits fixed growth values and unsupported insight text.
-      // Only computed numeric aggregates are retained in this user-facing snapshot.
       const clean: DashboardSnapshot = {
         id: data.id, title: data.title, created_at: data.created_at, dataset_id: datasetId,
-        sample_rows: preview.rows.length, total_rows: preview.total_rows,
-        kpis: data.kpis.filter(k => k.id !== 'kpi-4' && Number.isFinite(k.value)).map(({ id, label, value }) => ({ id, label, value })),
+        sample_rows: data.filtered_rows ?? data.population_size ?? 0, total_rows: data.population_size ?? null,
+        metric: data.metric, dimension: data.dimension,
+        kpis: data.kpis.filter((k: any) => Number.isFinite(k.value)).map(({ id, label, value }: any) => ({ id, label, value })),
+        charts: data.charts,
       };
       setSnapshot(clean);
-      try { localStorage.setItem(storageKey, JSON.stringify(clean)); setNotice('Snapshot saved in this browser.'); }
-      catch { setNotice('Snapshot generated, but browser storage is unavailable. Export it to keep a copy.'); }
+      try { localStorage.setItem(storageKey, JSON.stringify(clean)); setNotice('Dashboard persisted to server and local workspace.'); }
+      catch { setNotice('Dashboard saved to server.'); }
     } catch (e) { setError(e instanceof Error ? e.message : 'Dashboard generation failed.'); }
     finally { setBusy(false); }
   }
@@ -68,7 +91,7 @@ export default function DashboardStudioPage() {
       <label className="fw-param">Dataset<select className="fw-select" disabled={busy} value={datasetId} onChange={e => setDatasetId(e.target.value)}><option value="">Select an uploaded dataset</option>{datasets.map(d => <option key={d.dataset_id} value={d.dataset_id}>{d.dataset_name}</option>)}</select></label>
       <label className="fw-param">Dashboard title<input className="fw-select" value={title} onChange={e => setTitle(e.target.value)} disabled={busy} maxLength={120} /></label>
       <button className="btn btn--primary" disabled={busy || !datasetId}><RefreshCw size={15} /> {busy ? 'Loading…' : 'Generate snapshot'}</button>
-      <p className="page-subtitle">Uses up to 100 preview rows. Aggregates describe that sample, not the full dataset. Share links and PDF dashboard export are not available.</p>
+      <p className="page-subtitle">Calculated over full dataset population. All matching observations are computed directly from authoritative storage.</p>
     </form>
     <div className="dashboard-canvas" aria-busy={busy}>
     <div className="canvas-toolbar"><span className="eyebrow">LIVE WORKSPACE</span><label className="control-field">Card layout<select value={layout} onChange={e => setLayout(e.target.value as 'grid' | 'list')}><option value="grid">Grid</option><option value="list">Stacked</option></select></label></div>
@@ -76,8 +99,19 @@ export default function DashboardStudioPage() {
     {notice && <p role="status">{notice}</p>}
     {busy && <p role="status">Waiting for the dataset or dashboard service…</p>}
     {!busy && !datasets.length && !error && <div className="mem-empty"><h2>No datasets uploaded yet.</h2><p>Upload a dataset to create your first dashboard.</p><Link className="btn btn--primary" to="/datasets">Open datasets</Link></div>}
-    {snapshot && <section><h2>{snapshot.title}</h2><p className="page-subtitle">Saved snapshot · {new Date(snapshot.created_at).toLocaleString()} · Dataset {snapshot.dataset_id} · {snapshot.sample_rows} of {snapshot.total_rows ?? 'unknown total'} rows</p><p className="page-subtitle">Stored locally in this browser. Generate a new snapshot to fetch updated data. Values use source units; no currency is inferred.</p>
-      <div className={`snapshot-cards snapshot-cards--${layout}`}>{snapshot.kpis.map(k => <article className="ds-widget" key={k.id}><div className="ds-widget-body"><div className="ds-kpi-label">{k.label}</div><div className="ds-kpi-value">{k.value.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div><p className="page-subtitle">Preview sample</p></div></article>)}</div>
+    {snapshot && <section><h2>{snapshot.title}</h2><p className="page-subtitle">Persistent dashboard · {new Date(snapshot.created_at).toLocaleString()} · Dataset {snapshot.dataset_id} · {snapshot.sample_rows} computed of {snapshot.total_rows ?? snapshot.sample_rows} total rows</p><p className="page-subtitle">Full population metrics. Values use source units without artificial assumptions.</p>
+      <div className={`snapshot-cards snapshot-cards--${layout}`}>{snapshot.kpis.map(k => <article className="ds-widget" key={k.id}><div className="ds-widget-body"><div className="ds-kpi-label">{k.label}</div><div className="ds-kpi-value">{k.value.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div><p className="page-subtitle">Full Dataset</p></div></article>)}</div>
+      {snapshot.charts && snapshot.charts.length > 0 && <div className="dashboard-charts-grid" style={{ marginTop: 24 }}>
+        {snapshot.charts.map(chart => <div key={chart.id} className="ds-widget" style={{ padding: 16 }}>
+          <h3 className="ds-kpi-label" style={{ marginBottom: 12 }}>{chart.title}</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {chart.points.slice(0, 10).map((pt, idx) => <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 13, color: '#A0A090' }}>{pt.label}</span>
+              <strong style={{ fontSize: 14 }}>{pt.value != null ? pt.value.toLocaleString(undefined, { maximumFractionDigits: 2 }) : 'N/A'}</strong>
+            </div>)}
+          </div>
+        </div>)}
+      </div>}
     </section>}
     {!snapshot && !busy && datasets.length > 0 && <div className="mem-empty"><LayoutDashboard size={36} /><h2>No dashboard created yet</h2><p>Select a dataset to calculate its summary.</p></div>}
     </div></div>

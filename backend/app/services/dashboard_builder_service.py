@@ -67,7 +67,8 @@ class DashboardBuilderService:
                                      metric=None, dimension=None, filters=None, provenance=None):
         if metric is None:
             numeric = df.select_dtypes(include=[np.number]).columns.tolist()
-            if len(numeric) != 1: raise ValueError("Select a numeric metric explicitly")
+            if not numeric:
+                raise ValueError("Dataset has no numeric columns for dashboard metrics")
             metric = numeric[0]
         now = datetime.now(timezone.utc).isoformat()
         dashboard = {"id": f"dash-{uuid4().hex}", "title": title or "Dataset dashboard", "prompt": prompt,

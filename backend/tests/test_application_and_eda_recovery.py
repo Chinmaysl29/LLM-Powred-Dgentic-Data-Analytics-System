@@ -225,7 +225,7 @@ def test_dataset_preview_unstructured_document_guidance(client, db_session, sett
 # 3. EXTERNAL DATABASE CONNECTORS (ERROR 1 ROOT CAUSE)
 # =============================================================================
 
-def test_external_connection_test_postgresql_and_ssrf(client, db_session):
+def test_external_connection_test_postgresql_and_ssrf(client, db_session, settings):
     """External database connection testing must validate inputs, block SSRF, and test connections."""
     user, token = make_user_token(db_session, "conn_tester")
 
@@ -246,13 +246,13 @@ def test_external_connection_test_postgresql_and_ssrf(client, db_session):
     body = ssrf_res.json()
     assert "disallowed" in body["message"].lower()
 
-    # Real connection test against PostgreSQL service in Docker network
+    # Real connection test against PostgreSQL service
     test_res = client.post(
         "/api/v1/connections/test",
         json={
             "connector_type": "postgresql",
-            "host": "postgres",
-            "port": 5432,
+            "host": settings.postgres_host,
+            "port": settings.postgres_port,
             "database": "ai_analyst",
             "username": "postgres",
             "password": "postgres",

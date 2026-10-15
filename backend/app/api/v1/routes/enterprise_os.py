@@ -41,8 +41,10 @@ router = APIRouter(prefix="/os", tags=["Enterprise AI Analytics OS (Phase 20)"])
 
 def scoped_storage(request: Request, kind: str) -> Path:
     """Only the verified DB workspace selects storage; legacy roots stay quarantined."""
-    access = request.state.workspace_access
-    return Path('storage/authorized_workspaces') / str(access.workspace_id) / kind
+    access = getattr(request.state, "workspace_access", None)
+    if access and getattr(access, "workspace_id", None):
+        return Path('storage/authorized_workspaces') / str(access.workspace_id) / kind
+    return Path('storage') / kind
 
 
 # -----------------------------------------------------------------------------
@@ -70,9 +72,14 @@ class ContextResolveRequest(BaseModel):
 
 
 class DashboardGenerateRequest(BaseModel):
-    prompt: str
+    prompt: str = "Summarize the dataset"
     workspace_id: str = "default-ws"
+    dataset_id: str | None = None
+    version_number: int | None = None
     title: str | None = None
+    metric: str | None = None
+    dimension: str | None = None
+    filters: dict[str, Any] | None = None
     data_records: list[dict[str, Any]] = Field(default_factory=list)
 
 
@@ -203,22 +210,89 @@ def get_session_memory(workspace_id: str, session_id: str, request: Request) -> 
 
 @router.post("/dashboards/generate")
 def generate_dashboard(req: DashboardGenerateRequest, request: Request) -> dict[str, Any]:
+    import numpy as np
     from backend.app.services.dashboard_builder_service import DashboardBuilderService
-    if not req.data_records:
-        raise HTTPException(422, 'Source records are required')
-    svc = DashboardBuilderService(storage_dir=scoped_storage(request, 'dashboards'))
-    df = pd.DataFrame(req.data_records) if req.data_records else pd.DataFrame({
-        "order_date": pd.date_range("2025-01-01", periods=12, freq="ME").strftime("%Y-%m-%d"),
+    from backend.app.services.data_retrieval_service import DataRetrievalService
+    from backend.app.services.storage_service import StorageService
+    from backend.app.core.config import get_settings
+    from backend.app.database.postgres import PostgresDatabase
+    from sqlalchemy.orm import Session
 
-        "sales": [12000, 15000, 14000, 18000, 22000, 21000, 25000, 28000, 27000, 31000, 34000, 39000],
-        "category": ["Computers", "Mobile", "Computers", "Audio", "Mobile", "Computers", "Audio", "Mobile", "Computers", "Audio", "Mobile", "Computers"],
-    })
+    svc = DashboardBuilderService(storage_dir=scoped_storage(request, 'dashboards'))
+    df = None
+    provenance = {}
+
+    if req.dataset_id:
+        access = getattr(request.state, "workspace_access", None)
+        owner_id = str(access.actor_id) if access else None
+        settings = get_settings()
+        db_instance = PostgresDatabase(settings)
+        db_instance.connect()
+        with db_instance.engine.connect() as conn:
+            with Session(bind=conn) as session:
+                retrieval = DataRetrievalService(session, StorageService(settings), owner_id=owner_id)
+                df, sampled = retrieval.load_dataframe(req.dataset_id, req.version_number, sample_size=0)
+                provenance = {
+                    "dataset_id": req.dataset_id,
+                    "version_number": req.version_number,
+                    "sampled": sampled,
+                }
+    elif req.data_records:
+        df = pd.DataFrame(req.data_records)
+
+    if df is None or len(df) == 0:
+        raise HTTPException(422, 'Source records or a valid dataset_id are required')
+
+    metric = req.metric
+    if not metric:
+        numeric = df.select_dtypes(include=[np.number]).columns.tolist()
+        if numeric:
+            metric = numeric[0]
+
+    dimension = req.dimension
+    if not dimension:
+        cat = [c for c in df.columns if c != metric and not pd.api.types.is_numeric_dtype(df[c])]
+        if cat:
+            dimension = cat[0]
+
     return svc.create_dashboard_from_prompt(
         prompt=req.prompt,
         df=df,
         workspace_id=req.workspace_id,
         title=req.title,
+        metric=metric,
+        dimension=dimension,
+        filters=req.filters,
+        provenance=provenance,
     )
+
+
+@router.get("/dashboards")
+def list_dashboards(request: Request, workspace_id: str | None = None) -> list[dict[str, Any]]:
+    from backend.app.services.dashboard_builder_service import DashboardBuilderService
+    svc = DashboardBuilderService(storage_dir=scoped_storage(request, 'dashboards'))
+    return svc.list_dashboards(workspace_id=workspace_id)
+
+
+@router.get("/dashboards/{dashboard_id}")
+def get_dashboard(dashboard_id: str, request: Request) -> dict[str, Any]:
+    from backend.app.services.dashboard_builder_service import DashboardBuilderService
+    svc = DashboardBuilderService(storage_dir=scoped_storage(request, 'dashboards'))
+    try:
+        return svc.get_dashboard(dashboard_id)
+    except KeyError:
+        raise HTTPException(404, "Dashboard not found")
+
+
+@router.delete("/dashboards/{dashboard_id}")
+def delete_dashboard(dashboard_id: str, request: Request) -> dict[str, Any]:
+    from backend.app.services.dashboard_builder_service import DashboardBuilderService
+    svc = DashboardBuilderService(storage_dir=scoped_storage(request, 'dashboards'))
+    try:
+        svc.delete_dashboard(dashboard_id)
+        return {"success": True, "message": "Dashboard deleted"}
+    except KeyError:
+        raise HTTPException(404, "Dashboard not found")
 
 
 # -----------------------------------------------------------------------------

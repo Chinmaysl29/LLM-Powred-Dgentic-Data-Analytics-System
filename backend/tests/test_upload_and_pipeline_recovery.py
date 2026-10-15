@@ -129,7 +129,7 @@ def test_schema_preflight_compatible(db_engine):
     assert result["missing_tables"] == []
     assert result["missing_columns"] == {}
     assert result["revision_matches"] is True
-    assert "009_analysis_runs" in result["actual_revisions"]
+    assert any(rev in result["actual_revisions"] for rev in ("009_analysis_runs", "010_workspace_authorization_tables"))
 
 
 def test_schema_preflight_missing_table_detection(db_engine):
