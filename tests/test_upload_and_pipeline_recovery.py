@@ -27,7 +27,9 @@ from backend.app.database.postgres import PostgresDatabase
 from backend.app.database.schema_contract import inspect_schema
 from backend.app.main import create_app
 from backend.app.models.user import User
-from backend.app.models.workspace import Workspace, WorkspaceMember
+from backend.app.models.tenant import Tenant
+from backend.app.models.workspace import Workspace
+from backend.app.core.workspace_authorization import tenant_memberships, workspace_memberships
 
 
 @pytest.fixture(scope="session")
@@ -74,21 +76,42 @@ def make_user_token(db: Session, email_prefix: str) -> tuple[User, str]:
 
 
 def make_workspace(db: Session, owner: User) -> Workspace:
+    tenant_id = uuid4()
+    tenant = Tenant(
+        id=tenant_id,
+        tenant_name=f"Tenant {owner.full_name}",
+        tenant_slug=f"tenant-{owner.id.hex[:8]}",
+        tenant_status="active",
+    )
+    db.add(tenant)
+    db.flush()
+
     ws = Workspace(
         id=uuid4(),
-        name=f"Workspace {owner.full_name}",
-        slug=f"ws-{owner.id.hex[:8]}",
-        owner_id=owner.id,
+        tenant_id=tenant.id,
+        workspace_name=f"Workspace {owner.full_name}",
+        workspace_slug=f"ws-{owner.id.hex[:8]}",
+        status="active",
     )
     db.add(ws)
     db.flush()
-    member = WorkspaceMember(
-        id=uuid4(),
-        workspace_id=ws.id,
-        user_id=owner.id,
-        role="owner",
+
+    db.execute(
+        tenant_memberships.insert().values(
+            tenant_id=tenant.id,
+            user_id=owner.id,
+            role="owner",
+            active=True,
+        )
     )
-    db.add(member)
+    db.execute(
+        workspace_memberships.insert().values(
+            workspace_id=ws.id,
+            user_id=owner.id,
+            role="owner",
+            active=True,
+        )
+    )
     db.commit()
     db.refresh(ws)
     return ws
@@ -106,15 +129,26 @@ def test_schema_preflight_compatible(db_engine):
     assert result["missing_tables"] == []
     assert result["missing_columns"] == {}
     assert result["revision_matches"] is True
-    assert "009_analysis_runs" in result["actual_revisions"]
+    assert any(rev in result["actual_revisions"] for rev in ("009_analysis_runs", "010_workspace_authorization_tables"))
 
 
 def test_schema_preflight_missing_table_detection(db_engine):
     """Verify preflight detects missing tables correctly without false positives."""
+    from sqlalchemy import MetaData, Table, Column, Integer
+    test_meta = MetaData()
+    Table("non_existent_table_xyz", test_meta, Column("id", Integer, primary_key=True))
     with db_engine.connect() as conn:
-        result = inspect_schema(conn, required_tables={"non_existent_table_xyz"})
+        result = inspect_schema(conn, metadata=test_meta)
     assert result["compatible"] is False
     assert "non_existent_table_xyz" in result["missing_tables"]
+
+
+def test_schema_preflight_missing_revision_detection(db_engine):
+    """Verify preflight detects unapplied migrations correctly."""
+    with db_engine.connect() as conn:
+        result = inspect_schema(conn, expected_revisions=["999_unapplied_future_migration"])
+    assert result["compatible"] is False
+    assert result["revision_matches"] is False
 
 
 def test_startup_readiness_endpoint(client):
