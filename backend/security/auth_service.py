@@ -54,6 +54,7 @@ class AuthService:
             "exp": expire,
             "iat": datetime.now(timezone.utc),
             "token_type": "access",
+            "jti": str(uuid.uuid4()),
         })
         return jwt.encode(to_encode, secret, algorithm=algo)
 
@@ -101,6 +102,10 @@ class AuthService:
             "token_type": "bearer",
             "expires_in": expires_in_seconds,
         }
+
+    def is_revoked(self, token: str) -> bool:
+        """Share revocation decisions with the protected-route verifier."""
+        return token in self._revoked_tokens
 
     def verify_token(self, token: str) -> dict[str, Any]:
         """Decode and validate a JWT token, ensuring it hasn't been revoked."""

@@ -9,6 +9,7 @@ Supports:
 import json
 import logging
 import time
+from uuid import uuid4
 import urllib.error
 import urllib.request
 from datetime import datetime, timedelta, timezone
@@ -107,7 +108,7 @@ def create_access_token(
     expire = datetime.now(timezone.utc) + (
         expires_delta or timedelta(minutes=settings.access_token_expire_minutes)
     )
-    to_encode.update({"exp": expire, "iat": datetime.now(timezone.utc), "token_type": "access"})
+    to_encode.update({"exp": expire, "iat": datetime.now(timezone.utc), "token_type": "access", "jti": str(uuid4())})
     return jwt.encode(
         to_encode,
         settings.jwt_secret_key.get_secret_value(),
@@ -117,6 +118,10 @@ def create_access_token(
 
 def verify_token(token: str, settings: Settings | None = None) -> dict[str, Any]:
     """Decode and validate a JWT token against Supabase JWKS or local HMAC secret."""
+    from backend.security.auth_service import auth_service
+    if auth_service.is_revoked(token):
+        raise HTTPException(status_code=401, detail="Invalid or expired authentication token",
+                            headers={"WWW-Authenticate": "Bearer"})
     if settings is None:
         settings = get_settings()
 
