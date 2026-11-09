@@ -34,6 +34,7 @@ def batches(source: Path, file_type: str, limits: Limits):
             yield pa.Table.from_batches([batch])
     elif file_type in ("jsonl", "ndjson"):
         rows = []
+        fields = None
         with source.open(encoding="utf-8") as stream:
             while line := stream.readline(1024**2 + 1):
                 if len(line) > 1024**2:
@@ -41,7 +42,13 @@ def batches(source: Path, file_type: str, limits: Limits):
                 item = json.loads(line)
                 if not isinstance(item, dict):
                     raise ValueError("JSONL requires objects")
-                rows.append(item)
+                if fields is None:
+                    fields = tuple(item)
+                if item.keys() - set(fields):
+                    raise ValueError("JSONL schema changed: unexpected fields")
+                # Arrow infers names from the first mapping, so validate every
+                # record before conversion and retain absent fields as nulls.
+                rows.append({name: item.get(name) for name in fields})
                 if len(rows) == limits.batch_rows:
                     yield pa.Table.from_pylist(rows)
                     rows = []
