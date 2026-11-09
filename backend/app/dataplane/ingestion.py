@@ -56,6 +56,10 @@ def batches(source: Path, file_type: str, limits: Limits):
                 raise ValueError("Too many columns")
             rows = sheet.iter_rows(values_only=True)
             header = [str(v) if v is not None else f"column_{i}" for i, v in enumerate(next(rows))]
+            # Check before dict(zip(...)): duplicate keys would already lose values.
+            if (len({name.casefold() for name in header}) != len(header)
+                    or any(not name or len(name) > 128 or "\x00" in name for name in header)):
+                raise ValueError("Duplicate or invalid XLSX columns")
             batch = []
             for row in rows:
                 # Preserve native cell types, including text identifiers with leading zeros.
