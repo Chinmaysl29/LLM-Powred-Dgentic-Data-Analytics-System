@@ -23,6 +23,7 @@ class ProjectPostgresqlImpl(PostgresqlImpl):
 sys.path.insert(0, os.path.abspath("."))
 
 from backend.app.core.config import get_settings
+from backend.app.core.database_target import bind_database_schema
 from backend.app.models.base import Base
 import backend.app.models  # noqa: F401 - ensure all models are registered
 
@@ -37,7 +38,7 @@ if config.config_file_name is not None:
 
 # Set database URL from application configuration
 settings = get_settings()
-config.set_main_option("sqlalchemy.url", settings.postgres_dsn)
+config.set_main_option("sqlalchemy.url", config.attributes.get('database_url', settings.postgres_dsn).replace('%', '%%'))
 
 # add your model's MetaData object here
 # for 'autogenerate' support
@@ -89,6 +90,7 @@ def run_migrations_online() -> None:
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
+    bind_database_schema(connectable, config.attributes.get('database_schema', settings.database_schema))
 
     with connectable.connect() as connection:
         # Widen existing bookkeeping without changing or stamping its revision.

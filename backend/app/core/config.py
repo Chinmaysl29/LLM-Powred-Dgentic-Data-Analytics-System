@@ -3,6 +3,7 @@
 from functools import lru_cache
 from pathlib import Path
 from urllib.parse import quote, unquote, urlsplit, urlunsplit
+from typing import Literal
 
 from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -21,6 +22,7 @@ class Settings(BaseSettings):
     environment: str = "development"
     debug: bool = False
     log_level: str = "INFO"
+    learning_enabled: bool = False
 
     # ------------------------------------------------------------------
     # CORS
@@ -38,8 +40,13 @@ class Settings(BaseSettings):
     postgres_user: str = "postgres"
     postgres_password: SecretStr = SecretStr("postgres")
     database_url: str | None = None
+    database_target: Literal['local', 'supabase'] = 'local'
+    supabase_database_url: SecretStr | None = None
+    supabase_runtime_database_url: SecretStr | None = None
     database_pool_size: int = Field(default=5, ge=1)
     database_max_overflow: int = Field(default=10, ge=0)
+    background_worker_concurrency: int = Field(default=2, ge=1, le=16)
+    background_worker_enabled: bool = True
 
     # ------------------------------------------------------------------
     # Redis
@@ -89,7 +96,7 @@ class Settings(BaseSettings):
     # ------------------------------------------------------------------
     # Supabase Integration
     # ------------------------------------------------------------------
-    supabase_url: str = "https://pmmlieqibfgbxtjdkbnl.supabase.co"
+    supabase_url: str = ""
     supabase_publishable_key: SecretStr | None = None
     supabase_jwt_aud: str = "authenticated"
 
@@ -259,6 +266,11 @@ class Settings(BaseSettings):
     @property
     def postgres_dsn(self) -> str:
         """Return the SQLAlchemy-compatible PostgreSQL connection URL."""
+        if self.database_target == 'supabase':
+            from backend.app.core.database_target import hosted_postgres_dsn
+            if not self.supabase_runtime_database_url:
+                raise ValueError('Run the verified Supabase migration to configure SUPABASE_RUNTIME_DATABASE_URL before switching.')
+            return hosted_postgres_dsn(self.supabase_runtime_database_url.get_secret_value(), self.supabase_url)
         if self.database_url:
             return self.database_url
         password = self.postgres_password.get_secret_value()
@@ -267,6 +279,10 @@ class Settings(BaseSettings):
             f"{self.postgres_user}:{password}@{self.postgres_host}:"
             f"{self.postgres_port}/{self.postgres_db}"
         )
+
+    @property
+    def database_schema(self) -> str:
+        return 'analyst' if self.database_target == 'supabase' else 'public'
 
     @property
     def allowed_extension_set(self) -> set[str]:
