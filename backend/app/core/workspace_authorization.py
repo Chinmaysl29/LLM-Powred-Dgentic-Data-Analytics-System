@@ -110,6 +110,7 @@ def authorize_bound_dataset(db, access: WorkspaceAccess, dataset_id: str):
     records = rows(db, select(Dataset.dataset_id).join(dataset_workspace_bindings,
         dataset_workspace_bindings.c.dataset_id == Dataset.dataset_id).where(
         Dataset.dataset_id == dataset_id, Dataset.owner_id == str(access.actor_id),
+        Dataset.status.not_in(['deleted', 'archived', 'purged']),
         dataset_workspace_bindings.c.workspace_id == access.workspace_id))
     if not records:
         raise HTTPException(404, 'Resource not found')
