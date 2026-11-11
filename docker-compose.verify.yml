@@ -1,0 +1,73 @@
+# Separate Compose project: synthetic fixtures only; no application volumes.
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: analyst_setup_test
+      POSTGRES_USER: setup
+      POSTGRES_PASSWORD: isolated-setup-only
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U setup -d analyst_setup_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+  redis:
+    image: redis:7
+  chromadb:
+    image: chromadb/chroma:0.6.3
+    environment:
+      ANONYMIZED_TELEMETRY: "FALSE"
+      IS_PERSISTENT: "TRUE"
+    volumes:
+      - verify_chroma:/chroma/chroma
+  runner:
+    image: dataanalyst-backend:latest
+    working_dir: /repo
+    command: python scripts/run_setup_tests.py
+    environment: &verify_environment
+      DATABASE_URL: postgresql+psycopg://setup:isolated-setup-only@postgres:5432/analyst_setup_test
+      ISOLATION_TEST_DATABASE_URL: postgresql+psycopg://setup:isolated-setup-only@postgres:5432/analyst_setup_test
+      ENVIRONMENT: test
+      DEBUG: "false"
+      JWT_SECRET_KEY: isolated-setup-test-not-for-deployment-123456789
+      REDIS_URL: redis://redis:6379/0
+      CHROMA_HOST: chromadb
+      CHROMA_PORT: 8000
+      LANGCHAIN_TRACING_V2: "false"
+      ANONYMIZED_TELEMETRY: "false"
+      PYTHONPATH: /repo
+      OMP_NUM_THREADS: 1
+      OPENBLAS_NUM_THREADS: 1
+      MPLCONFIGDIR: /tmp/matplotlib
+    volumes: &verify_mounts
+      - .:/repo:ro
+      - verify_logs:/repo/logs
+      - verify_storage:/verification
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      chromadb:
+        condition: service_started
+  api:
+    image: dataanalyst-backend:latest
+    working_dir: /verification
+    command: python /repo/scripts/serve_setup_api.py
+    environment:
+      <<: *verify_environment
+      UPLOAD_DIR: /verification/storage
+    volumes: *verify_mounts
+    ports:
+      - "127.0.0.1:8011:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      chromadb:
+        condition: service_started
+volumes:
+  verify_storage:
+  verify_chroma:
+  verify_logs:

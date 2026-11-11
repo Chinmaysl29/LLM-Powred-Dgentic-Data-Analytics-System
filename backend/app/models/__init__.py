@@ -1,7 +1,9 @@
 """ORM model registry — import all models so Alembic and Base.metadata discover them."""
 
 from backend.app.models.base import Base, TimestampMixin
+from backend.app.models.review_grant import DatasetReviewGrant
 from backend.app.models.user import User
+from backend.app.models.auth_token_revocation import AuthTokenRevocation
 from backend.app.models.dataset import Dataset
 from backend.app.models.dataset_metadata import DatasetMetadata
 from backend.app.models.dataset_profile import DatasetProfile

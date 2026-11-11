@@ -14,6 +14,7 @@ def owned_dataset(db: Session | None, dataset_id: str, owner_id: str | None) -> 
         raise DatabaseConnectionError("Authorization storage is unavailable")
     dataset = db.scalar(select(Dataset).where(
         Dataset.dataset_id == dataset_id, Dataset.owner_id == str(owner_id),
+        Dataset.status.not_in(['deleted', 'archived', 'purged']),
     ))
     if dataset is None:
         raise DatasetNotFoundError("Dataset not found")

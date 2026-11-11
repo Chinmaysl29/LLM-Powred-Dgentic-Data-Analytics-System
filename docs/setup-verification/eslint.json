@@ -1,0 +1,282 @@
+﻿[
+    {
+        "file":  "frontend/src/components/CommandPalette.tsx",
+        "errors":  0,
+        "warnings":  2,
+        "messages":  [
+                         {
+                             "line":  160,
+                             "column":  7,
+                             "severity":  1,
+                             "rule":  "react-hooks/set-state-in-effect",
+                             "message":  "Error: Calling setState synchronously within an effect can trigger cascading renders"
+                         },
+                         {
+                             "line":  166,
+                             "column":  21,
+                             "severity":  1,
+                             "rule":  "react-hooks/set-state-in-effect",
+                             "message":  "Error: Calling setState synchronously within an effect can trigger cascading renders"
+                         }
+                     ]
+    },
+    {
+        "file":  "frontend/src/components/ui/Toast.tsx",
+        "errors":  0,
+        "warnings":  2,
+        "messages":  [
+                         {
+                             "line":  45,
+                             "column":  17,
+                             "severity":  1,
+                             "rule":  "react-refresh/only-export-components",
+                             "message":  "Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components."
+                         },
+                         {
+                             "line":  94,
+                             "column":  6,
+                             "severity":  1,
+                             "rule":  "react-hooks/exhaustive-deps",
+                             "message":  "React Hook useEffect has missing dependencies: \u0027duration\u0027 and \u0027handleDismiss\u0027. Either include them or remove the dependency array."
+                         }
+                     ]
+    },
+    {
+        "file":  "frontend/src/pagesfrontend/AnalysisPage.tsx",
+        "errors":  2,
+        "warnings":  3,
+        "messages":  [
+                         {
+                             "line":  67,
+                             "column":  36,
+                             "severity":  2,
+                             "rule":  "react-hooks/preserve-manual-memoization",
+                             "message":  "Compilation Skipped: Existing memoization could not be preserved"
+                         },
+                         {
+                             "line":  67,
+                             "column":  36,
+                             "severity":  2,
+                             "rule":  "react-hooks/preserve-manual-memoization",
+                             "message":  "Compilation Skipped: Existing memoization could not be preserved"
+                         },
+                         {
+                             "line":  80,
+                             "column":  10,
+                             "severity":  1,
+                             "rule":  "react-hooks/set-state-in-effect",
+                             "message":  "Error: Calling setState synchronously within an effect can trigger cascading renders"
+                         },
+                         {
+                             "line":  86,
+                             "column":  7,
+                             "severity":  1,
+                             "rule":  "react-hooks/set-state-in-effect",
+                             "message":  "Error: Calling setState synchronously within an effect can trigger cascading renders"
+                         },
+                         {
+                             "line":  110,
+                             "column":  6,
+                             "severity":  1,
+                             "rule":  "react-hooks/exhaustive-deps",
+                             "message":  "React Hook useEffect has a missing dependency: \u0027datasetId\u0027. Either include it or remove the dependency array."
+                         }
+                     ]
+    },
+    {
+        "file":  "frontend/src/pagesfrontend/ConnectionsPage.tsx",
+        "errors":  2,
+        "warnings":  0,
+        "messages":  [
+                         {
+                             "line":  83,
+                             "column":  19,
+                             "severity":  2,
+                             "rule":  "@typescript-eslint/no-explicit-any",
+                             "message":  "Unexpected any. Specify a different type."
+                         },
+                         {
+                             "line":  114,
+                             "column":  19,
+                             "severity":  2,
+                             "rule":  "@typescript-eslint/no-explicit-any",
+                             "message":  "Unexpected any. Specify a different type."
+                         }
+                     ]
+    },
+    {
+        "file":  "frontend/src/pagesfrontend/DashboardPage.tsx",
+        "errors":  0,
+        "warnings":  1,
+        "messages":  [
+                         {
+                             "line":  20,
+                             "column":  25,
+                             "severity":  1,
+                             "rule":  "react-hooks/set-state-in-effect",
+                             "message":  "Error: Calling setState synchronously within an effect can trigger cascading renders"
+                         }
+                     ]
+    },
+    {
+        "file":  "frontend/src/pagesfrontend/DashboardStudioPage.tsx",
+        "errors":  6,
+        "warnings":  0,
+        "messages":  [
+                         {
+                             "line":  41,
+                             "column":  54,
+                             "severity":  2,
+                             "rule":  "@typescript-eslint/no-explicit-any",
+                             "message":  "Unexpected any. Specify a different type."
+                         },
+                         {
+                             "line":  49,
+                             "column":  44,
+                             "severity":  2,
+                             "rule":  "@typescript-eslint/no-explicit-any",
+                             "message":  "Unexpected any. Specify a different type."
+                         },
+                         {
+                             "line":  49,
+                             "column":  105,
+                             "severity":  2,
+                             "rule":  "@typescript-eslint/no-explicit-any",
+                             "message":  "Unexpected any. Specify a different type."
+                         },
+                         {
+                             "line":  65,
+                             "column":  41,
+                             "severity":  2,
+                             "rule":  "@typescript-eslint/no-explicit-any",
+                             "message":  "Unexpected any. Specify a different type."
+                         },
+                         {
+                             "line":  75,
+                             "column":  36,
+                             "severity":  2,
+                             "rule":  "@typescript-eslint/no-explicit-any",
+                             "message":  "Unexpected any. Specify a different type."
+                         },
+                         {
+                             "line":  75,
+                             "column":  97,
+                             "severity":  2,
+                             "rule":  "@typescript-eslint/no-explicit-any",
+                             "message":  "Unexpected any. Specify a different type."
+                         }
+                     ]
+    },
+    {
+        "file":  "frontend/src/pagesfrontend/EDAStudioPage.tsx",
+        "errors":  0,
+        "warnings":  2,
+        "messages":  [
+                         {
+                             "line":  1024,
+                             "column":  6,
+                             "severity":  1,
+                             "rule":  "react-hooks/exhaustive-deps",
+                             "message":  "React Hook useEffect has a missing dependency: \u0027selectedId\u0027. Either include it or remove the dependency array."
+                         },
+                         {
+                             "line":  1054,
+                             "column":  26,
+                             "severity":  1,
+                             "rule":  "react-hooks/set-state-in-effect",
+                             "message":  "Error: Calling setState synchronously within an effect can trigger cascading renders"
+                         }
+                     ]
+    },
+    {
+        "file":  "frontend/src/pagesfrontend/InsightsPage.tsx",
+        "errors":  0,
+        "warnings":  2,
+        "messages":  [
+                         {
+                             "line":  14,
+                             "column":  39,
+                             "severity":  1,
+                             "rule":  "react-hooks/set-state-in-effect",
+                             "message":  "Error: Calling setState synchronously within an effect can trigger cascading renders"
+                         },
+                         {
+                             "line":  15,
+                             "column":  62,
+                             "severity":  1,
+                             "rule":  "react-hooks/set-state-in-effect",
+                             "message":  "Error: Calling setState synchronously within an effect can trigger cascading renders"
+                         }
+                     ]
+    },
+    {
+        "file":  "frontend/src/pagesfrontend/ReportDetailPage.tsx",
+        "errors":  0,
+        "warnings":  1,
+        "messages":  [
+                         {
+                             "line":  7,
+                             "column":  39,
+                             "severity":  1,
+                             "rule":  "react-hooks/set-state-in-effect",
+                             "message":  "Error: Calling setState synchronously within an effect can trigger cascading renders"
+                         }
+                     ]
+    },
+    {
+        "file":  "frontend/src/pagesfrontend/ReportsPage.tsx",
+        "errors":  0,
+        "warnings":  1,
+        "messages":  [
+                         {
+                             "line":  85,
+                             "column":  10,
+                             "severity":  1,
+                             "rule":  "react-hooks/set-state-in-effect",
+                             "message":  "Error: Calling setState synchronously within an effect can trigger cascading renders"
+                         }
+                     ]
+    },
+    {
+        "file":  "frontend/src/pagesfrontend/VisualizationsPage.tsx",
+        "errors":  1,
+        "warnings":  4,
+        "messages":  [
+                         {
+                             "line":  62,
+                             "column":  7,
+                             "severity":  1,
+                             "rule":  "react-hooks/set-state-in-effect",
+                             "message":  "Error: Calling setState synchronously within an effect can trigger cascading renders"
+                         },
+                         {
+                             "line":  81,
+                             "column":  19,
+                             "severity":  2,
+                             "rule":  "@typescript-eslint/no-explicit-any",
+                             "message":  "Unexpected any. Specify a different type."
+                         },
+                         {
+                             "line":  103,
+                             "column":  7,
+                             "severity":  1,
+                             "rule":  "react-hooks/set-state-in-effect",
+                             "message":  "Error: Calling setState synchronously within an effect can trigger cascading renders"
+                         },
+                         {
+                             "line":  153,
+                             "column":  7,
+                             "severity":  1,
+                             "rule":  "react-hooks/set-state-in-effect",
+                             "message":  "Error: Calling setState synchronously within an effect can trigger cascading renders"
+                         },
+                         {
+                             "line":  162,
+                             "column":  7,
+                             "severity":  1,
+                             "rule":  "react-hooks/set-state-in-effect",
+                             "message":  "Error: Calling setState synchronously within an effect can trigger cascading renders"
+                         }
+                     ]
+    }
+]

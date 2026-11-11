@@ -1,0 +1,78 @@
+﻿[
+    {
+        "path":  "backend/app/api/v1/routes/datasets.py",
+        "sha256":  "08a390d16e09ca67b8a408c440afae07008a528f9761f2a36694dc950f4b71cd"
+    },
+    {
+        "path":  "backend/app/api/v1/routes/chat.py",
+        "sha256":  "a4e5425ddb6a7c31adc9af8f7cda05cfd16d372897d941ee2c914ec526d96133"
+    },
+    {
+        "path":  "backend/app/core/config.py",
+        "sha256":  "0fec1cb54ea1848c95410dfd844915eefd1a52f1ef47e3cbd7ea045411885715"
+    },
+    {
+        "path":  "backend/app/core/authorization.py",
+        "sha256":  "f496418ccb20dd75235cdccb24576a8ab20101e44a067254272508b8a8d39be1"
+    },
+    {
+        "path":  "backend/app/core/workspace_authorization.py",
+        "sha256":  "3d018fe0be2807d1e4bcafab483fc5f4bc476eef90bceb7c412428e382ebfbca"
+    },
+    {
+        "path":  "backend/app/services/dataset_upload_service.py",
+        "sha256":  "323b190fb2d8def94fe46de66452349e31e9d89a2d3f4e915ab3098f9c40d1e7"
+    },
+    {
+        "path":  "backend/app/services/dataset_json_service.py",
+        "sha256":  "d7d6ee056ce5001387fac22e621b1d910ee9057378b0074878069917b413bdb1"
+    },
+    {
+        "path":  "backend/app/services/storage_service.py",
+        "sha256":  "754dbc1342dffa8ac426530383f1a3ffd62ecb739cca754e7c83f425a14bad51"
+    },
+    {
+        "path":  "backend/app/services/tabular_loader.py",
+        "sha256":  "520a8edbc1cca82a8221c1f566bda62c9a94be71e3eca1689487ec68a65c4c5e"
+    },
+    {
+        "path":  "backend/app/services/data_retrieval_service.py",
+        "sha256":  "6ff9bcc5588d430b4e50772bf90315504ecbf0a67ea471007df593dc22c6ca89"
+    },
+    {
+        "path":  "backend/app/services/natural_language_analytics.py",
+        "sha256":  "90e4629fa59860eaa6716f53fd358f64bfed60aeaa75b5178e0b80688d5a9f30"
+    },
+    {
+        "path":  "backend/jobs/manager.py",
+        "sha256":  "24a3fd904827797b9ef27086e61357bdf4f11ef61e43e0914e7915ea9ca0d3fa"
+    },
+    {
+        "path":  "backend/jobs/persistence.py",
+        "sha256":  "1617faffc595324ec804fe51bb1dd00d535c6b8f2d9f3080f9dd4ec412c9ba6e"
+    },
+    {
+        "path":  "backend/jobs/job_worker.py",
+        "sha256":  "ab78286df89dcd4465c2439cd5dc885888082156cc93e97280cb98077373c715"
+    },
+    {
+        "path":  "backend/app/main.py",
+        "sha256":  "6283834f5ff3e16e286ada4c990e50124c05e27217d76277d01e6e37d4c4f7bf"
+    },
+    {
+        "path":  "docker-compose.yml",
+        "sha256":  "0b4167e22d64621768bedc476e59754cf47c505e6dd376f638628d871dd592fe"
+    },
+    {
+        "path":  "docker-compose.verify.yml",
+        "sha256":  "0235b2825e76ed7d3e1166b7d7f8d5690d495cf3b941fce9e991b149108baf1b"
+    },
+    {
+        "path":  "backend/requirements.lock.txt",
+        "sha256":  "5e5600fb521b3458a50024b69143b4ed7755e83cf4ad2ef40d38340c418b04a5"
+    },
+    {
+        "path":  "frontend/package-lock.json",
+        "sha256":  "24c26621b1698b957446858b7b0ae30c7ee0f4214012c6764698dda6b3cb8fd2"
+    }
+]

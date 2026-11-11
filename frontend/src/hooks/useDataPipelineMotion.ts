@@ -166,17 +166,23 @@ function getPhaseMetadata(phase: PipelinePhase): {
 
 // Storage can be unavailable in privacy-restricted embeds. Motion still works.
 function readMotionPreference(): boolean {
-  try { return window.localStorage.getItem('ai_analyst_motion_mode') === 'reduced'; }
-  catch { return false; }
+  try {
+    return window.localStorage.getItem('ai_analyst_motion_mode') === 'reduced';
+  } catch {
+    return false;
+  }
 }
 
 export function useDataPipelineMotion(): DataPipelineMotionState {
   const [userPaused, setUserPaused] = useState(readMotionPreference);
-  const [systemReduced, setSystemReduced] = useState(() =>
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const [systemReduced, setSystemReduced] = useState(
+    () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
   const isReducedMotion = userPaused || systemReduced;
   const [isVerifiedRunning, setIsVerifiedRunning] = useState(false);
-  const [currentPhase, setCurrentPhase] = useState<PipelinePhase>(isReducedMotion ? 'donut-complete' : 'raw');
+  const [currentPhase, setCurrentPhase] = useState<PipelinePhase>(
+    isReducedMotion ? 'donut-complete' : 'raw',
+  );
   const [sampledMs, setSampledMs] = useState(isReducedMotion ? 6200 : 0);
   const elapsedMsRef = useRef(isReducedMotion ? 6200 : 0);
   const subscribersRef = useRef(new Set<(elapsedMs: number) => void>());
@@ -184,13 +190,19 @@ export function useDataPipelineMotion(): DataPipelineMotionState {
   const subscribeToFrames = useCallback((callback: (elapsedMs: number) => void) => {
     subscribersRef.current.add(callback);
     callback(elapsedMsRef.current);
-    return () => { subscribersRef.current.delete(callback); };
+    return () => {
+      subscribersRef.current.delete(callback);
+    };
   }, []);
   const getElapsedMs = useCallback(() => elapsedMsRef.current, []);
   const toggleMotion = useCallback(() => {
     if (systemReduced) return;
     const next = !userPaused;
-    try { window.localStorage.setItem('ai_analyst_motion_mode', next ? 'reduced' : 'live'); } catch { /* Session-only preference. */ }
+    try {
+      window.localStorage.setItem('ai_analyst_motion_mode', next ? 'reduced' : 'live');
+    } catch {
+      /* Session-only preference. */
+    }
     setUserPaused(next);
   }, [userPaused, systemReduced]);
 
@@ -198,7 +210,8 @@ export function useDataPipelineMotion(): DataPipelineMotionState {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
     const onMedia = () => setSystemReduced(media.matches);
     const onStorage = (event: StorageEvent) => {
-      if (event.key === 'ai_analyst_motion_mode' || event.key === null) setUserPaused(readMotionPreference());
+      if (event.key === 'ai_analyst_motion_mode' || event.key === null)
+        setUserPaused(readMotionPreference());
     };
     media.addEventListener('change', onMedia);
     window.addEventListener('storage', onStorage);
@@ -220,7 +233,8 @@ export function useDataPipelineMotion(): DataPipelineMotionState {
     setCurrentPhase(lastPhase);
     setSampledMs(elapsedMsRef.current);
     setIsVerifiedRunning(false);
-    const publish = () => subscribersRef.current.forEach(callback => callback(elapsedMsRef.current));
+    const publish = () =>
+      subscribersRef.current.forEach((callback) => callback(elapsedMsRef.current));
     publish();
     if (isReducedMotion) return;
 

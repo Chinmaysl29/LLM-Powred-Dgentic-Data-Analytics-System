@@ -32,11 +32,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Dataset, DatasetStatus } from '../../types/datasets';
-import {
-  formatFileSize,
-  formatDate,
-  getExtension,
-} from '../../datasetUtils';
+import { formatFileSize, formatDate, getExtension } from '../../datasetUtils';
 import { StatusBadge } from '../../components/StatusBadge';
 import { datasetService } from '../../services/datasetService';
 
@@ -45,20 +41,15 @@ import { datasetService } from '../../services/datasetService';
 // ---------------------------------------------------------------------------
 
 type SortOption =
-  | 'recently-uploaded'
-  | 'oldest-uploaded'
-  | 'name-asc'
-  | 'name-desc'
-  | 'size-desc'
-  | 'size-asc';
+  'recently-uploaded' | 'oldest-uploaded' | 'name-asc' | 'name-desc' | 'size-desc' | 'size-asc';
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'recently-uploaded', label: 'Recently uploaded' },
-  { value: 'oldest-uploaded',   label: 'Oldest uploaded' },
-  { value: 'name-asc',          label: 'Name A-Z' },
-  { value: 'name-desc',         label: 'Name Z-A' },
-  { value: 'size-desc',         label: 'Largest size' },
-  { value: 'size-asc',          label: 'Smallest size' },
+  { value: 'oldest-uploaded', label: 'Oldest uploaded' },
+  { value: 'name-asc', label: 'Name A-Z' },
+  { value: 'name-desc', label: 'Name Z-A' },
+  { value: 'size-desc', label: 'Largest size' },
+  { value: 'size-asc', label: 'Smallest size' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -68,14 +59,14 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
 type StatusFilterValue = 'all' | DatasetStatus;
 
 const STATUS_FILTER_OPTIONS: { value: StatusFilterValue; label: string }[] = [
-  { value: 'all',        label: 'All statuses' },
-  { value: 'ready',      label: 'Ready' },
-  { value: 'uploaded',   label: 'Uploaded' },
+  { value: 'all', label: 'All statuses' },
+  { value: 'ready', label: 'Ready' },
+  { value: 'uploaded', label: 'Uploaded' },
   { value: 'validating', label: 'Validating' },
-  { value: 'validated',  label: 'Validated' },
+  { value: 'validated', label: 'Validated' },
   { value: 'processing', label: 'Processing' },
-  { value: 'processed',  label: 'Processed' },
-  { value: 'failed',     label: 'Failed' },
+  { value: 'processed', label: 'Processed' },
+  { value: 'failed', label: 'Failed' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -93,9 +84,7 @@ function deriveVisibleDatasets(
   // 1. Search - case-insensitive, trims surrounding whitespace
   const trimmed = searchQuery.trim().toLowerCase();
   const searched =
-    trimmed === ''
-      ? source
-      : source.filter((ds) => ds.filename.toLowerCase().includes(trimmed));
+    trimmed === '' ? source : source.filter((ds) => ds.filename.toLowerCase().includes(trimmed));
 
   // 2. Status filter
   const filtered =
@@ -141,15 +130,11 @@ function DatasetRow({ dataset }: { dataset: Dataset }) {
       </td>
 
       {/* File size */}
-      <td className="dataset-meta">
-        {formatFileSize(dataset.size_bytes)}
-      </td>
+      <td className="dataset-meta">{formatFileSize(dataset.size_bytes)}</td>
 
       {/* Upload date */}
       <td className="dataset-meta">
-        <time dateTime={dataset.uploaded_at}>
-          {formatDate(dataset.uploaded_at)}
-        </time>
+        <time dateTime={dataset.uploaded_at}>{formatDate(dataset.uploaded_at)}</time>
       </td>
 
       {/* Processing status */}
@@ -218,8 +203,7 @@ function DatasetTable({ datasets, hasSourceData, onClearFilters }: DatasetTableP
             </svg>
             <p className="dataset-empty-title">No datasets yet</p>
             <p className="dataset-empty-body">
-              Datasets will appear here once they have been uploaded and are
-              available for analysis.
+              Datasets will appear here once they have been uploaded and are available for analysis.
             </p>
             <Link
               to="/datasets/upload"
@@ -268,14 +252,8 @@ function DatasetTable({ datasets, hasSourceData, onClearFilters }: DatasetTableP
             <line x1="8" y1="11" x2="14" y2="11" />
           </svg>
           <p className="dataset-empty-title">No matching datasets</p>
-          <p className="dataset-empty-body">
-            No datasets match your current search or filters.
-          </p>
-          <button
-            className="dataset-clear-btn"
-            type="button"
-            onClick={onClearFilters}
-          >
+          <p className="dataset-empty-body">No datasets match your current search or filters.</p>
+          <button className="dataset-clear-btn" type="button" onClick={onClearFilters}>
             Clear search and filters
           </button>
         </div>
@@ -318,11 +296,7 @@ function DatasetTable({ datasets, hasSourceData, onClearFilters }: DatasetTableP
 
 function DatasetLoadingSkeleton() {
   return (
-    <div
-      className="dataset-table-wrapper"
-      aria-label="Loading datasets"
-      aria-busy="true"
-    >
+    <div className="dataset-table-wrapper" aria-label="Loading datasets" aria-busy="true">
       <div className="dataset-skeleton" role="status">
         {Array.from({ length: 5 }, (_, i) => (
           <div key={i} className="dataset-skeleton-row">
@@ -348,8 +322,7 @@ function DatasetLoadingSkeleton() {
 function DatasetErrorBanner({ message }: { message: string }) {
   return (
     <div className="dataset-error" role="alert">
-      <strong>Failed to load datasets.</strong>{' '}
-      {message}
+      <strong>Failed to load datasets.</strong> {message}
     </div>
   );
 }
@@ -538,12 +511,7 @@ export default function DatasetsPage() {
 
   // Derived dataset pipeline: source -> search -> filter -> sort
   // DEV_DATASETS is never mutated - spread happens inside deriveVisibleDatasets.
-  const visibleDatasets = deriveVisibleDatasets(
-    datasets,
-    searchQuery,
-    statusFilter,
-    sortOption,
-  );
+  const visibleDatasets = deriveVisibleDatasets(datasets, searchQuery, statusFilter, sortOption);
 
   // isFiltered = true when search or status filter is active (NOT sort).
   // Sort is an independent control and is NOT reset by Clear Filters.
@@ -567,9 +535,7 @@ export default function DatasetsPage() {
           <div>
             <p className="eyebrow">DATA MANAGEMENT / DATASETS</p>
             <h1 className="page-title">Your data, organized.</h1>
-            <p className="page-description">
-              Manage and inspect datasets available for analysis.
-            </p>
+            <p className="page-description">Manage and inspect datasets available for analysis.</p>
           </div>
           {/* Phase 2F: Upload entry point */}
           <Link to="/datasets/upload" className="datasets-upload-btn">
@@ -597,9 +563,7 @@ export default function DatasetsPage() {
         <div className="dataset-summary" aria-label="Dataset summary">
           <div className="dataset-stat">
             <span className="dataset-stat-value">{totalCount}</span>
-            <span className="dataset-stat-label">
-              {totalCount === 1 ? 'Dataset' : 'Datasets'}
-            </span>
+            <span className="dataset-stat-label">{totalCount === 1 ? 'Dataset' : 'Datasets'}</span>
           </div>
 
           {/* Visible result count - only shown when filtering is active */}

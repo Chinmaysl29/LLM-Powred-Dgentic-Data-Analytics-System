@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { 
-  X, 
-  Download, 
-  FileText, 
-  FileSpreadsheet, 
-  Database, 
-  CheckCircle2, 
-  Loader2 
+import {
+  X,
+  Download,
+  FileText,
+  FileSpreadsheet,
+  Database,
+  CheckCircle2,
+  Loader2,
 } from 'lucide-react';
 import type { Report } from '../../types/reports';
 import { exportReport } from '../../services/reportsService';
@@ -44,7 +44,12 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, report, onClos
   };
 
   return (
-    <div className="reports-modal-backdrop" onClick={handleResetAndClose} role="dialog" aria-modal="true">
+    <div
+      className="reports-modal-backdrop"
+      onClick={handleResetAndClose}
+      role="dialog"
+      aria-modal="true"
+    >
       <div className="reports-modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="reports-modal-header">
           <div className="reports-modal-header-title">
@@ -54,7 +59,12 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, report, onClos
               <p>{report.title}</p>
             </div>
           </div>
-          <button type="button" className="reports-modal-close" onClick={handleResetAndClose} aria-label="Close modal">
+          <button
+            type="button"
+            className="reports-modal-close"
+            onClick={handleResetAndClose}
+            aria-label="Close modal"
+          >
             <X size={18} />
           </button>
         </div>
@@ -71,7 +81,9 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, report, onClos
                 >
                   <FileText size={24} className="reports-format-card-icon pdf" />
                   <div className="reports-format-name">Executive PDF</div>
-                  <div className="reports-format-sub">Formatted publication document with charts</div>
+                  <div className="reports-format-sub">
+                    Formatted publication document with charts
+                  </div>
                   <span className="reports-format-badge">Ready</span>
                 </button>
 
@@ -99,14 +111,17 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, report, onClos
               </div>
 
               <div className="reports-modal-note">
-                Exports preserve verified evidence boundaries and underlying dataset provenance tags.
+                Exports preserve verified evidence boundaries and underlying dataset provenance
+                tags.
               </div>
             </>
           ) : (
             <div className="reports-export-success">
               <CheckCircle2 size={40} className="reports-success-icon" />
               <h4>Export Ready for Download</h4>
-              <p>Your document <strong>{exportedFile}</strong> has been generated successfully.</p>
+              <p>
+                Your document <strong>{exportedFile}</strong> has been generated successfully.
+              </p>
               <div className="reports-success-file-chip">
                 <span>{exportedFile}</span>
               </div>
@@ -117,12 +132,17 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, report, onClos
         <div className="reports-modal-footer">
           {!exportedFile ? (
             <>
-              <button type="button" className="reports-btn-ghost" onClick={handleResetAndClose} disabled={isExporting}>
+              <button
+                type="button"
+                className="reports-btn-ghost"
+                onClick={handleResetAndClose}
+                disabled={isExporting}
+              >
                 Cancel
               </button>
-              <button 
-                type="button" 
-                className="reports-btn-primary" 
+              <button
+                type="button"
+                className="reports-btn-primary"
                 onClick={handleExport}
                 disabled={isExporting}
               >

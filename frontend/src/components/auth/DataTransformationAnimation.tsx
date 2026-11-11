@@ -48,24 +48,22 @@ export const DataTransformationAnimation: React.FC = () => {
     activeStage === 1
       ? Shuffle
       : activeStage === 2
-      ? Sparkles
-      : phase === 'donut-complete'
-      ? Check
-      : TrendingUp;
+        ? Sparkles
+        : phase === 'donut-complete'
+          ? Check
+          : TrendingUp;
 
   return (
     <section
       className="pipeline-card"
-      data-motion={isReducedMotion ? "reduced" : isVerifiedRunning ? "running" : "waiting"}
+      data-motion={isReducedMotion ? 'reduced' : isVerifiedRunning ? 'running' : 'waiting'}
       aria-label="Interactive Autonomous Data Transformation Pipeline"
     >
       {/* Top Banner Identity */}
       <div className="pipeline-header">
         <div className="pipeline-header-left">
           <span className="pipeline-status-dot" />
-          <span className="pipeline-header-title">
-            Autonomous Analytics Engine
-          </span>
+          <span className="pipeline-header-title">Autonomous Analytics Engine</span>
         </div>
         <div className="pipeline-header-right">
           <span
@@ -80,8 +78,10 @@ export const DataTransformationAnimation: React.FC = () => {
                 <span className="live-pulse-dot" aria-hidden="true" />
                 LIVE ANIMATION
               </>
+            ) : isReducedMotion ? (
+              'MOTION REDUCED'
             ) : (
-              isReducedMotion ? 'MOTION REDUCED' : 'WAITING FOR MOTION'
+              'WAITING FOR MOTION'
             )}
           </span>
           <button
@@ -89,16 +89,29 @@ export const DataTransformationAnimation: React.FC = () => {
             onClick={toggleMotion}
             disabled={systemReduced}
             className="pipeline-motion-toggle-btn"
-            title={systemReduced ? 'Motion reduced by your system preference' : isReducedMotion ? 'Resume animation' : 'Pause animation'}
+            title={
+              systemReduced
+                ? 'Motion reduced by your system preference'
+                : isReducedMotion
+                  ? 'Resume animation'
+                  : 'Pause animation'
+            }
             aria-label={isReducedMotion ? 'Enable live animation' : 'Enable static preview'}
           >
-            {systemReduced ? 'System preference' : isReducedMotion ? 'Resume Motion' : 'Pause Motion'}
+            {systemReduced
+              ? 'System preference'
+              : isReducedMotion
+                ? 'Resume Motion'
+                : 'Pause Motion'}
           </button>
         </div>
       </div>
 
       {/* Screen reader polite live announcement */}
-      <p className="sr-only">Illustrative data transforms from raw records to validated rows, then bars and a donut chart, in a repeating seven-second cycle.</p>
+      <p className="sr-only">
+        Illustrative data transforms from raw records to validated rows, then bars and a donut
+        chart, in a repeating seven-second cycle.
+      </p>
 
       {/* SINGLE MOTION VIEWPORT — Fixed bounding box, stationary frame */}
       <div className="single-motion-viewport" aria-hidden="true">
@@ -146,9 +159,7 @@ export const DataTransformationAnimation: React.FC = () => {
           <div className="viewport-footer-left">
             <span
               className={`viewport-footer-dot ${
-                activeStage === 1
-                  ? 'viewport-footer-dot--amber'
-                  : 'viewport-footer-dot--lime'
+                activeStage === 1 ? 'viewport-footer-dot--amber' : 'viewport-footer-dot--lime'
               }`}
             />
             <span>{footerLeft}</span>

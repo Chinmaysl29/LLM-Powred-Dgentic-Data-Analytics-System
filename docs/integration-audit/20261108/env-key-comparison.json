@@ -1,0 +1,25 @@
+{
+    "actual_key_count":  56,
+    "example_key_count":  72,
+    "example_keys_missing_from_actual":  [
+                                             "BACKGROUND_WORKER_CONCURRENCY",
+                                             "BACKGROUND_WORKER_ENABLED",
+                                             "LEARNING_ENABLED",
+                                             "DATAPLANE_ENABLED",
+                                             "DATAPLANE_ENGINE_DEFAULT",
+                                             "DATAPLANE_MEMORY_MB",
+                                             "DATAPLANE_WORKER_MEMORY_MB",
+                                             "DATAPLANE_THREADS",
+                                             "DATAPLANE_TIMEOUT_S",
+                                             "DATAPLANE_SPILL_MB",
+                                             "DATAPLANE_UPLOAD_MB",
+                                             "DATAPLANE_SCAN_MB",
+                                             "DATAPLANE_RESULT_ROWS",
+                                             "DATAPLANE_RESULT_BYTES",
+                                             "DATAPLANE_ROOT",
+                                             "DATAPLANE_POSTGRES_HOSTS"
+                                         ],
+    "actual_keys_missing_from_example":  [
+
+                                         ]
+}

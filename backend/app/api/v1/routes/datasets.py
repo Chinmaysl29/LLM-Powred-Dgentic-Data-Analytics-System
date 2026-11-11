@@ -802,13 +802,32 @@ async def delete_dataset(
             detail=f"Dataset with ID '{dataset_id}' not found",
         )
 
+    # Revoke source-derived memory before removing any backing file. Preserve a
+    # tombstone for foreign-key lineage, and make every owned read fail closed.
+    from backend.app.services.learning_supervisor import bind, invalidate_source
+    db = dataset_repository.session
+    bindings = db.scalars(select(dataset_workspace_bindings.c.workspace_id).where(
+        dataset_workspace_bindings.c.dataset_id == dataset_id)).all()
+    for workspace_id in bindings:
+        access = bind(db, dataset_repository.owner_id, workspace_id, 'write')
+        invalidate_source(db, access, dataset_id=dataset_id)
+    dataset.status = 'deleted'
+    # Physical removal is recoverable even if the API/worker dies after this commit.
+    from backend.app.models.background_job import DurableJob
+    if bindings:
+        db.add(DurableJob(workspace_id=bindings[0], owner_id=UUID(dataset_repository.owner_id), kind='dataset_cleanup',
+            idempotency_key=f'delete:{dataset_id}', payload={'dataset_id':dataset_id}, retry_eligible=True))
+    db.commit()
+
+    if bindings:
+        return {'success': True, 'message': 'Dataset access revoked; physical cleanup queued.', 'cleanup_status':'QUEUED'}
+
     # Delete the isolated source plus canonical artifacts.
     if not storage_service.delete_dataset(dataset_id):
         # Datasets uploaded before Phase 17.11 used a flat source-file layout.
         storage_service.delete_file(dataset.file_path)
 
-    # Delete database record
-    dataset_repository.delete(dataset_id)
+    # The tombstone retains IDs and lineage, not a retrievable dataset.
 
     # Delete any associated vector embeddings from ChromaDB
     try:

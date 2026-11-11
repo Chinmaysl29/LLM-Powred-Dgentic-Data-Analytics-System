@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "checks": [
+    "Dictionary draft, explicit policy, review and approval persist through the real API",
+    "Actual calculation drawer and exported comparison agree on independently expected 35 and zero delta",
+    "Approved manual workflow produces a separately reviewed downloadable PDF; schedule stays disabled",
+    "Desktop and mobile render without uncaught browser errors or horizontal page overflow"
+  ]
+}

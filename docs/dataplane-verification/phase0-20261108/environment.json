@@ -1,0 +1,57 @@
+{
+  "audit_date": "2026-11-08",
+  "workspace": "C:\\data analyst",
+  "branch": "feature/learning-layer",
+  "host_memory_bytes": 10592444416,
+  "docker_memory_bytes": 5084336128,
+  "logical_cpus": 12,
+  "backend_image": "sha256:d21fe26ac05380e7b8eb9d1d64fab8e13c5063a016b9868315477fa75ff9b205",
+  "frontend_image": "sha256:10715bd426bc9ade9485a9b4846077c7a14c041321cfbe2401615f8e2375706c",
+  "installed_versions": {
+    "pandas": "2.3.3",
+    "pyarrow": "26.0.1",
+    "numpy": "2.4.6",
+    "SQLAlchemy": "2.1.6",
+    "psycopg": "3.3.7",
+    "fastapi": "0.162.0",
+    "duckdb": null,
+    "sqlglot": null,
+    "asyncpg": null
+  },
+  "frontend_checks": {
+    "typecheck_exit_code": 0,
+    "build_exit_code": 0,
+    "vite_version": "8.3.6",
+    "modules_transformed": 2374,
+    "build_seconds": 2.22,
+    "method": "Network-disabled scratch copy using frontend image node_modules; no repository build output"
+  },
+  "backend_checks": {
+    "passed": 334,
+    "warnings": 5,
+    "seconds": 257.39,
+    "junit": "backend-baseline.xml"
+  },
+  "benchmarks": {
+    "cpus": 2,
+    "memory_budgets_bytes": [
+      1073741824,
+      2147483648
+    ],
+    "swap_enabled": false,
+    "timeout_seconds": 120,
+    "network": "none",
+    "repository_mount": "read-only",
+    "production_storage_mounted": false,
+    "measurement_scope": "Current CSV parser/grouped analytics and canonicalization service; excludes full upload/profile/quality/database stages",
+    "input": "deterministic synthetic CSV",
+    "run_directories": [
+      "/verification/benchmark/phase0-88cc6dd671",
+      "/verification/benchmark/phase0-878d2cca33"
+    ]
+  },
+  "application_code_changed": false,
+  "production_database_changed": false,
+  "env_file_changed": false,
+  "implementation_status": "Phase 0 only; approval pending"
+}

@@ -128,9 +128,7 @@ export const INITIAL_API_CONNECTIONS: ApiConnection[] = [
     baseUrl: 'https://storefront.myshopify.com/api/2026-01/graphql.json',
     authType: 'apiKey',
     apiKeyHeader: 'X-Shopify-Storefront-Access-Token',
-    headers: [
-      { key: 'Content-Type', value: 'application/json' },
-    ],
+    headers: [{ key: 'Content-Type', value: 'application/json' }],
     status: 'connected',
     latencyMs: 86,
     lastTestedAt: '2026-03-25T17:30:00Z',
@@ -142,9 +140,7 @@ export const INITIAL_API_CONNECTIONS: ApiConnection[] = [
     baseUrl: 'https://api.hubapi.com/crm/v3/objects',
     endpoint: '/deals',
     authType: 'bearer',
-    headers: [
-      { key: 'Content-Type', value: 'application/json' },
-    ],
+    headers: [{ key: 'Content-Type', value: 'application/json' }],
     status: 'connected',
     latencyMs: 135,
     lastTestedAt: '2026-03-25T15:20:00Z',
@@ -160,7 +156,8 @@ export const INITIAL_WAREHOUSE_CATALOG: DataWarehouseCatalog = {
     {
       id: 'fact-sales',
       name: 'fact_sales_transactions',
-      description: 'Granular store and e-commerce checkout events with line-item totals and margins.',
+      description:
+        'Granular store and e-commerce checkout events with line-item totals and margins.',
       rowCount: 1_840_000,
       columnCount: 18,
       partitionKey: 'transaction_date (monthly)',
@@ -182,7 +179,8 @@ export const INITIAL_WAREHOUSE_CATALOG: DataWarehouseCatalog = {
     {
       id: 'fact-revenue',
       name: 'fact_monthly_revenue',
-      description: 'Monthly ledger revenue recognition by cost center, region, and subscription cohort.',
+      description:
+        'Monthly ledger revenue recognition by cost center, region, and subscription cohort.',
       rowCount: 480_000,
       columnCount: 14,
       partitionKey: 'fiscal_period (quarterly)',
@@ -217,7 +215,8 @@ export const INITIAL_WAREHOUSE_CATALOG: DataWarehouseCatalog = {
     {
       id: 'dim-customers',
       name: 'dim_customers',
-      description: 'SCD Type 2 dimension for customer attributes, tier, credit rating, and geography.',
+      description:
+        'SCD Type 2 dimension for customer attributes, tier, credit rating, and geography.',
       rowCount: 95_000,
       columnCount: 16,
       primaryKey: 'customer_id',
@@ -269,7 +268,8 @@ export const INITIAL_WAREHOUSE_CATALOG: DataWarehouseCatalog = {
     {
       id: 'v-high-value',
       name: 'v_high_value_customers',
-      description: 'Logical view filtering accounts with lifetime spend > $100k and health score > 85.',
+      description:
+        'Logical view filtering accounts with lifetime spend > $100k and health score > 85.',
       sourceTables: ['dim_customers', 'fact_sales_transactions'],
       lastRefreshed: '2026-03-25T18:30:00Z',
       query: `SELECT c.customer_id, c.customer_name, c.tier, SUM(s.net_amount) AS ltv
@@ -307,7 +307,8 @@ GROUP BY transaction_date;`,
     {
       id: 'mv-cohort-retention',
       name: 'mv_cohort_retention_matrix',
-      description: 'Monthly customer cohort retention rates pre-calculated for instant visualization.',
+      description:
+        'Monthly customer cohort retention rates pre-calculated for instant visualization.',
       refreshInterval: 'Daily at 02:00 UTC',
       lastRefreshed: '2026-03-25T02:00:00Z',
       rowCount: 48,
@@ -333,29 +334,158 @@ export const DEV_PREVIEWS: Record<string, DatasetPreview> = {};
 export function getMockMetadata(datasetId: string): ColumnMetadata[] {
   if (datasetId === 'ds-customer-data') {
     return [
-      { name: 'customer_id', datatype: 'String (UUID)', uniqueValues: 45000, nullCount: 0, nullPercentage: 0, sampleValues: ['CUST-5001', 'CUST-5002'], isPrimaryKey: true },
-      { name: 'company_name', datatype: 'String', uniqueValues: 44920, nullCount: 0, nullPercentage: 0, sampleValues: ['Acme Labs', 'Nexus Corp'] },
-      { name: 'industry', datatype: 'Categorical', uniqueValues: 8, nullCount: 120, nullPercentage: 0.27, sampleValues: ['FinTech', 'HealthTech'] },
-      { name: 'tier', datatype: 'Categorical', uniqueValues: 4, nullCount: 0, nullPercentage: 0, sampleValues: ['Enterprise', 'Mid-Market'] },
-      { name: 'annual_revenue', datatype: 'Numeric (Float)', uniqueValues: 38200, nullCount: 450, nullPercentage: 1.0, sampleValues: [120000, 480000] },
-      { name: 'employee_count', datatype: 'Integer', uniqueValues: 1200, nullCount: 890, nullPercentage: 1.98, sampleValues: [50, 450] },
-      { name: 'nps_score', datatype: 'Integer (1-10)', uniqueValues: 10, nullCount: 12, nullPercentage: 0.03, sampleValues: [8, 10] },
-      { name: 'status', datatype: 'Categorical', uniqueValues: 3, nullCount: 0, nullPercentage: 0, sampleValues: ['Active', 'At Risk'] },
+      {
+        name: 'customer_id',
+        datatype: 'String (UUID)',
+        uniqueValues: 45000,
+        nullCount: 0,
+        nullPercentage: 0,
+        sampleValues: ['CUST-5001', 'CUST-5002'],
+        isPrimaryKey: true,
+      },
+      {
+        name: 'company_name',
+        datatype: 'String',
+        uniqueValues: 44920,
+        nullCount: 0,
+        nullPercentage: 0,
+        sampleValues: ['Acme Labs', 'Nexus Corp'],
+      },
+      {
+        name: 'industry',
+        datatype: 'Categorical',
+        uniqueValues: 8,
+        nullCount: 120,
+        nullPercentage: 0.27,
+        sampleValues: ['FinTech', 'HealthTech'],
+      },
+      {
+        name: 'tier',
+        datatype: 'Categorical',
+        uniqueValues: 4,
+        nullCount: 0,
+        nullPercentage: 0,
+        sampleValues: ['Enterprise', 'Mid-Market'],
+      },
+      {
+        name: 'annual_revenue',
+        datatype: 'Numeric (Float)',
+        uniqueValues: 38200,
+        nullCount: 450,
+        nullPercentage: 1.0,
+        sampleValues: [120000, 480000],
+      },
+      {
+        name: 'employee_count',
+        datatype: 'Integer',
+        uniqueValues: 1200,
+        nullCount: 890,
+        nullPercentage: 1.98,
+        sampleValues: [50, 450],
+      },
+      {
+        name: 'nps_score',
+        datatype: 'Integer (1-10)',
+        uniqueValues: 10,
+        nullCount: 12,
+        nullPercentage: 0.03,
+        sampleValues: [8, 10],
+      },
+      {
+        name: 'status',
+        datatype: 'Categorical',
+        uniqueValues: 3,
+        nullCount: 0,
+        nullPercentage: 0,
+        sampleValues: ['Active', 'At Risk'],
+      },
     ];
   }
 
   // Default to Sales_Data_2025 metadata
   return [
-    { name: 'transaction_id', datatype: 'String (Alphanumeric)', uniqueValues: 15000, nullCount: 0, nullPercentage: 0, sampleValues: ['TXN-10001', 'TXN-10002'], isPrimaryKey: true },
-    { name: 'date', datatype: 'DateTime (ISO)', uniqueValues: 365, nullCount: 0, nullPercentage: 0, sampleValues: ['2025-01-03', '2025-01-04'] },
-    { name: 'customer_name', datatype: 'String', uniqueValues: 420, nullCount: 0, nullPercentage: 0, sampleValues: ['Acme Corp', 'Starlight Logistics'] },
-    { name: 'region', datatype: 'Categorical', uniqueValues: 5, nullCount: 0, nullPercentage: 0, sampleValues: ['North America', 'EMEA', 'APAC'] },
-    { name: 'product', datatype: 'Categorical', uniqueValues: 12, nullCount: 0, nullPercentage: 0, sampleValues: ['Enterprise Cloud', 'AI Analytics Pro'] },
-    { name: 'quantity', datatype: 'Integer', uniqueValues: 45, nullCount: 0, nullPercentage: 0, sampleValues: [1, 5, 12] },
-    { name: 'unit_price', datatype: 'Numeric (Float)', uniqueValues: 18, nullCount: 0, nullPercentage: 0, sampleValues: [850.0, 2400.0] },
-    { name: 'total_amount', datatype: 'Numeric (Float)', uniqueValues: 4200, nullCount: 0, nullPercentage: 0, sampleValues: [4250.0, 12000.0] },
-    { name: 'discount_rate', datatype: 'Percentage', uniqueValues: 8, nullCount: 42, nullPercentage: 0.28, sampleValues: [0.05, 0.15] },
-    { name: 'profit_margin', datatype: 'Numeric (Float)', uniqueValues: 85, nullCount: 0, nullPercentage: 0, sampleValues: [0.65, 0.78], isTarget: true },
+    {
+      name: 'transaction_id',
+      datatype: 'String (Alphanumeric)',
+      uniqueValues: 15000,
+      nullCount: 0,
+      nullPercentage: 0,
+      sampleValues: ['TXN-10001', 'TXN-10002'],
+      isPrimaryKey: true,
+    },
+    {
+      name: 'date',
+      datatype: 'DateTime (ISO)',
+      uniqueValues: 365,
+      nullCount: 0,
+      nullPercentage: 0,
+      sampleValues: ['2025-01-03', '2025-01-04'],
+    },
+    {
+      name: 'customer_name',
+      datatype: 'String',
+      uniqueValues: 420,
+      nullCount: 0,
+      nullPercentage: 0,
+      sampleValues: ['Acme Corp', 'Starlight Logistics'],
+    },
+    {
+      name: 'region',
+      datatype: 'Categorical',
+      uniqueValues: 5,
+      nullCount: 0,
+      nullPercentage: 0,
+      sampleValues: ['North America', 'EMEA', 'APAC'],
+    },
+    {
+      name: 'product',
+      datatype: 'Categorical',
+      uniqueValues: 12,
+      nullCount: 0,
+      nullPercentage: 0,
+      sampleValues: ['Enterprise Cloud', 'AI Analytics Pro'],
+    },
+    {
+      name: 'quantity',
+      datatype: 'Integer',
+      uniqueValues: 45,
+      nullCount: 0,
+      nullPercentage: 0,
+      sampleValues: [1, 5, 12],
+    },
+    {
+      name: 'unit_price',
+      datatype: 'Numeric (Float)',
+      uniqueValues: 18,
+      nullCount: 0,
+      nullPercentage: 0,
+      sampleValues: [850.0, 2400.0],
+    },
+    {
+      name: 'total_amount',
+      datatype: 'Numeric (Float)',
+      uniqueValues: 4200,
+      nullCount: 0,
+      nullPercentage: 0,
+      sampleValues: [4250.0, 12000.0],
+    },
+    {
+      name: 'discount_rate',
+      datatype: 'Percentage',
+      uniqueValues: 8,
+      nullCount: 42,
+      nullPercentage: 0.28,
+      sampleValues: [0.05, 0.15],
+    },
+    {
+      name: 'profit_margin',
+      datatype: 'Numeric (Float)',
+      uniqueValues: 85,
+      nullCount: 0,
+      nullPercentage: 0,
+      sampleValues: [0.65, 0.78],
+      isTarget: true,
+    },
   ];
 }
 
@@ -364,13 +494,13 @@ export function getMockProfile(_datasetId: string): DatasetProfileData {
     summary: {
       total_amount: {
         count: 15000,
-        mean: 5840.50,
-        median: 4800.00,
-        stdDev: 2420.10,
-        min: 850.00,
-        max: 24800.00,
-        q25: 3200.00,
-        q75: 7800.00,
+        mean: 5840.5,
+        median: 4800.0,
+        stdDev: 2420.1,
+        min: 850.0,
+        max: 24800.0,
+        q25: 3200.0,
+        q75: 7800.0,
         distribution: [
           { bucket: '< $2k', count: 1840 },
           { bucket: '$2k - $5k', count: 5420 },
@@ -401,11 +531,11 @@ export function getMockProfile(_datasetId: string): DatasetProfileData {
       profit_margin: {
         count: 15000,
         mean: 0.68,
-        median: 0.70,
+        median: 0.7,
         stdDev: 0.12,
         min: 0.35,
         max: 0.92,
-        q25: 0.60,
+        q25: 0.6,
         q75: 0.78,
         distribution: [
           { bucket: '30% - 50%', count: 1240 },
@@ -414,17 +544,17 @@ export function getMockProfile(_datasetId: string): DatasetProfileData {
           { bucket: '75% - 85%', count: 2840 },
           { bucket: '> 85%', count: 820 },
         ],
-        boxplot: { min: 0.35, q1: 0.60, median: 0.70, q3: 0.78, max: 0.92 },
+        boxplot: { min: 0.35, q1: 0.6, median: 0.7, q3: 0.78, max: 0.92 },
       },
     },
     correlation: {
       columns: ['Quantity', 'Unit Price', 'Total Amount', 'Discount', 'Margin'],
       matrix: [
-        [1.00, -0.15, 0.78, 0.22, -0.32],
-        [-0.15, 1.00, 0.62, -0.08, 0.54],
-        [0.78, 0.62, 1.00, 0.14, 0.18],
-        [0.22, -0.08, 0.14, 1.00, -0.68],
-        [-0.32, 0.54, 0.18, -0.68, 1.00],
+        [1.0, -0.15, 0.78, 0.22, -0.32],
+        [-0.15, 1.0, 0.62, -0.08, 0.54],
+        [0.78, 0.62, 1.0, 0.14, 0.18],
+        [0.22, -0.08, 0.14, 1.0, -0.68],
+        [-0.32, 0.54, 0.18, -0.68, 1.0],
       ],
     },
   };
@@ -437,12 +567,42 @@ export function getMockQuality(_datasetId: string): DatasetQualityData {
     duplicateRowsCount: 0,
     outliersCount: 68,
     rules: [
-      { rule: 'Primary Key Uniqueness', description: 'Zero duplicate transaction identifiers found', status: 'passed', score: 100 },
-      { rule: 'Null Values Under Threshold', description: 'Missing values account for 0.02% of all entries', status: 'passed', score: 98 },
-      { rule: 'Data Type Uniformity', description: 'All schema types match inferred columnar formats', status: 'passed', score: 96 },
-      { rule: 'Numeric Range Integrity', description: 'Unit prices and amounts strictly non-negative', status: 'passed', score: 100 },
-      { rule: 'Statistical Outlier Boundary', description: '68 transactions exceed 3x standard deviations on total_amount', status: 'warning', score: 84 },
-      { rule: 'Date Sequence Continuity', description: 'Continuous daily distribution across FY2025 with no missing dates', status: 'passed', score: 95 },
+      {
+        rule: 'Primary Key Uniqueness',
+        description: 'Zero duplicate transaction identifiers found',
+        status: 'passed',
+        score: 100,
+      },
+      {
+        rule: 'Null Values Under Threshold',
+        description: 'Missing values account for 0.02% of all entries',
+        status: 'passed',
+        score: 98,
+      },
+      {
+        rule: 'Data Type Uniformity',
+        description: 'All schema types match inferred columnar formats',
+        status: 'passed',
+        score: 96,
+      },
+      {
+        rule: 'Numeric Range Integrity',
+        description: 'Unit prices and amounts strictly non-negative',
+        status: 'passed',
+        score: 100,
+      },
+      {
+        rule: 'Statistical Outlier Boundary',
+        description: '68 transactions exceed 3x standard deviations on total_amount',
+        status: 'warning',
+        score: 84,
+      },
+      {
+        rule: 'Date Sequence Continuity',
+        description: 'Continuous daily distribution across FY2025 with no missing dates',
+        status: 'passed',
+        score: 95,
+      },
     ],
   };
 }
@@ -454,7 +614,8 @@ export function getMockVersions(_datasetId: string): DatasetVersionItem[] {
       label: 'Version 3 (Current Active)',
       created_at: '2026-03-20T14:15:00Z',
       author: 'Data Pipeline Engine',
-      changelog: 'Feature engineering: Normalized profit margins and generated regional categorical groupings.',
+      changelog:
+        'Feature engineering: Normalized profit margins and generated regional categorical groupings.',
       rows: 15_000,
       columns: 25,
       size_bytes: 4_850_000,
@@ -465,7 +626,8 @@ export function getMockVersions(_datasetId: string): DatasetVersionItem[] {
       label: 'Version 2',
       created_at: '2026-02-18T10:00:00Z',
       author: 'Auto-Clean Agent',
-      changelog: 'Data sanitization: Imputed 42 null discount values using median baseline; eliminated 6 duplicate test rows.',
+      changelog:
+        'Data sanitization: Imputed 42 null discount values using median baseline; eliminated 6 duplicate test rows.',
       rows: 15_000,
       columns: 24,
       size_bytes: 4_720_000,
@@ -574,22 +736,21 @@ export function getMockLineage(dataset: Dataset): DatasetLineageNode[] {
 // ---------------------------------------------------------------------------
 
 export const STATUS_LABELS: Record<string, string> = {
-  ready:      'Ready',
-  uploaded:   'Uploaded',
+  ready: 'Ready',
+  uploaded: 'Uploaded',
   validating: 'Validating',
-  validated:  'Validated',
+  validated: 'Validated',
   processing: 'Processing',
-  processed:  'Processed',
-  failed:     'Failed',
-  Ready:      'Ready',
-  Processed:  'Processed',
+  processed: 'Processed',
+  failed: 'Failed',
+  Ready: 'Ready',
+  Processed: 'Processed',
 };
 
 export function formatFileSize(bytes: number): string {
   if (bytes < 1_024) return `${bytes} B`;
   if (bytes < 1_024 * 1_024) return `${(bytes / 1_024).toFixed(1)} KB`;
-  if (bytes < 1_024 * 1_024 * 1_024)
-    return `${(bytes / (1_024 * 1_024)).toFixed(1)} MB`;
+  if (bytes < 1_024 * 1_024 * 1_024) return `${(bytes / (1_024 * 1_024)).toFixed(1)} MB`;
   return `${(bytes / (1_024 * 1_024 * 1_024)).toFixed(2)} GB`;
 }
 

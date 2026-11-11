@@ -1,0 +1,287 @@
+{
+  "kind": "synthetic pilot only",
+  "source": {
+    "task": {
+      "workspace_id": "5e5f286e-90f8-4ef3-9f34-f5d259cf2e9c",
+      "objective": "Net revenue by region",
+      "task_type": "descriptive",
+      "datasets": [
+        {
+          "dataset_id": "42a61e42-5e9c-4fd4-abc8-1347cbdc5e54",
+          "version": 1
+        }
+      ],
+      "metrics": [
+        {
+          "column": "amount",
+          "aggregation": "sum",
+          "missing": "reject",
+          "definition_ref": "net_revenue@1"
+        }
+      ],
+      "dimensions": [
+        "region"
+      ],
+      "grain": "one source transaction",
+      "filters": [
+        {
+          "column": "status",
+          "operator": "not_in",
+          "value": [
+            "cancelled"
+          ]
+        }
+      ],
+      "date_range": null,
+      "timezone": "UTC",
+      "units": "USD",
+      "currency": "USD",
+      "output": "table",
+      "definition_refs": [
+        "net_revenue@1"
+      ],
+      "assumptions": [],
+      "ambiguity": [],
+      "success_criteria": [
+        "Independent total matches declared definition"
+      ]
+    },
+    "csv": "region,amount,status\na,100,paid\na,1000,cancelled\na,-20,refund\na,100,paid\n"
+  },
+  "business_definitions": {
+    "net_revenue@1": {
+      "key": "net_revenue",
+      "version": 1,
+      "source": "Synthetic reviewed accounting specification",
+      "owner": "Synthetic finance owner",
+      "metric": {
+        "column": "amount",
+        "aggregation": "sum",
+        "missing": "reject",
+        "definition_ref": null
+      },
+      "filters": [
+        {
+          "column": "status",
+          "operator": "not_in",
+          "value": [
+            "cancelled"
+          ]
+        }
+      ],
+      "units": "USD",
+      "currency": "USD",
+      "examples": [
+        {
+          "paid": 100,
+          "cancelled": 1000,
+          "refund": -20,
+          "expected": 80
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "case_id": "578c03bf-f479-42c1-88f5-9e38355bf42d",
+      "contract_and_gold": {
+        "task": {
+          "workspace_id": "5e5f286e-90f8-4ef3-9f34-f5d259cf2e9c",
+          "objective": "Net revenue by region",
+          "task_type": "descriptive",
+          "datasets": [
+            {
+              "dataset_id": "dabc9690-56c6-4bd6-a036-f5bd58cb2748",
+              "version": 1
+            }
+          ],
+          "metrics": [
+            {
+              "column": "amount",
+              "aggregation": "sum",
+              "missing": "reject",
+              "definition_ref": "net_revenue@1"
+            }
+          ],
+          "dimensions": [
+            "region"
+          ],
+          "grain": "one source transaction",
+          "filters": [
+            {
+              "column": "status",
+              "operator": "not_in",
+              "value": [
+                "cancelled"
+              ]
+            }
+          ],
+          "date_range": null,
+          "timezone": "UTC",
+          "units": "USD",
+          "currency": "USD",
+          "output": "table",
+          "definition_refs": [
+            "net_revenue@1"
+          ],
+          "assumptions": [],
+          "ambiguity": [],
+          "success_criteria": [
+            "Independent total matches declared definition"
+          ]
+        },
+        "scenario_group": "new-business-scenario",
+        "split": "final",
+        "dataset_version": {
+          "dataset_id": "dabc9690-56c6-4bd6-a036-f5bd58cb2748",
+          "version": 1
+        },
+        "label_source": "synthetic",
+        "reference": "Hand-computed synthetic total",
+        "expected_status": "verified",
+        "expected_rows": [
+          {
+            "region": "b",
+            "value": 190
+          }
+        ]
+      },
+      "csv": "region,amount,status\nb,200,paid\nb,-10,refund\nb,900,cancelled\n",
+      "source_hash": "c1a226ef0ce304974da6ac509a2a2870a3caafeece8afcd15f5321447843db36"
+    },
+    {
+      "case_id": "40342feb-ef75-4978-b38e-ee1229a21e5e",
+      "contract_and_gold": {
+        "task": {
+          "workspace_id": "5e5f286e-90f8-4ef3-9f34-f5d259cf2e9c",
+          "objective": "Net revenue by region",
+          "task_type": "descriptive",
+          "datasets": [
+            {
+              "dataset_id": "0a608bc7-a03b-4fd8-b055-8f576e062f02",
+              "version": 1
+            }
+          ],
+          "metrics": [
+            {
+              "column": "amount",
+              "aggregation": "sum",
+              "missing": "reject",
+              "definition_ref": "net_revenue@1"
+            }
+          ],
+          "dimensions": [
+            "region"
+          ],
+          "grain": "one source transaction",
+          "filters": [
+            {
+              "column": "status",
+              "operator": "not_in",
+              "value": [
+                "cancelled"
+              ]
+            }
+          ],
+          "date_range": null,
+          "timezone": "UTC",
+          "units": "USD",
+          "currency": "USD",
+          "output": "table",
+          "definition_refs": [
+            "net_revenue@1"
+          ],
+          "assumptions": [],
+          "ambiguity": [],
+          "success_criteria": [
+            "Independent total matches declared definition"
+          ]
+        },
+        "scenario_group": "another-scenario",
+        "split": "final",
+        "dataset_version": {
+          "dataset_id": "0a608bc7-a03b-4fd8-b055-8f576e062f02",
+          "version": 1
+        },
+        "label_source": "synthetic",
+        "reference": "Hand-computed synthetic total",
+        "expected_status": "verified",
+        "expected_rows": [
+          {
+            "region": "c",
+            "value": 35
+          }
+        ]
+      },
+      "csv": "region,amount,status\nc,40,paid\nc,-5,refund\n",
+      "source_hash": "143186ae2432ebc7bdd8363872882519f00561b1227a46e18053c3608a69f6b1"
+    }
+  ],
+  "frozen_bundle": {
+    "engine": "deterministic-supervisor-v1",
+    "runtime_identity": {
+      "policy_hash": "9f6c63a8dc313286dc1386bdbff21e9ad8357deb1127ebd701a0c8f89de722d8",
+      "dependencies": {
+        "pandas": "2.3.3",
+        "pydantic": "2.14.2",
+        "SQLAlchemy": "2.1.6"
+      }
+    },
+    "lessons": [
+      {
+        "id": "f13d56c2-4836-4f99-8fcc-d23dd9377ad1",
+        "revision": 3,
+        "content_hash": "a07574345f5186f0553bca01c8f621e11a010f824556a98d5fc337b39587fbe7"
+      }
+    ],
+    "configuration": "validated-baseline-v1",
+    "memory_cutoff": "2026-11-04T13:28:12.329875+00:00"
+  },
+  "frozen_lessons": [
+    {
+      "frozen_reference": {
+        "id": "f13d56c2-4836-4f99-8fcc-d23dd9377ad1",
+        "revision": 3,
+        "content_hash": "a07574345f5186f0553bca01c8f621e11a010f824556a98d5fc337b39587fbe7"
+      },
+      "immutable_content": {
+        "type": "technical",
+        "conditions": [
+          "Canonical signed decimal text in the named numeric measure.",
+          "Exact schema and definition versions match."
+        ],
+        "correction": {
+          "type": "exact_decimal_parse",
+          "column": "amount"
+        },
+        "exceptions": [
+          "Reject separators, currency symbols, exponents, leading zero ambiguity or nonfinite values.",
+          "Never impute missing values, delete duplicate-looking rows or change metric meaning."
+        ],
+        "scope": {
+          "workspace_id": "5e5f286e-90f8-4ef3-9f34-f5d259cf2e9c",
+          "schema_hash": "2a605e96b7e585d5c855a02a507e218e3c77572321f3800ee7be66b74c031369",
+          "definition_refs": [
+            "net_revenue@1"
+          ],
+          "task_type": "descriptive",
+          "dataset_id": null
+        },
+        "provenance": [
+          "run:ab93170f-6036-49a3-b79f-23e074bbc3ec",
+          "dataset:42a61e42-5e9c-4fd4-abc8-1347cbdc5e54@1"
+        ],
+        "verification_evidence": [],
+        "state": "candidate",
+        "expires_at": "2027-02-02T13:28:12.040545Z",
+        "invalidation_rules": [
+          "Source deletion or invalidation",
+          "Schema or definition mismatch",
+          "Revocation",
+          "Expiry"
+        ]
+      }
+    }
+  ],
+  "verification": "Regenerated CSV inputs reproduce both saved baseline result hashes; source fingerprint matches."
+}

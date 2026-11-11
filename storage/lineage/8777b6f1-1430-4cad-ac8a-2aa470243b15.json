@@ -1,0 +1,15 @@
+{
+  "dataset_id": "8777b6f1-1430-4cad-ac8a-2aa470243b15",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "009c2e9f-cb19-4740-9fde-6cf773df28b1",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-11-11 17:05:36.590328+00:00",
+      "author": "system",
+      "description": "Initial ingestion of customers.csv"
+    }
+  ]
+}

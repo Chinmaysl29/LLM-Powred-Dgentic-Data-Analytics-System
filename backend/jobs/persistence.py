@@ -52,6 +52,10 @@ class PersistentJobStore:
                                                            DurableJob.retry_eligible.is_(False)))
                        .values(status='FAILED', error_code='LEASE_RETRIES_EXHAUSTED', retry_eligible=False,
                                completed_at=now, updated_at=now, lease_token=None))
+            from backend.jobs.resource_policy import admitted_kinds
+            kinds = admitted_kinds(db, kinds, now, ACTIVE)
+            if not kinds:
+                return None
             row = db.scalar(select(DurableJob).where(DurableJob.kind.in_(kinds),
                 DurableJob.attempt < DurableJob.max_attempts,
                 or_(DurableJob.status == 'QUEUED', and_(expired, DurableJob.retry_eligible.is_(True))))

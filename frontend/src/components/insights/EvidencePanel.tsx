@@ -1,25 +1,25 @@
 import React, { useEffect } from 'react';
-import { 
-  X, 
-  Database, 
-  Calendar, 
-  Eye, 
-  Sparkles, 
-  BarChart2, 
-  MessageSquare, 
-  ArrowUpRight, 
-  ArrowDownRight, 
+import {
+  X,
+  Database,
+  Calendar,
+  Eye,
+  Sparkles,
+  BarChart2,
+  MessageSquare,
+  ArrowUpRight,
+  ArrowDownRight,
   Minus,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
 } from 'lucide-react';
-import type { 
-  Insight, 
-  Risk, 
-  Opportunity, 
-  Recommendation, 
-  InsightMetric, 
-  VisualizationReference 
+import type {
+  Insight,
+  Risk,
+  Opportunity,
+  Recommendation,
+  InsightMetric,
+  VisualizationReference,
 } from '../../types/insights';
 
 export type ExplainableItem = Insight | Risk | Opportunity | Recommendation;
@@ -72,37 +72,31 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
   const observedPoints: string[] = isInsight
     ? (item as Insight).observedEvidence
     : isRisk
-    ? (item as Risk).observedData
-    : isOpportunity
-    ? (item as Opportunity).observedData
-    : isRecommendation
-    ? (item as Recommendation).supportingEvidence
-    : [];
+      ? (item as Risk).observedData
+      : isOpportunity
+        ? (item as Opportunity).observedData
+        : isRecommendation
+          ? (item as Recommendation).supportingEvidence
+          : [];
 
   // Extract interpretation or summary
-  const interpretationText = isInsight
-    ? (item as Insight).derivedInterpretation
-    : item.summary;
+  const interpretationText = isInsight ? (item as Insight).derivedInterpretation : item.summary;
 
   // Extract metrics table
   const metrics: InsightMetric[] = isInsight
     ? (item as Insight).metrics || []
     : isRisk
-    ? (item as Risk).evidence || []
-    : isOpportunity
-    ? (item as Opportunity).evidence || []
-    : [];
+      ? (item as Risk).evidence || []
+      : isOpportunity
+        ? (item as Opportunity).evidence || []
+        : [];
 
   // Extract visualization reference
   const visRef: VisualizationReference | undefined = item.visualizationReference;
 
   return (
     <div className="insights-drawer-backdrop" onClick={onClose} role="dialog" aria-modal="true">
-      <div 
-        className="insights-drawer" 
-        onClick={(e) => e.stopPropagation()}
-        tabIndex={-1}
-      >
+      <div className="insights-drawer" onClick={(e) => e.stopPropagation()} tabIndex={-1}>
         {/* Drawer Header */}
         <div className="insights-drawer-header">
           <div className="insights-drawer-meta">
@@ -117,9 +111,9 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
               </span>
             )}
           </div>
-          <button 
-            type="button" 
-            className="insights-drawer-close" 
+          <button
+            type="button"
+            className="insights-drawer-close"
             onClick={onClose}
             aria-label="Close evidence drawer"
           >
@@ -156,7 +150,8 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
               <h3>Directly Observed Data</h3>
             </div>
             <p className="insights-drawer-sub">
-              Empirical measurements extracted directly from the verified dataset records without extrapolation:
+              Empirical measurements extracted directly from the verified dataset records without
+              extrapolation:
             </p>
             <ul className="insights-drawer-list">
               {observedPoints.map((point, idx) => (
@@ -229,7 +224,9 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
               </div>
               <div className="insights-tags-container">
                 {(item as Insight).drivers.map((d, idx) => (
-                  <span key={idx} className="insights-tag-driver">{d}</span>
+                  <span key={idx} className="insights-tag-driver">
+                    {d}
+                  </span>
                 ))}
               </div>
             </div>
@@ -247,8 +244,18 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                   <div className="insights-vis-preview-title">{visRef.title}</div>
                   <div className="insights-vis-preview-meta">
                     Type: <strong>{visRef.chartType} Chart</strong>
-                    {visRef.xAxis && <> • X-Axis: <strong>{visRef.xAxis}</strong></>}
-                    {visRef.yAxis && <> • Y-Axis: <strong>{visRef.yAxis}</strong></>}
+                    {visRef.xAxis && (
+                      <>
+                        {' '}
+                        • X-Axis: <strong>{visRef.xAxis}</strong>
+                      </>
+                    )}
+                    {visRef.yAxis && (
+                      <>
+                        {' '}
+                        • Y-Axis: <strong>{visRef.yAxis}</strong>
+                      </>
+                    )}
                   </div>
                 </div>
                 {onOpenVisualization && (
@@ -285,11 +292,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
             </button>
           )}
 
-          <button
-            type="button"
-            className="insights-drawer-btn close"
-            onClick={onClose}
-          >
+          <button type="button" className="insights-drawer-btn close" onClick={onClose}>
             Close
           </button>
         </div>

@@ -5,11 +5,130 @@ import { authService } from '../../services/authService';
 import { isSupabaseConfigured } from '../../lib/supabase/client';
 import type { User } from '../../types/auth';
 export default function ProfilePage() {
- const [profile, setProfile] = useState<User | null>(null); const [name, setName] = useState(''); const [error, setError] = useState(''); const [loading, setLoading] = useState(true); const [busy, setBusy] = useState(false); const [notice, setNotice] = useState(''); const [attempt, setAttempt] = useState(0);
- useEffect(() => { let active = true; authService.getCurrentUser().then(user => { if (active) { setProfile(user); setName(user.full_name); } }).catch(e => { if (active) setError(e.message); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [attempt]);
- async function save() { setBusy(true); setError(''); setNotice(''); try { const user = await authService.updateProfile({ full_name: name.trim() }); setProfile(user); setNotice('Your name was saved to your authenticated account.'); } catch (e) { setError(e instanceof Error ? e.message : 'Profile update failed.'); } finally { setBusy(false); } }
- return <div className="ws-page"><header className="editorial-heading"><p className="eyebrow">ACCOUNT / PROFILE</p><h1 className="ws-page-heading">Your place in the workspace.</h1><p className="ws-page-sub">Account information from your authenticated session.</p></header>
- {loading && <p role="status">Loading account…</p>}{error && <div role="alert" className="source-note"><p>{error}</p>{!profile && <button className="reports-btn-secondary" onClick={() => { setError(''); setLoading(true); setAttempt(n => n + 1); }}>Retry account</button>}</div>}
- <div className="settings-editorial"><section className="surface-panel"><UserRound size={30} /><h2>{profile?.full_name || 'Account details'}</h2>{profile && <><dl><dt>Email</dt><dd>{profile.email}</dd><dt>Account ID</dt><dd style={{ overflowWrap: 'anywhere' }}>{profile.id}</dd><dt>Workspace role</dt><dd>Not supplied by the connected account service</dd></dl>{isSupabaseConfigured() ? <form onSubmit={e => { e.preventDefault(); void save(); }}><label className="control-field">Display name<input required value={name} maxLength={100} disabled={busy} onChange={e => setName(e.target.value)} /></label><button className="reports-create-btn" disabled={busy || !name.trim() || name.trim() === profile.full_name}>{busy ? 'Saving…' : 'Save name'}</button></form> : <p>Profile editing is not available through this deployment's account API.</p>}</>}{notice && <p role="status">{notice}</p>}</section>
- <section className="surface-panel"><ShieldCheck size={30} /><h2>Account security</h2><p>Password, session, export and deletion requests are managed through your authentication provider or workspace administrator.</p><Link to="/forgot-password">Password recovery →</Link><br /><Link to="/privacy">Privacy information →</Link><Link to="/settings">Appearance settings →</Link></section></div></div>;
+  const [profile, setProfile] = useState<User | null>(null);
+  const [name, setName] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    let active = true;
+    authService
+      .getCurrentUser()
+      .then((user) => {
+        if (active) {
+          setProfile(user);
+          setName(user.full_name);
+        }
+      })
+      .catch((e) => {
+        if (active) setError(e.message);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [attempt]);
+  async function save() {
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      const user = await authService.updateProfile({ full_name: name.trim() });
+      setProfile(user);
+      setNotice('Your name was saved to your authenticated account.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Profile update failed.');
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="ws-page">
+      <header className="editorial-heading">
+        <p className="eyebrow">ACCOUNT / PROFILE</p>
+        <h1 className="ws-page-heading">Your place in the workspace.</h1>
+        <p className="ws-page-sub">Account information from your authenticated session.</p>
+      </header>
+      {loading && <p role="status">Loading account…</p>}
+      {error && (
+        <div role="alert" className="source-note">
+          <p>{error}</p>
+          {!profile && (
+            <button
+              className="reports-btn-secondary"
+              onClick={() => {
+                setError('');
+                setLoading(true);
+                setAttempt((n) => n + 1);
+              }}
+            >
+              Retry account
+            </button>
+          )}
+        </div>
+      )}
+      <div className="settings-editorial">
+        <section className="surface-panel">
+          <UserRound size={30} />
+          <h2>{profile?.full_name || 'Account details'}</h2>
+          {profile && (
+            <>
+              <dl>
+                <dt>Email</dt>
+                <dd>{profile.email}</dd>
+                <dt>Account ID</dt>
+                <dd style={{ overflowWrap: 'anywhere' }}>{profile.id}</dd>
+                <dt>Workspace role</dt>
+                <dd>Not supplied by the connected account service</dd>
+              </dl>
+              {isSupabaseConfigured() ? (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void save();
+                  }}
+                >
+                  <label className="control-field">
+                    Display name
+                    <input
+                      required
+                      value={name}
+                      maxLength={100}
+                      disabled={busy}
+                      onChange={(e) => setName(e.target.value)}
+                    />
+                  </label>
+                  <button
+                    className="reports-create-btn"
+                    disabled={busy || !name.trim() || name.trim() === profile.full_name}
+                  >
+                    {busy ? 'Saving…' : 'Save name'}
+                  </button>
+                </form>
+              ) : (
+                <p>Profile editing is not available through this deployment's account API.</p>
+              )}
+            </>
+          )}
+          {notice && <p role="status">{notice}</p>}
+        </section>
+        <section className="surface-panel">
+          <ShieldCheck size={30} />
+          <h2>Account security</h2>
+          <p>
+            Password, session, export and deletion requests are managed through your authentication
+            provider or workspace administrator.
+          </p>
+          <Link to="/forgot-password">Password recovery →</Link>
+          <br />
+          <Link to="/privacy">Privacy information →</Link>
+          <Link to="/settings">Appearance settings →</Link>
+        </section>
+      </div>
+    </div>
+  );
 }

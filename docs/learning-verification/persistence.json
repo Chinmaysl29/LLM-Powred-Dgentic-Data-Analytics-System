@@ -1,0 +1,7 @@
+{
+  "run_restored": true,
+  "exact_report_bytes_restored": true,
+  "bytes": 6104,
+  "sha256": "f8353415f8604a901b7abb0a5252f58d7a995b999ebafba6da00620c1d774af7",
+  "scope": "Synthetic local/test PostgreSQL and API restart; real auth and export"
+}

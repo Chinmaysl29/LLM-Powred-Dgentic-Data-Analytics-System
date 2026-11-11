@@ -131,9 +131,7 @@ export function CardCurtain({ className, children }: CardCurtainProps) {
       initial="hidden"
       animate={isOpen ? 'visible' : 'hidden'}
       variants={
-        shouldReduceMotion
-          ? { hidden: { opacity: 0 }, visible: { opacity: 1 } }
-          : curtainVariants
+        shouldReduceMotion ? { hidden: { opacity: 0 }, visible: { opacity: 1 } } : curtainVariants
       }
       transition={
         shouldReduceMotion
@@ -158,10 +156,7 @@ interface CardCurtainRevealBodyProps {
   children: ReactNode;
 }
 
-export function CardCurtainRevealBody({
-  className,
-  children,
-}: CardCurtainRevealBodyProps) {
+export function CardCurtainRevealBody({ className, children }: CardCurtainRevealBodyProps) {
   return <div className={cn('feat-body', className)}>{children}</div>;
 }
 
@@ -188,11 +183,7 @@ export function CardCurtainRevealTitle({
     return (
       <motion.h3
         className={cn('feat-title feat-title--resting', className)}
-        animate={
-          shouldReduceMotion
-            ? {}
-            : { opacity: isOpen ? 0 : 1, y: isOpen ? -8 : 0 }
-        }
+        animate={shouldReduceMotion ? {} : { opacity: isOpen ? 0 : 1, y: isOpen ? -8 : 0 }}
         transition={{ duration: 0.25, ease: 'easeInOut' }}
       >
         {children}
@@ -205,9 +196,7 @@ export function CardCurtainRevealTitle({
     <motion.h3
       className={cn('feat-title feat-title--revealed', className)}
       initial={{ y: 170 }}
-      animate={
-        shouldReduceMotion ? {} : { y: isOpen ? 0 : 170 }
-      }
+      animate={shouldReduceMotion ? {} : { y: isOpen ? 0 : 170 }}
       transition={{
         duration: 0.45,
         ease: [0.76, 0, 0.24, 1],
@@ -264,10 +253,7 @@ interface CardCurtainRevealFooterProps {
   children: ReactNode;
 }
 
-export function CardCurtainRevealFooter({
-  className,
-  children,
-}: CardCurtainRevealFooterProps) {
+export function CardCurtainRevealFooter({ className, children }: CardCurtainRevealFooterProps) {
   const { isOpen, shouldReduceMotion } = useCurtain();
 
   return (

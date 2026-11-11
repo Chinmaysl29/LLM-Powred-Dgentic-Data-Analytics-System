@@ -1,0 +1,157 @@
+﻿{
+    "scope":  "Isolated synthetic Redis and PostgreSQL; ten measured samples after two warmups; controlled audit sink delay is not a production latency measurement",
+    "before":  {
+                   "redis":  {
+                                 "keys":  10000,
+                                 "warmups":  2,
+                                 "samples":  [
+                                                 {
+                                                     "ms":  440.81080700016173,
+                                                     "python_peak_allocated_bytes":  2968611
+                                                 },
+                                                 {
+                                                     "ms":  442.54406099935295,
+                                                     "python_peak_allocated_bytes":  2968587
+                                                 },
+                                                 {
+                                                     "ms":  487.4786830005178,
+                                                     "python_peak_allocated_bytes":  2968587
+                                                 },
+                                                 {
+                                                     "ms":  453.4372979996988,
+                                                     "python_peak_allocated_bytes":  2968611
+                                                 },
+                                                 {
+                                                     "ms":  462.30407599978207,
+                                                     "python_peak_allocated_bytes":  2968587
+                                                 },
+                                                 {
+                                                     "ms":  444.76435800061154,
+                                                     "python_peak_allocated_bytes":  2968611
+                                                 },
+                                                 {
+                                                     "ms":  446.53701499919407,
+                                                     "python_peak_allocated_bytes":  2968587
+                                                 },
+                                                 {
+                                                     "ms":  465.8973250006966,
+                                                     "python_peak_allocated_bytes":  2968588
+                                                 },
+                                                 {
+                                                     "ms":  530.376182998225,
+                                                     "python_peak_allocated_bytes":  2968588
+                                                 },
+                                                 {
+                                                     "ms":  598.2965610000974,
+                                                     "python_peak_allocated_bytes":  2968612
+                                                 }
+                                             ],
+                                 "median_ms":  457.8706869997404,
+                                 "median_peak_bytes":  2968588.0
+                             },
+                   "audit":  {
+                                 "pool_size":  1,
+                                 "overflow":  0,
+                                 "checkout_timeout_s":  0.15,
+                                 "warmups":  2,
+                                 "samples_ms":  [
+                                                    158.44916800051578,
+                                                    157.28800900069473,
+                                                    157.04468799958704,
+                                                    156.831181000598,
+                                                    154.90336699986074,
+                                                    156.52070800024376,
+                                                    156.46115100025781,
+                                                    155.15484800016566,
+                                                    158.15633100100968,
+                                                    158.0984569991415
+                                                ],
+                                 "median_ms":  156.93793450009252,
+                                 "requests_including_warmups":  12,
+                                 "persisted_audit_events":  0,
+                                 "controlled_sink_delay_ms":  50,
+                                 "maximum_event_loop_tick_gap_ms":  55.17175199929625
+                             },
+                   "source_hashes":  {
+                                         "backend/app/database/redis.py":  "adbfc1f78ac41c9031b8611126daae771fb948c53c33c96f39e44753db53b543",
+                                         "backend/app/middleware/audit.py":  "7d6a47f7983212ce0c3d1a67719a0ee1e37c095423f82630b2cf09c003b7c44a"
+                                     }
+               },
+    "after":  {
+                  "redis":  {
+                                "keys":  10000,
+                                "warmups":  2,
+                                "samples":  [
+                                                {
+                                                    "ms":  484.84425299830036,
+                                                    "python_peak_allocated_bytes":  300791
+                                                },
+                                                {
+                                                    "ms":  490.6501030018262,
+                                                    "python_peak_allocated_bytes":  300767
+                                                },
+                                                {
+                                                    "ms":  498.2765360000485,
+                                                    "python_peak_allocated_bytes":  300767
+                                                },
+                                                {
+                                                    "ms":  478.9722530003928,
+                                                    "python_peak_allocated_bytes":  300767
+                                                },
+                                                {
+                                                    "ms":  483.7894779993803,
+                                                    "python_peak_allocated_bytes":  300791
+                                                },
+                                                {
+                                                    "ms":  517.6754739986791,
+                                                    "python_peak_allocated_bytes":  300767
+                                                },
+                                                {
+                                                    "ms":  493.8460250014032,
+                                                    "python_peak_allocated_bytes":  300791
+                                                },
+                                                {
+                                                    "ms":  482.9148789976898,
+                                                    "python_peak_allocated_bytes":  300767
+                                                },
+                                                {
+                                                    "ms":  490.05776699777925,
+                                                    "python_peak_allocated_bytes":  300767
+                                                },
+                                                {
+                                                    "ms":  510.01135900150985,
+                                                    "python_peak_allocated_bytes":  300791
+                                                }
+                                            ],
+                                "median_ms":  490.35393499980273,
+                                "median_peak_bytes":  300767.0
+                            },
+                  "audit":  {
+                                "pool_size":  1,
+                                "overflow":  0,
+                                "checkout_timeout_s":  0.15,
+                                "warmups":  2,
+                                "samples_ms":  [
+                                                   15.076150000822963,
+                                                   16.405247999500716,
+                                                   17.040893999364926,
+                                                   14.080561999435304,
+                                                   11.355847000231734,
+                                                   12.96763199934503,
+                                                   12.59090899839066,
+                                                   14.909951998561155,
+                                                   17.65062900085468,
+                                                   16.109422998852096
+                                               ],
+                                "median_ms":  14.99305099969206,
+                                "requests_including_warmups":  12,
+                                "persisted_audit_events":  12,
+                                "controlled_sink_delay_ms":  50,
+                                "maximum_event_loop_tick_gap_ms":  4.716842999187065
+                            },
+                  "source_hashes":  {
+                                        "backend/app/database/redis.py":  "56d166bfba24eaf81b15612348230b778eb17ef697f5fbf4ae0c6e03ece61c64",
+                                        "backend/app/middleware/audit.py":  "604605d799a6bd105c7365f943a5079c071e73679ed6b071e2d79ec92e6240fc"
+                                    }
+              }
+}

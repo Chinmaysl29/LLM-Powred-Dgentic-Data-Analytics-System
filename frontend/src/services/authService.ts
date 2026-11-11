@@ -52,7 +52,9 @@ export const authService = {
 
       if (error) {
         if (error.message.includes('Email not confirmed')) {
-          throw new Error('Please confirm your email address. Check your inbox for the confirmation link.');
+          throw new Error(
+            'Please confirm your email address. Check your inbox for the confirmation link.',
+          );
         }
         if (error.message.includes('Invalid login credentials')) {
           throw new Error('Invalid email or password. Please verify and try again.');
@@ -99,6 +101,8 @@ export const authService = {
         email: data.email,
         password: data.password,
         options: {
+          emailRedirectTo:
+            typeof window !== 'undefined' ? `${window.location.origin}/login` : undefined,
           data: {
             full_name: data.full_name,
           },
@@ -160,7 +164,10 @@ export const authService = {
    */
   async getCurrentUser(): Promise<User> {
     if (isSupabaseConfigured()) {
-      const { data: { user }, error } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
 
       if (error || !user) {
         throw new Error('No active authenticated session.');
@@ -186,9 +193,8 @@ export const authService = {
    */
   async forgotPassword(data: ForgotPasswordRequest): Promise<void> {
     if (isSupabaseConfigured()) {
-      const redirectTo = typeof window !== 'undefined'
-        ? `${window.location.origin}/login`
-        : undefined;
+      const redirectTo =
+        typeof window !== 'undefined' ? `${window.location.origin}/login` : undefined;
 
       const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
         redirectTo,

@@ -12,10 +12,7 @@ export const AnimatedDonutChart: React.FC<AnimatedDonutChartProps> = ({
   phase,
   isReducedMotion = false,
 }) => {
-  const isVisualizing =
-    phase === 'bar-to-donut' ||
-    phase === 'donut-complete' ||
-    isReducedMotion;
+  const isVisualizing = phase === 'bar-to-donut' || phase === 'donut-complete' || isReducedMotion;
 
   // Circle geometry
   const size = 96;
@@ -24,9 +21,9 @@ export const AnimatedDonutChart: React.FC<AnimatedDonutChartProps> = ({
   const circumference = 2 * Math.PI * radius; // approx 267.03
 
   // Segments distribution: 70%, 20%, 10%
-  const seg1Len = circumference * 0.70;
-  const seg2Len = circumference * 0.20;
-  const seg3Len = circumference * 0.10;
+  const seg1Len = circumference * 0.7;
+  const seg2Len = circumference * 0.2;
+  const seg3Len = circumference * 0.1;
 
   // Offsets around the circle starting from top (-90deg)
   const seg1Offset = 0;
@@ -34,7 +31,17 @@ export const AnimatedDonutChart: React.FC<AnimatedDonutChartProps> = ({
   const seg3Offset = -(seg1Len + seg2Len);
 
   return (
-    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 96, height: 96 }} aria-label="Data Distribution Donut Chart">
+    <div
+      style={{
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 96,
+        height: 96,
+      }}
+      aria-label="Data Distribution Donut Chart"
+    >
       <motion.svg
         width={size}
         height={size}
@@ -133,8 +140,20 @@ export const AnimatedDonutChart: React.FC<AnimatedDonutChartProps> = ({
           pointerEvents: 'none',
         }}
       >
-        <span style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#151915', lineHeight: 1.1 }}>99.8%</span>
-        <span style={{ fontSize: '0.5625rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#737D6E', fontWeight: 600 }}>Valid</span>
+        <span style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#151915', lineHeight: 1.1 }}>
+          99.8%
+        </span>
+        <span
+          style={{
+            fontSize: '0.5625rem',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            color: '#737D6E',
+            fontWeight: 600,
+          }}
+        >
+          Valid
+        </span>
       </motion.div>
     </div>
   );

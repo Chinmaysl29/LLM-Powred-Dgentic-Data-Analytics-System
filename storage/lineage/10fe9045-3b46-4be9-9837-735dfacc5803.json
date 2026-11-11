@@ -1,0 +1,15 @@
+{
+  "dataset_id": "10fe9045-3b46-4be9-9837-735dfacc5803",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "877845c7-535b-4067-ba46-7eab8c371f30",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-11-11 17:05:38.186984+00:00",
+      "author": "system",
+      "description": "Initial ingestion of inventory.json"
+    }
+  ]
+}

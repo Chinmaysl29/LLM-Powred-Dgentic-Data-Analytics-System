@@ -1,0 +1,12 @@
+{
+  "targeted_ruff": "passed: new adaptive services, contracts, models, routes, migrations, verification scripts and tests",
+  "targeted_frontend_eslint": "passed: AdaptiveWorkbench, VerifiedLearningPage, adaptiveService, learningService",
+  "production_build": "passed: TypeScript project build and Vite 8.2.1, 2368 modules",
+  "frontend_log": "frontend-check.log",
+  "additive_role_grants": "infrastructure/adaptive_role_grants.sql executed successfully with ON_ERROR_STOP=1 against dedicated PostgreSQL test roles",
+  "git_diff_check": "passed; Git emitted only a line-ending conversion notice",
+  "remote_ci": "not run",
+  "provider_calls": "no live credentials; provider interpretation tests explicitly mocked",
+  "primary_application_database": "not migrated or restarted",
+  "production_release": "not performed"
+}

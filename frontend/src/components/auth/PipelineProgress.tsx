@@ -59,7 +59,9 @@ export const PipelineProgress: React.FC<PipelineProgressProps> = ({
     return unsubscribe;
   }, [subscribeToFrames, isReducedMotion]);
 
-  const initialPercent = isReducedMotion ? 100 : Math.min(Math.round((elapsedMs / 7000) * 100), 100);
+  const initialPercent = isReducedMotion
+    ? 100
+    : Math.min(Math.round((elapsedMs / 7000) * 100), 100);
   const initialSeconds = (elapsedMs / 1000).toFixed(1);
 
   return (

@@ -58,7 +58,10 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
       aria-modal="true"
       aria-labelledby="delete-account-title"
     >
-      <div className="profile-modal-card profile-modal-card--danger" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="profile-modal-card profile-modal-card--danger"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="profile-modal-header">
           <div className="profile-modal-header-title">
             <div className="profile-modal-icon-badge profile-modal-icon-badge--danger">

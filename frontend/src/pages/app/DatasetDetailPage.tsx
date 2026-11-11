@@ -21,12 +21,7 @@ import {
 import { apiClient } from '../../api/client';
 import { datasetService } from '../../services/datasetService';
 import PdfDocumentPanel from '../../components/datasets/PdfDocumentPanel';
-import {
-  formatFileSize,
-  formatDate,
-  formatDateTime,
-  getExtension,
-} from '../../datasetUtils';
+import { formatFileSize, formatDate, formatDateTime, getExtension } from '../../datasetUtils';
 import type {
   Dataset,
   DatasetPreview,
@@ -54,7 +49,12 @@ export default function DatasetDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [retry, setRetry] = useState(0);
-  const [comparison, setComparison] = useState<{ rows_added: number; rows_removed: number; columns_added: string[]; columns_removed: string[] } | null>(null);
+  const [comparison, setComparison] = useState<{
+    rows_added: number;
+    rows_removed: number;
+    columns_added: string[];
+    columns_removed: string[];
+  } | null>(null);
   const [comparisonError, setComparisonError] = useState('');
   const [comparisonLoading, setComparisonLoading] = useState(false);
   const [rollbackLoading, setRollbackLoading] = useState(false);
@@ -70,7 +70,11 @@ export default function DatasetDetailPage() {
 
   useEffect(() => {
     async function loadDatasetDetails() {
-      if (!datasetId) { setError('Dataset identifier is missing.'); setIsLoading(false); return; }
+      if (!datasetId) {
+        setError('Dataset identifier is missing.');
+        setIsLoading(false);
+        return;
+      }
       setIsLoading(true);
       setError('');
       try {
@@ -80,11 +84,16 @@ export default function DatasetDetailPage() {
         // PDFs are documents, not canonical tables. Their indexing lifecycle
         // remains accessible even while extraction is queued or has failed.
         if (ds.file_type?.toLowerCase() === 'pdf' || ds.filename.toLowerCase().endsWith('.pdf')) {
-          setPreview(null); setMetadata([]); setProfile(null); setQuality(null);
+          setPreview(null);
+          setMetadata([]);
+          setProfile(null);
+          setQuality(null);
           const [verData, linData] = await Promise.all([
-            datasetService.getVersions(datasetId), datasetService.getLineage(ds),
+            datasetService.getVersions(datasetId),
+            datasetService.getLineage(ds),
           ]);
-          setVersions(verData); setLineage(linData);
+          setVersions(verData);
+          setLineage(linData);
           return;
         }
 
@@ -115,7 +124,17 @@ export default function DatasetDetailPage() {
     loadDatasetDetails();
   }, [datasetId, retry]);
 
-  if (error) return <div className="ws-page" role="alert"><h1 className="ws-page-heading">Dataset unavailable</h1><p>{error}</p><button className="reports-btn-secondary" onClick={() => setRetry(n => n + 1)}>Try again</button><Link to="/datasets">Back to datasets</Link></div>;
+  if (error)
+    return (
+      <div className="ws-page" role="alert">
+        <h1 className="ws-page-heading">Dataset unavailable</h1>
+        <p>{error}</p>
+        <button className="reports-btn-secondary" onClick={() => setRetry((n) => n + 1)}>
+          Try again
+        </button>
+        <Link to="/datasets">Back to datasets</Link>
+      </div>
+    );
 
   if (isLoading || !dataset) {
     return (
@@ -126,36 +145,61 @@ export default function DatasetDetailPage() {
     );
   }
 
-  const isPdf = dataset.file_type?.toLowerCase() === 'pdf' || dataset.filename.toLowerCase().endsWith('.pdf');
+  const isPdf =
+    dataset.file_type?.toLowerCase() === 'pdf' || dataset.filename.toLowerCase().endsWith('.pdf');
 
   // Filtered Preview Rows
   const filteredRows = (preview?.rows || []).filter((row) => {
     if (!previewSearch.trim()) return true;
     const query = previewSearch.toLowerCase();
-    return Object.values(row).some((val) => String(val ?? '').toLowerCase().includes(query));
+    return Object.values(row).some((val) =>
+      String(val ?? '')
+        .toLowerCase()
+        .includes(query),
+    );
   });
 
   const paginatedRows = filteredRows.slice(previewPage * pageSize, (previewPage + 1) * pageSize);
   const totalPages = Math.ceil(filteredRows.length / pageSize);
 
   async function handleRollback(versionNumber: number) {
-    if (!dataset || !window.confirm('Activate version ' + versionNumber + '? This changes the dataset used by future analyses.')) return;
+    if (
+      !dataset ||
+      !window.confirm(
+        'Activate version ' + versionNumber + '? This changes the dataset used by future analyses.',
+      )
+    )
+      return;
     setRollbackLoading(true);
     const res = await datasetService.rollbackVersion(dataset.dataset_id, versionNumber);
     setRollbackStatus(res.message);
     setRollbackLoading(false);
-    if (res.success) setRetry(n => n + 1);
+    if (res.success) setRetry((n) => n + 1);
   }
 
   async function compareVersions(versionNumber?: number) {
     if (!dataset || versions.length < 2) return;
-    const active = versions.find(v => v.isActive) ?? versions[0];
-    const other = versions.find(v => v.version_number === versionNumber && v.version_number !== active.version_number) ?? versions.find(v => v.version_number !== active.version_number)!;
-    setComparingVersions(true); setComparison(null); setComparisonError(''); setComparisonLoading(true);
+    const active = versions.find((v) => v.isActive) ?? versions[0];
+    const other =
+      versions.find(
+        (v) => v.version_number === versionNumber && v.version_number !== active.version_number,
+      ) ?? versions.find((v) => v.version_number !== active.version_number)!;
+    setComparingVersions(true);
+    setComparison(null);
+    setComparisonError('');
+    setComparisonLoading(true);
     try {
-      setComparison(await apiClient.get('/api/v1/datasets/' + encodeURIComponent(dataset.dataset_id) + '/versions/compare', { params: { v1: String(active.version_number), v2: String(other.version_number) } }));
-    } catch (err) { setComparisonError(err instanceof Error ? err.message : 'Unable to compare versions.'); }
-    finally { setComparisonLoading(false); }
+      setComparison(
+        await apiClient.get(
+          '/api/v1/datasets/' + encodeURIComponent(dataset.dataset_id) + '/versions/compare',
+          { params: { v1: String(active.version_number), v2: String(other.version_number) } },
+        ),
+      );
+    } catch (err) {
+      setComparisonError(err instanceof Error ? err.message : 'Unable to compare versions.');
+    } finally {
+      setComparisonLoading(false);
+    }
   }
 
   return (
@@ -216,33 +260,40 @@ export default function DatasetDetailPage() {
           { id: 'quality', label: 'Quality', icon: ShieldCheck },
           { id: 'versions', label: 'Versions', icon: GitBranch },
           { id: 'lineage', label: 'Lineage', icon: Network },
-        ].filter(tab => !isPdf || ['overview', 'versions', 'lineage'].includes(tab.id)).map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as DetailTab)}
-              className={`flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-xl whitespace-nowrap transition-all ${
-                isActive
-                  ? 'bg-sky-500/15 text-sky-400 border border-sky-500/30 shadow-sm'
-                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
+        ]
+          .filter((tab) => !isPdf || ['overview', 'versions', 'lineage'].includes(tab.id))
+          .map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as DetailTab)}
+                className={`flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-xl whitespace-nowrap transition-all ${
+                  isActive
+                    ? 'bg-sky-500/15 text-sky-400 border border-sky-500/30 shadow-sm'
+                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
       </div>
 
       {/* =================================================================== */}
       {/* TAB 1: OVERVIEW                                                     */}
       {/* =================================================================== */}
-      {activeTab === 'overview' && isPdf && <PdfDocumentPanel
-        key={`${dataset.dataset_id}:${dataset.version ?? 1}`} datasetId={dataset.dataset_id}
-        initialVersion={dataset.version ?? versions.find(v => v.isActive)?.version_number ?? 1}
-        versions={versions} filename={dataset.filename} />}
+      {activeTab === 'overview' && isPdf && (
+        <PdfDocumentPanel
+          key={`${dataset.dataset_id}:${dataset.version ?? 1}`}
+          datasetId={dataset.dataset_id}
+          initialVersion={dataset.version ?? versions.find((v) => v.isActive)?.version_number ?? 1}
+          versions={versions}
+          filename={dataset.filename}
+        />
+      )}
       {activeTab === 'overview' && !isPdf && (
         <div className="space-y-6">
           {/* Top Key Metrics Card */}
@@ -250,26 +301,34 @@ export default function DatasetDetailPage() {
             <div className="p-4 bg-zinc-900/70 border border-zinc-800/80 rounded-2xl">
               <span className="text-[11px] text-zinc-500 block mb-1">Total Rows</span>
               <span className="text-xl font-bold font-mono text-zinc-100">
-                {dataset.pages ? `${dataset.pages} Pages` : (dataset.row_count ?? 0).toLocaleString()}
+                {dataset.pages
+                  ? `${dataset.pages} Pages`
+                  : (dataset.row_count ?? 0).toLocaleString()}
               </span>
             </div>
             <div className="p-4 bg-zinc-900/70 border border-zinc-800/80 rounded-2xl">
               <span className="text-[11px] text-zinc-500 block mb-1">Columns</span>
               <span className="text-xl font-bold font-mono text-zinc-100">
-                {dataset.pages ? '—' : dataset.column_count ?? 'Unavailable'}
+                {dataset.pages ? '—' : (dataset.column_count ?? 'Unavailable')}
               </span>
             </div>
             <div className="p-4 bg-zinc-900/70 border border-zinc-800/80 rounded-2xl">
               <span className="text-[11px] text-zinc-500 block mb-1">File Size</span>
-              <span className="text-xl font-bold font-mono text-zinc-100">{formatFileSize(dataset.size_bytes)}</span>
+              <span className="text-xl font-bold font-mono text-zinc-100">
+                {formatFileSize(dataset.size_bytes)}
+              </span>
             </div>
             <div className="p-4 bg-zinc-900/70 border border-zinc-800/80 rounded-2xl">
               <span className="text-[11px] text-zinc-500 block mb-1">Quality Score</span>
-              <span className="text-xl font-bold font-mono text-emerald-400">{dataset.quality_score == null ? 'Unavailable' : dataset.quality_score + '%'}</span>
+              <span className="text-xl font-bold font-mono text-emerald-400">
+                {dataset.quality_score == null ? 'Unavailable' : dataset.quality_score + '%'}
+              </span>
             </div>
             <div className="p-4 bg-zinc-900/70 border border-zinc-800/80 rounded-2xl">
               <span className="text-[11px] text-zinc-500 block mb-1">Created Date</span>
-              <span className="text-xs font-medium text-zinc-200 mt-1 block">{formatDate(dataset.uploaded_at)}</span>
+              <span className="text-xs font-medium text-zinc-200 mt-1 block">
+                {formatDate(dataset.uploaded_at)}
+              </span>
             </div>
             <div className="p-4 bg-zinc-900/70 border border-zinc-800/80 rounded-2xl">
               <span className="text-[11px] text-zinc-500 block mb-1">Last Updated</span>
@@ -283,7 +342,9 @@ export default function DatasetDetailPage() {
           <div className="p-5 bg-zinc-900/80 border border-zinc-800 rounded-2xl shadow-lg space-y-3">
             <div className="flex items-center gap-2">
               <HardDrive className="w-5 h-5 text-sky-400" />
-              <h3 className="text-sm font-semibold text-zinc-100">Enterprise Storage Architecture</h3>
+              <h3 className="text-sm font-semibold text-zinc-100">
+                Enterprise Storage Architecture
+              </h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
               <div className="p-3 bg-zinc-950/80 rounded-xl border border-zinc-800">
@@ -305,7 +366,9 @@ export default function DatasetDetailPage() {
                 <span className="font-mono text-xs text-purple-400 truncate block mt-0.5">
                   {dataset.dataset_id}
                 </span>
-                <span className="text-[10px] text-zinc-500 mt-1 block">metadata, profile, quality, lineage</span>
+                <span className="text-[10px] text-zinc-500 mt-1 block">
+                  metadata, profile, quality, lineage
+                </span>
               </div>
             </div>
           </div>
@@ -317,13 +380,19 @@ export default function DatasetDetailPage() {
                 <Bot className="w-5 h-5 text-sky-400" />
                 <h3 className="text-sm font-semibold text-zinc-100">Explore this dataset</h3>
               </div>
-              <span className="text-xs text-emerald-400 font-medium">Choose an analytical workflow</span>
+              <span className="text-xs text-emerald-400 font-medium">
+                Choose an analytical workflow
+              </span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 pt-1">
               {[
                 { name: 'EDA Agent', desc: 'Auto Exploratory Analysis', route: '/eda' },
                 { name: 'SQL Agent', desc: 'Text-to-SQL Querying', route: '/analysis' },
-                { name: 'Visualization Agent', desc: 'Intelligent Chart Engine', route: '/visualizations' },
+                {
+                  name: 'Visualization Agent',
+                  desc: 'Intelligent Chart Engine',
+                  route: '/visualizations',
+                },
                 { name: 'Forecast Agent', desc: 'Prophet / XGBoost Models', route: '/analysis' },
                 { name: 'Insight Agent', desc: 'Causal Drivers & Risks', route: '/insights' },
                 { name: 'Recommendation Agent', desc: 'Decision Intelligence', route: '/insights' },
@@ -355,7 +424,10 @@ export default function DatasetDetailPage() {
                   <span>Preview: First 50 Records</span>
                 </h3>
                 <p className="text-xs text-zinc-400">
-                  Showing {filteredRows.length} matching preview rows of {preview?.rows.length ?? 0} loaded; dataset total: {preview?.totalRows == null ? 'unknown' : preview.totalRows.toLocaleString()}. Source: {dataset.filename}
+                  Showing {filteredRows.length} matching preview rows of {preview?.rows.length ?? 0}{' '}
+                  loaded; dataset total:{' '}
+                  {preview?.totalRows == null ? 'unknown' : preview.totalRows.toLocaleString()}.
+                  Source: {dataset.filename}
                 </p>
               </div>
 
@@ -382,7 +454,10 @@ export default function DatasetDetailPage() {
                     <tr>
                       <th className="px-3 py-2.5 w-12 text-zinc-600 font-normal">#</th>
                       {preview.columns.map((col) => (
-                        <th key={col} className="px-4 py-2.5 font-medium whitespace-nowrap text-zinc-300">
+                        <th
+                          key={col}
+                          className="px-4 py-2.5 font-medium whitespace-nowrap text-zinc-300"
+                        >
                           {col}
                         </th>
                       ))}
@@ -391,10 +466,16 @@ export default function DatasetDetailPage() {
                   <tbody className="divide-y divide-zinc-800/60">
                     {paginatedRows.map((row, idx) => (
                       <tr key={idx} className="hover:bg-zinc-800/30">
-                        <td className="px-3 py-2 text-zinc-600 text-[11px]">{previewPage * pageSize + idx + 1}</td>
+                        <td className="px-3 py-2 text-zinc-600 text-[11px]">
+                          {previewPage * pageSize + idx + 1}
+                        </td>
                         {preview.columns.map((col) => (
                           <td key={col} className="px-4 py-2 text-zinc-300 whitespace-nowrap">
-                            {row[col] !== null && row[col] !== undefined ? String(row[col]) : <span className="text-zinc-600">—</span>}
+                            {row[col] !== null && row[col] !== undefined ? (
+                              String(row[col])
+                            ) : (
+                              <span className="text-zinc-600">—</span>
+                            )}
                           </td>
                         ))}
                       </tr>
@@ -447,9 +528,13 @@ export default function DatasetDetailPage() {
                 <FileCode className="w-4 h-4 text-sky-400" />
                 <span>Column Schema & Inferred Data Types</span>
               </h3>
-              <p className="text-xs text-zinc-400">Detailed columnar profiling, null counts, and cardinality.</p>
+              <p className="text-xs text-zinc-400">
+                Detailed columnar profiling, null counts, and cardinality.
+              </p>
             </div>
-            <span className="text-xs font-mono text-zinc-400">{metadata.length} Columns Indexed</span>
+            <span className="text-xs font-mono text-zinc-400">
+              {metadata.length} Columns Indexed
+            </span>
           </div>
 
           <div className="border border-zinc-800 rounded-xl overflow-x-auto">
@@ -471,7 +556,9 @@ export default function DatasetDetailPage() {
                     <td className="px-4 py-3 text-sky-400">{col.datatype}</td>
                     <td className="px-4 py-3 text-zinc-300">{col.uniqueValues.toLocaleString()}</td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${col.nullPercentage > 0 ? 'bg-amber-500/10 text-amber-400' : 'text-emerald-400'}`}>
+                      <span
+                        className={`px-2 py-0.5 rounded text-[11px] font-bold ${col.nullPercentage > 0 ? 'bg-amber-500/10 text-amber-400' : 'text-emerald-400'}`}
+                      >
                         {col.nullPercentage.toFixed(2)}% ({col.nullCount})
                       </span>
                     </td>
@@ -489,7 +576,9 @@ export default function DatasetDetailPage() {
                           TARGET
                         </span>
                       )}
-                      {!col.isPrimaryKey && !col.isTarget && <span className="text-zinc-600">—</span>}
+                      {!col.isPrimaryKey && !col.isTarget && (
+                        <span className="text-zinc-600">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -502,8 +591,12 @@ export default function DatasetDetailPage() {
       {/* =================================================================== */}
       {/* TAB 3: PROFILE                                                      */}
       {/* =================================================================== */}
-      {activeTab === 'profile' && !profile && <p role="status">Profile is unavailable. Retry loading the dataset to check again.</p>}
-      {activeTab === 'quality' && !quality && <p role="status">Quality assessment is unavailable.</p>}
+      {activeTab === 'profile' && !profile && (
+        <p role="status">Profile is unavailable. Retry loading the dataset to check again.</p>
+      )}
+      {activeTab === 'quality' && !quality && (
+        <p role="status">Quality assessment is unavailable.</p>
+      )}
       {activeTab === 'profile' && profile && (
         <div className="space-y-6">
           {/* Summary Statistics Table */}
@@ -532,7 +625,9 @@ export default function DatasetDetailPage() {
                     <tr key={key} className="hover:bg-zinc-800/30">
                       <td className="px-4 py-3 font-semibold text-zinc-200">{key}</td>
                       <td className="px-4 py-3 text-sky-400">{stat.mean?.toLocaleString()}</td>
-                      <td className="px-4 py-3 text-emerald-400">{stat.median?.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-emerald-400">
+                        {stat.median?.toLocaleString()}
+                      </td>
                       <td className="px-4 py-3 text-zinc-300">±{stat.stdDev?.toLocaleString()}</td>
                       <td className="px-4 py-3 text-zinc-400">{stat.min?.toLocaleString()}</td>
                       <td className="px-4 py-3 text-zinc-400">{stat.q25?.toLocaleString()}</td>
@@ -545,7 +640,10 @@ export default function DatasetDetailPage() {
             </div>
           </div>
 
-          <p className="text-sm text-zinc-400">Distribution and correlation plots are not supplied by the profile API. Summary statistics above are computed by the backend.</p>
+          <p className="text-sm text-zinc-400">
+            Distribution and correlation plots are not supplied by the profile API. Summary
+            statistics above are computed by the backend.
+          </p>
         </div>
       )}
 
@@ -581,15 +679,17 @@ export default function DatasetDetailPage() {
                   {quality.qualityScore}%
                 </span>
               </div>
-              <span className="text-[11px] text-emerald-400 font-medium mt-2">Backend quality assessment</span>
+              <span className="text-[11px] text-emerald-400 font-medium mt-2">
+                Backend quality assessment
+              </span>
             </div>
-
-
           </div>
 
           {/* Data Hygiene Rules Checklist */}
           <div className="p-5 bg-zinc-900/70 border border-zinc-800/80 rounded-2xl shadow-xl space-y-4">
-            <h3 className="text-sm font-semibold text-zinc-100">Quality Assessment & Rule Evaluation</h3>
+            <h3 className="text-sm font-semibold text-zinc-100">
+              Quality Assessment & Rule Evaluation
+            </h3>
             <div className="space-y-2.5">
               {quality.rules.map((rule) => (
                 <div
@@ -622,11 +722,17 @@ export default function DatasetDetailPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-zinc-100">Dataset Versioning & Snapshots</h3>
-              <p className="text-xs text-zinc-400">Track mutations, schema modifications, and audit rollback history.</p>
+              <h3 className="text-sm font-semibold text-zinc-100">
+                Dataset Versioning & Snapshots
+              </h3>
+              <p className="text-xs text-zinc-400">
+                Track mutations, schema modifications, and audit rollback history.
+              </p>
             </div>
             <button
-              onClick={() => comparingVersions ? setComparingVersions(false) : void compareVersions()}
+              onClick={() =>
+                comparingVersions ? setComparingVersions(false) : void compareVersions()
+              }
               disabled={versions.length < 2 || comparisonLoading}
               className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/20 rounded-xl transition-all"
             >
@@ -642,9 +748,26 @@ export default function DatasetDetailPage() {
             </div>
           )}
 
-          {comparingVersions && <div className="p-4 bg-zinc-950 border border-zinc-800 rounded-xl" aria-live="polite">
-            {comparisonLoading ? <p>Comparing versions…</p> : comparisonError ? <p role="alert">{comparisonError}</p> : comparison && <><p>Changes from the active version to the selected version:</p><p>Rows added: {comparison.rows_added}; rows removed: {comparison.rows_removed}</p><p>Columns added: {comparison.columns_added.join(', ') || 'None'}</p><p>Columns removed: {comparison.columns_removed.join(', ') || 'None'}</p></>}
-          </div>}
+          {comparingVersions && (
+            <div className="p-4 bg-zinc-950 border border-zinc-800 rounded-xl" aria-live="polite">
+              {comparisonLoading ? (
+                <p>Comparing versions…</p>
+              ) : comparisonError ? (
+                <p role="alert">{comparisonError}</p>
+              ) : (
+                comparison && (
+                  <>
+                    <p>Changes from the active version to the selected version:</p>
+                    <p>
+                      Rows added: {comparison.rows_added}; rows removed: {comparison.rows_removed}
+                    </p>
+                    <p>Columns added: {comparison.columns_added.join(', ') || 'None'}</p>
+                    <p>Columns removed: {comparison.columns_removed.join(', ') || 'None'}</p>
+                  </>
+                )
+              )}
+            </div>
+          )}
 
           {/* Version Cards */}
           <div className="space-y-3">
@@ -714,7 +837,8 @@ export default function DatasetDetailPage() {
               <span>Registered dataset storage</span>
             </h3>
             <p className="text-xs text-zinc-400 mt-0.5">
-              Source and canonical paths supplied by the dataset registry. This is not an execution lineage trace.
+              Source and canonical paths supplied by the dataset registry. This is not an execution
+              lineage trace.
             </p>
           </div>
 
@@ -724,17 +848,20 @@ export default function DatasetDetailPage() {
               {lineage
                 .filter((n) => n.type !== 'ai_agent')
                 .map((node) => (
-                  <div key={node.id} className="p-4 bg-zinc-950 border border-zinc-800 rounded-xl text-center space-y-2">
+                  <div
+                    key={node.id}
+                    className="p-4 bg-zinc-950 border border-zinc-800 rounded-xl text-center space-y-2"
+                  >
                     <span className="px-2 py-0.5 text-[10px] font-mono text-sky-400 rounded bg-sky-500/10 uppercase">
                       {node.type.replace('_', ' ')}
                     </span>
                     <h4 className="text-xs font-bold text-zinc-200">{node.title}</h4>
-                    <p className="text-[10px] text-zinc-500 font-mono truncate">{node.description}</p>
+                    <p className="text-[10px] text-zinc-500 font-mono truncate">
+                      {node.description}
+                    </p>
                   </div>
                 ))}
             </div>
-
-
           </div>
         </div>
       )}

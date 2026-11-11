@@ -1,2 +1,18 @@
 import { Link } from 'react-router-dom';
-export default function ReportBuilderPage() { return <div className="ws-page"><h1 className="ws-page-heading">Report editor</h1><div className="ws-empty"><h2>Report editing is unavailable</h2><p>The backend does not expose report editing or section persistence. Existing reports remain accessible in the library.</p><Link className="reports-btn-secondary" to="/reports">View saved reports</Link></div></div>; }
+export default function ReportBuilderPage() {
+  return (
+    <div className="ws-page">
+      <h1 className="ws-page-heading">Report editor</h1>
+      <div className="ws-empty">
+        <h2>Report editing is unavailable</h2>
+        <p>
+          The backend does not expose report editing or section persistence. Existing reports remain
+          accessible in the library.
+        </p>
+        <Link className="reports-btn-secondary" to="/reports">
+          View saved reports
+        </Link>
+      </div>
+    </div>
+  );
+}

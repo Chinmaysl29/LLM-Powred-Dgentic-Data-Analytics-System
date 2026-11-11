@@ -1,0 +1,7 @@
+target-version = "py311"
+line-length = 100
+exclude = [".git", ".venv", "node_modules", "storage", "data", "uploads"]
+
+[lint]
+# Start with fatal syntax/name errors. Do not mass-rewrite legacy application code.
+select = ["E9", "F63", "F7", "F82"]

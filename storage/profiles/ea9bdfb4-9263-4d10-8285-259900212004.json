@@ -1,0 +1,125 @@
+{
+  "dataset_id": "ea9bdfb4-9263-4d10-8285-259900212004",
+  "duplicate_rows": 0,
+  "duplicate_percentage": 0.0,
+  "missing_data_profile": {
+    "null_count": 4,
+    "null_percentage": 0.0004814057046576002,
+    "columns_with_missing": [
+      "financing_activity",
+      "net_cash_flow"
+    ]
+  },
+  "cardinality_profile": {
+    "high_cardinality_columns": [
+      "id",
+      "operating_activity",
+      "investing_activity"
+    ],
+    "low_cardinality_columns": [
+      "company_id",
+      "year",
+      "net_cash_flow"
+    ]
+  },
+  "numeric_columns_profile": {
+    "id": {
+      "mean": 594.0,
+      "median": 594.0,
+      "mode": 1.0,
+      "min": 1.0,
+      "max": 1187.0,
+      "std": 342.8016919444827,
+      "variance": 117513.0,
+      "p25": 297.5,
+      "p50": 594.0,
+      "p75": 890.5,
+      "skewness": 0.0,
+      "kurtosis": -1.2
+    },
+    "company_id": {
+      "mean": 4.491154170176917,
+      "median": 4.0,
+      "mode": 0.0,
+      "min": 0.0,
+      "max": 9.0,
+      "std": 2.8714235939643995,
+      "variance": 8.245073455975428,
+      "p25": 2.0,
+      "p50": 4.0,
+      "p75": 7.0,
+      "skewness": 0.003919782907185495,
+      "kurtosis": -1.2221576067720001
+    },
+    "year": {
+      "mean": 2021.9974726200505,
+      "median": 2022.0,
+      "mode": 2020.0,
+      "min": 2020.0,
+      "max": 2024.0,
+      "std": 1.4151053381024075,
+      "variance": 2.0025231179259286,
+      "p25": 2021.0,
+      "p50": 2022.0,
+      "p75": 2023.0,
+      "skewness": 0.002684650499304232,
+      "kurtosis": -1.3011287104869997
+    },
+    "operating_activity": {
+      "mean": 603.0,
+      "median": 603.0,
+      "mode": 10.0,
+      "min": 10.0,
+      "max": 1196.0,
+      "std": 342.8016919444827,
+      "variance": 117513.0,
+      "p25": 306.5,
+      "p50": 603.0,
+      "p75": 899.5,
+      "skewness": 0.0,
+      "kurtosis": -1.2
+    },
+    "investing_activity": {
+      "mean": -593.0,
+      "median": -593.0,
+      "mode": -1186.0,
+      "min": -1186.0,
+      "max": 0.0,
+      "std": 342.8016919444827,
+      "variance": 117513.0,
+      "p25": -889.5,
+      "p50": -593.0,
+      "p75": -296.5,
+      "skewness": 0.0,
+      "kurtosis": -1.2
+    },
+    "financing_activity": {
+      "mean": 9.468354430379748,
+      "median": 9.0,
+      "mode": 0.0,
+      "min": 0.0,
+      "max": 19.0,
+      "std": 5.777772477928275,
+      "variance": 33.38265480670544,
+      "p25": 4.0,
+      "p50": 9.0,
+      "p75": 14.0,
+      "skewness": 0.0062199899642776495,
+      "kurtosis": -1.2102585406717745
+    },
+    "net_cash_flow": {
+      "mean": 9.240506329113924,
+      "median": 10.0,
+      "mode": 10.0,
+      "min": 1.0,
+      "max": 10.0,
+      "std": 2.50277813480599,
+      "variance": 6.26389839206295,
+      "p25": 10.0,
+      "p50": 10.0,
+      "p75": 10.0,
+      "skewness": -2.994136828092743,
+      "kurtosis": 6.976627409751707
+    }
+  }
+}

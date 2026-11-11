@@ -1,0 +1,26 @@
+{
+  "dataset_id": "18d0b7cd-01c2-4337-abd1-3dcbdcf7d199",
+  "dataset_name": "Orders Excel Test",
+  "columns": [
+    "order_id",
+    "product",
+    "price"
+  ],
+  "records": [
+    {
+      "order_id": 101,
+      "product": "Widget A",
+      "price": 19.99
+    },
+    {
+      "order_id": 102,
+      "product": "Widget B",
+      "price": 45.5
+    },
+    {
+      "order_id": 103,
+      "product": "Widget C",
+      "price": 99.0
+    }
+  ]
+}

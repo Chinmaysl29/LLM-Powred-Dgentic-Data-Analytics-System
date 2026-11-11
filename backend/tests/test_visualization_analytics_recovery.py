@@ -184,11 +184,35 @@ def test_identifier_column_protection():
     assert is_identifier_column("sales_amount") is False
 
 
-def test_smart_header_detection_bluestock_cashflow():
-    """Verify that Bluestock cashflow dataset correctly skips the banner title row."""
-    file_path = Path("/app/storage/raw/excel/6ac6f755-9978-4ce0-b3dc-928b70c2eeff_cashflow.xlsx")
-    if not file_path.exists():
-        pytest.skip(f"Test file not found at {file_path}")
+def synthetic_cashflow():
+    return pd.DataFrame({
+        "id": range(1, 1188), "company_id": [i % 10 for i in range(1187)],
+        "year": [2020 + i % 5 for i in range(1187)],
+        "operating_activity": [float(i + 10) for i in range(1187)],
+        "investing_activity": [float(-i) for i in range(1187)],
+        "financing_activity": [float(i % 20) if i < 1185 else None for i in range(1187)],
+        "net_cash_flow": [1.0 if i < 100 else 10.0 if i < 1185 else None for i in range(1187)],
+    })
+
+
+def upload_cashflow(client, token, workspace):
+    response = client.post("/api/v1/datasets/upload",
+        files={"file": ("synthetic_cashflow.csv", synthetic_cashflow().to_csv(index=False).encode(), "text/csv")},
+        headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 201, response.text
+    dataset_id = response.json()["dataset_id"]
+    bound = client.post(f"/api/v1/datasets/{dataset_id}/workspace",
+        json={"workspace_id": str(workspace.id)}, headers={"Authorization": f"Bearer {token}"})
+    assert bound.status_code == 200, bound.text
+    return dataset_id
+
+
+def test_smart_header_detection_bluestock_cashflow(tmp_path):
+    """Generate a banner-row workbook rather than depending on a customer upload."""
+    file_path = tmp_path / "cashflow.xlsx"
+    with pd.ExcelWriter(file_path, engine="openpyxl") as writer:
+        synthetic_cashflow().to_excel(writer, index=False, startrow=1)
+        writer.sheets["Sheet1"].cell(1, 1, "Synthetic cash flow report: 1,187 records")
 
     # Load with smart tabular loader
     df = load_tabular_dataframe(file_path)
@@ -266,23 +290,7 @@ def test_chart_data_endpoint_full_population_and_metrics(client, db_session):
     user, token = make_user_token(db_session, "chart_tester")
     ws = make_workspace(db_session, user)
 
-    dataset_id = UUID("6ac6f755-9978-4ce0-b3dc-928b70c2eeff")
-    # Bind dataset to workspace and assign owner_id to test user
-    db_session.execute(
-        text("UPDATE datasets SET owner_id = :uid WHERE dataset_id = :did"),
-        {"uid": str(user.id), "did": str(dataset_id)},
-    )
-    db_session.execute(
-        text("DELETE FROM dataset_workspace_bindings WHERE dataset_id = :did"),
-        {"did": str(dataset_id)},
-    )
-    db_session.execute(
-        dataset_workspace_bindings.insert().values(
-            workspace_id=ws.id,
-            dataset_id=str(dataset_id),
-        )
-    )
-    db_session.commit()
+    dataset_id = upload_cashflow(client, token, ws)
 
     headers = {
         "Authorization": f"Bearer {token}",
@@ -316,7 +324,8 @@ def test_chart_data_endpoint_full_population_and_metrics(client, db_session):
     assert "mean" in metrics
     assert "min" in metrics
     assert "max" in metrics
-    assert metrics["sum"] is not None
+    assert metrics["sum"] == 10950.0
+    assert sum(point["value"] for point in data["points"]) == 10950.0
 
     # 2. Query Scatter chart comparing operating_activity vs investing_activity
     scatter_payload = {
@@ -349,29 +358,13 @@ def test_chart_data_endpoint_full_population_and_metrics(client, db_session):
 
 def test_chart_data_multi_tenant_isolation(client, db_session):
     """Verify that User B in another workspace CANNOT access User A's dataset chart data."""
-    user_a, _ = make_user_token(db_session, "user_a")
+    user_a, token_a = make_user_token(db_session, "user_a")
     ws_a = make_workspace(db_session, user_a)
 
     user_b, token_b = make_user_token(db_session, "user_b")
     ws_b = make_workspace(db_session, user_b)
 
-    dataset_id = UUID("6ac6f755-9978-4ce0-b3dc-928b70c2eeff")
-    # Bind exclusively to Workspace A and assign owner_id to User A
-    db_session.execute(
-        text("UPDATE datasets SET owner_id = :uid WHERE dataset_id = :did"),
-        {"uid": str(user_a.id), "did": str(dataset_id)},
-    )
-    db_session.execute(
-        text("DELETE FROM dataset_workspace_bindings WHERE dataset_id = :did"),
-        {"did": str(dataset_id)},
-    )
-    db_session.execute(
-        dataset_workspace_bindings.insert().values(
-            workspace_id=ws_a.id,
-            dataset_id=str(dataset_id),
-        )
-    )
-    db_session.commit()
+    dataset_id = upload_cashflow(client, token_a, ws_a)
 
     # User B attempts to query User A's dataset in Workspace B
     headers_b = {
@@ -387,10 +380,3 @@ def test_chart_data_multi_tenant_isolation(client, db_session):
     resp = client.post(f"/api/v1/datasets/{dataset_id}/chart-data", json=payload, headers=headers_b)
     # Must be 403 Forbidden or 404 Not Found
     assert resp.status_code in [403, 404], f"Expected 403/404, got {resp.status_code}: {resp.text}"
-
-    # Teardown: Restore owner_id to canonical development user
-    db_session.execute(
-        text("UPDATE datasets SET owner_id = :uid WHERE dataset_id = :did"),
-        {"uid": "a9573a0b-8a48-4883-a54f-46650627ecdf", "did": str(dataset_id)},
-    )
-    db_session.commit()

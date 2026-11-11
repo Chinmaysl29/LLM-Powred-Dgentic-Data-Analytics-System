@@ -1,12 +1,5 @@
 import React from 'react';
-import { 
-  CheckSquare, 
-  Square, 
-  ChevronUp, 
-  ChevronDown, 
-  Layers, 
-  HelpCircle 
-} from 'lucide-react';
+import { CheckSquare, Square, ChevronUp, ChevronDown, Layers, HelpCircle } from 'lucide-react';
 import type { ReportSectionConfig } from '../../types/reports';
 
 interface ReportStructurePanelProps {
@@ -41,7 +34,8 @@ export const ReportStructurePanel: React.FC<ReportStructurePanelProps> = ({
       </div>
 
       <p className="reports-structure-hint">
-        Toggle sections to customize report contents or use reorder arrows to change narrative sequence.
+        Toggle sections to customize report contents or use reorder arrows to change narrative
+        sequence.
       </p>
 
       {/* Sections List */}
@@ -72,7 +66,7 @@ export const ReportStructurePanel: React.FC<ReportStructurePanelProps> = ({
               </button>
 
               {/* Title click selects / scrolls to section in preview */}
-              <div 
+              <div
                 className="reports-structure-label-wrap"
                 onClick={() => onSelectSection(sec.id)}
                 role="button"

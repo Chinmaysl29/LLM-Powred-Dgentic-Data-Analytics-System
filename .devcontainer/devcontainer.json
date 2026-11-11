@@ -1,0 +1,25 @@
+{
+  "name": "AI Analyst - Python 3.11 and Node 22",
+  "dockerComposeFile": ["../docker-compose.yml", "compose.yml"],
+  "service": "devtools",
+  "workspaceFolder": "/workspace",
+  "shutdownAction": "none",
+  "overrideCommand": false,
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python", "ms-python.debugpy", "ms-python.vscode-pylance",
+        "charliermarsh.ruff", "dbaeumer.vscode-eslint", "esbenp.prettier-vscode",
+        "redhat.vscode-yaml"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.testing.pytestEnabled": false,
+        "ruff.path": ["/usr/local/bin/ruff"],
+        "eslint.runtime": "/usr/local/bin/node"
+      }
+    }
+  },
+  "forwardPorts": [5173, 8000],
+  "postCreateCommand": "python -m pip check && node --version && cd frontend && npm ls --depth=0"
+}

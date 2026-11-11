@@ -1,13 +1,13 @@
 import React from 'react';
-import { 
-  AlertOctagon, 
-  TrendingUp, 
-  Eye, 
-  MessageSquare, 
-  Sliders, 
+import {
+  AlertOctagon,
+  TrendingUp,
+  Eye,
+  MessageSquare,
+  Sliders,
   ArrowUpRight,
   ShieldAlert,
-  Sparkles
+  Sparkles,
 } from 'lucide-react';
 import type { Risk, Opportunity } from '../../types/insights';
 
@@ -25,12 +25,12 @@ interface OpportunityCardProps {
 }
 
 export const RiskCard: React.FC<RiskCardProps> = ({ risk, onViewEvidence, onAskAI }) => {
-  const severityClass = 
-    risk.impact === 'High' 
-      ? 'insights-severity-high' 
-      : risk.impact === 'Medium' 
-      ? 'insights-severity-med' 
-      : 'insights-severity-low';
+  const severityClass =
+    risk.impact === 'High'
+      ? 'insights-severity-high'
+      : risk.impact === 'Medium'
+        ? 'insights-severity-med'
+        : 'insights-severity-low';
 
   return (
     <div className="insights-risk-card">
@@ -55,7 +55,9 @@ export const RiskCard: React.FC<RiskCardProps> = ({ risk, onViewEvidence, onAskA
         <div className="insights-subcard-section-label">Observed Data Patterns</div>
         <ul className="insights-evidence-list">
           {risk.observedData.map((pt, idx) => (
-            <li key={idx} className="insights-evidence-item warning">{pt}</li>
+            <li key={idx} className="insights-evidence-item warning">
+              {pt}
+            </li>
           ))}
         </ul>
       </div>
@@ -66,7 +68,9 @@ export const RiskCard: React.FC<RiskCardProps> = ({ risk, onViewEvidence, onAskA
           <span className="insights-tags-label">Contributing Factors:</span>
           <div className="insights-tags-container">
             {risk.contributingFactors.map((factor, idx) => (
-              <span key={idx} className="insights-tag-risk">{factor}</span>
+              <span key={idx} className="insights-tag-risk">
+                {factor}
+              </span>
             ))}
           </div>
         </div>
@@ -84,11 +88,7 @@ export const RiskCard: React.FC<RiskCardProps> = ({ risk, onViewEvidence, onAskA
         </button>
 
         {onAskAI && (
-          <button
-            type="button"
-            className="insights-action-btn ghost"
-            onClick={() => onAskAI(risk)}
-          >
+          <button type="button" className="insights-action-btn ghost" onClick={() => onAskAI(risk)}>
             <MessageSquare size={13} />
             <span>Investigate</span>
           </button>
@@ -127,7 +127,9 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
         <div className="insights-subcard-section-label">Observed Evidence</div>
         <ul className="insights-evidence-list">
           {opportunity.observedData.map((pt, idx) => (
-            <li key={idx} className="insights-evidence-item success">{pt}</li>
+            <li key={idx} className="insights-evidence-item success">
+              {pt}
+            </li>
           ))}
         </ul>
       </div>
@@ -138,7 +140,9 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
           <span className="insights-tags-label">Target Segments:</span>
           <div className="insights-tags-container">
             {opportunity.targetRegions.map((region, idx) => (
-              <span key={idx} className="insights-tag-opp">{region}</span>
+              <span key={idx} className="insights-tag-opp">
+                {region}
+              </span>
             ))}
           </div>
         </div>

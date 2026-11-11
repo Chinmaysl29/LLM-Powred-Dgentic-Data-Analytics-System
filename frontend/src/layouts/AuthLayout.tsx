@@ -91,15 +91,11 @@ export default function AuthLayout() {
         <section className="cinematic-showcase-section" aria-label="Product Capabilities">
           <div className="cinematic-headline-group">
             <div>
-              <span className="cinematic-tag-badge">
-                Data Intelligence Redefined
-              </span>
+              <span className="cinematic-tag-badge">Data Intelligence Redefined</span>
             </div>
             <h1 className="cinematic-headline">
               Your data. <br />
-              <span className="cinematic-wavy-text">
-                Finally makes sense.
-              </span>
+              <span className="cinematic-wavy-text">Finally makes sense.</span>
             </h1>
             <p className="cinematic-subhead">
               Transform scattered information into reliable, actionable intelligence. From turbulent

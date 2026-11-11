@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "checks": [
+    "unauthenticated dashboard redirects to login",
+    "real stored evaluations, provider reward and distinct 50% shadow agreement displayed",
+    "weight history pagination works",
+    "period filter and empty workspace show no stale evidence or fabricated accuracy",
+    "injected outage clears stale data; retry recovers using real API",
+    "workspace restores after reload; mobile page fits viewport with scrollable tables",
+    "no page errors and dashboard requests are GET only"
+  ]
+}

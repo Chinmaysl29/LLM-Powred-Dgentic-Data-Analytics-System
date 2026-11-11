@@ -120,6 +120,13 @@ class BackgroundJobManager:
             from backend.app.services.document_indexing_service import DocumentSourceError
             retryable = isinstance(exc, (ChromaConnectionError, ConnectionError, TimeoutError))
             code = 'INDEX_DEPENDENCY_UNAVAILABLE' if retryable else 'JOB_EXECUTION_FAILED'
+            from backend.app.dataplane.supervisor import WorkerCapacityError
+            if isinstance(exc, WorkerCapacityError):
+                code, retryable = 'CAPACITY_EXCEEDED', False
+            from fastapi import HTTPException
+            if isinstance(exc, PermissionError) or isinstance(exc, HTTPException) and exc.status_code in (401, 403, 404):
+                code = 'AUTHORIZATION_DENIED'
+                retryable = False
             if isinstance(exc, DocumentSourceError):
                 code = exc.error_code
             elif isinstance(exc, ChromaConnectionError) and getattr(exc, 'error_code', None) == 'CHROMA_VERSION_INCOMPATIBLE':

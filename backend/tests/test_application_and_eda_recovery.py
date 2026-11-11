@@ -10,11 +10,14 @@ Validates:
 """
 
 from pathlib import Path
+from io import BytesIO
 from uuid import UUID, uuid4
+import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import text
+from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
+from sqlalchemy.engine import make_url
 
 from backend.app.core.config import get_settings
 from backend.app.core.exceptions import StorageFileNotFoundError
@@ -118,9 +121,11 @@ def make_workspace(db: Session, owner: User) -> Workspace:
 # 1. PATH RESOLUTION & RECOVERY (ERROR 2 ROOT CAUSE)
 # =============================================================================
 
-def test_windows_path_resolution(settings):
+def test_windows_path_resolution(settings, tmp_path):
     """StorageService must seamlessly resolve Windows absolute paths into container storage."""
-    storage = StorageService(settings)
+    storage = StorageService(settings.model_copy(update={"upload_dir": str(tmp_path / "storage")}))
+    fixture = storage.raw_excel_dir / "38003018-eeb7-4842-afad-78844a3bbec8_prosandcons.xlsx"
+    pd.DataFrame({"item": ["synthetic"], "value": [1]}).to_excel(fixture, index=False)
     win_path = r"C:\data analyst\ai-data-analyst-os\storage\raw\excel\38003018-eeb7-4842-afad-78844a3bbec8_prosandcons.xlsx"
     resolved = storage.retrieve_file(win_path)
     assert resolved.exists()
@@ -137,9 +142,23 @@ def test_windows_path_resolution(settings):
         storage.retrieve_file(r"C:\some\nonexistent\fake_file_12345.csv")
 
 
-def test_prosandcons_excel_recovery_and_eda(db_session, settings):
+@pytest.fixture
+def excel_dataset(client, db_session):
+    user, token = make_user_token(db_session, "excel_fixture")
+    buffer = BytesIO()
+    pd.DataFrame({"item": [f"item-{i}" for i in range(17)],
+                  "category": ["A" if i % 2 else "B" for i in range(17)],
+                  "revenue": list(range(100, 117)), "cost": list(range(20, 37))}).to_excel(buffer, index=False)
+    response = client.post("/api/v1/datasets/upload",
+        files={"file": ("synthetic_recovery.xlsx", buffer.getvalue(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+        headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 201, response.text
+    return response.json()["dataset_id"], str(user.id), token
+
+
+def test_prosandcons_excel_recovery_and_eda(db_session, settings, excel_dataset):
     """prosandcons.xlsx must load into DataRetrievalService and complete full automated EDA."""
-    ds_id = "38003018-eeb7-4842-afad-78844a3bbec8"
+    ds_id, owner_id, _ = excel_dataset
     row = db_session.execute(
         text("SELECT owner_id FROM datasets WHERE dataset_id = :id"),
         {"id": ds_id},
@@ -167,11 +186,9 @@ def test_prosandcons_excel_recovery_and_eda(db_session, settings):
 # 2. DATASET PREVIEW & VISUALIZATION CONTRACT (ERROR 3 ROOT CAUSE)
 # =============================================================================
 
-def test_dataset_preview_tabular_success(client, db_session):
+def test_dataset_preview_tabular_success(client, db_session, excel_dataset):
     """Tabular preview on prosandcons must return exact rows and columns for authorized owner."""
-    owner_id = "a9573a0b-8a48-4883-a54f-46650627ecdf"
-    token = create_access_token({"sub": owner_id, "email": "rabs.chinmay@gmail.com"})
-    ds_id = "38003018-eeb7-4842-afad-78844a3bbec8"
+    ds_id, _, token = excel_dataset
 
     response = client.get(
         f"/api/v1/datasets/{ds_id}/preview?limit=10",
@@ -247,15 +264,16 @@ def test_external_connection_test_postgresql_and_ssrf(client, db_session, settin
     assert "disallowed" in body["message"].lower()
 
     # Real connection test against PostgreSQL service
+    database_url = make_url(settings.postgres_dsn)
     test_res = client.post(
         "/api/v1/connections/test",
         json={
             "connector_type": "postgresql",
-            "host": settings.postgres_host,
-            "port": settings.postgres_port,
-            "database": "ai_analyst",
-            "username": "postgres",
-            "password": "postgres",
+            "host": database_url.host,
+            "port": database_url.port or 5432,
+            "database": database_url.database,
+            "username": database_url.username,
+            "password": database_url.password,
             "schema_name": "public",
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -266,8 +284,14 @@ def test_external_connection_test_postgresql_and_ssrf(client, db_session, settin
     assert result["status"] == "HEALTHY"
     assert result["connector_type"] == "postgresql"
     assert result["latency_ms"] > 0
-    assert "datasets" in result["tables"]
-    assert result["total_tables"] > 0
+    # The endpoint returns a 50-table preview; discovery order is unspecified.
+    # A known table can legitimately occur after the preview boundary.
+    discovered_tables = set(inspect(db_session.get_bind()).get_table_names(schema="public"))
+    assert "datasets" in discovered_tables
+    assert result["total_tables"] == len(discovered_tables)
+    assert len(result["tables"]) == min(50, len(discovered_tables))
+    assert len(set(result["tables"])) == len(result["tables"])
+    assert set(result["tables"]) <= discovered_tables
 
 
 def test_external_connection_persistence_and_masking(client, db_session):

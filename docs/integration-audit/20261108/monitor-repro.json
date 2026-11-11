@@ -1,0 +1,1 @@
+{"observations": 1, "volume": {"status": "insufficient_history", "observations": 1, "minimum": 8}, "distribution_warnings": [{"column": "amount", "mean_shift_stddevs": 99.5}], "threshold_configuration_fields": []}

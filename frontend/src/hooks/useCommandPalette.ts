@@ -6,7 +6,7 @@ export function useCommandPalette() {
     const handler = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
-        setIsOpen(previous => !previous);
+        setIsOpen((previous) => !previous);
       }
     };
     window.addEventListener('keydown', handler);

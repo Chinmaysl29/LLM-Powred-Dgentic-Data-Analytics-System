@@ -1,0 +1,8 @@
+{
+  "status": "READY",
+  "attempt": 2,
+  "running_observed": true,
+  "elapsed_s": 64.64759776399296,
+  "rows": 4000000,
+  "source_hash_matches": true
+}

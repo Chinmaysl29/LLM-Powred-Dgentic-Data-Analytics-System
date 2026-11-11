@@ -1,0 +1,34 @@
+{
+  "dataset_id": "10fe9045-3b46-4be9-9837-735dfacc5803",
+  "duplicate_rows": 0,
+  "duplicate_percentage": 0.0,
+  "missing_data_profile": {
+    "null_count": 0,
+    "null_percentage": 0.0,
+    "columns_with_missing": []
+  },
+  "cardinality_profile": {
+    "high_cardinality_columns": [],
+    "low_cardinality_columns": [
+      "sku",
+      "name",
+      "stock"
+    ]
+  },
+  "numeric_columns_profile": {
+    "stock": {
+      "mean": 60.0,
+      "median": 45.0,
+      "mode": 15.0,
+      "min": 15.0,
+      "max": 120.0,
+      "std": 54.08326913195984,
+      "variance": 2925.0,
+      "p25": 30.0,
+      "p50": 45.0,
+      "p75": 82.5,
+      "skewness": 1.1520696383139377,
+      "kurtosis": 0.0
+    }
+  }
+}

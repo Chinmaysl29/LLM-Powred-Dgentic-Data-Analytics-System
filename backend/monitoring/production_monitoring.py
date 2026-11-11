@@ -180,6 +180,8 @@ class ProductionMonitoringService:
             from sqlalchemy import create_engine, text
             settings = get_settings()
             engine = create_engine(settings.postgres_dsn, pool_pre_ping=True)
+            from backend.app.core.database_target import bind_database_schema
+            bind_database_schema(engine, settings.database_schema)
             with engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
             engine.dispose()

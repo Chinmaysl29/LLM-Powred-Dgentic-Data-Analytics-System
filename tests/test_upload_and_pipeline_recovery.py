@@ -24,7 +24,7 @@ from sqlalchemy.orm import Session
 from backend.app.core.config import get_settings
 from backend.app.core.security import create_access_token
 from backend.app.database.postgres import PostgresDatabase
-from backend.app.database.schema_contract import inspect_schema
+from backend.app.database.schema_contract import inspect_schema, required_revisions
 from backend.app.main import create_app
 from backend.app.models.user import User
 from backend.app.models.tenant import Tenant
@@ -122,14 +122,14 @@ def make_workspace(db: Session, owner: User) -> Workspace:
 # ==============================================================================
 
 def test_schema_preflight_compatible(db_engine):
-    """Verify live database schema matches required head revision 009."""
+    """Verify database schema matches the repository migration head."""
     with db_engine.connect() as conn:
         result = inspect_schema(conn)
     assert result["compatible"] is True, f"Schema preflight failed: {result}"
     assert result["missing_tables"] == []
     assert result["missing_columns"] == {}
     assert result["revision_matches"] is True
-    assert any(rev in result["actual_revisions"] for rev in ("009_analysis_runs", "010_workspace_authorization_tables"))
+    assert result["actual_revisions"] == list(required_revisions())
 
 
 def test_schema_preflight_missing_table_detection(db_engine):

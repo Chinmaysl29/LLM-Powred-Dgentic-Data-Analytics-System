@@ -32,7 +32,9 @@ export const profileService = {
         role: 'Analyst',
         accountStatus: 'Active',
         emailVerified: true,
-        memberSince: user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Active Member',
+        memberSince: user.created_at
+          ? new Date(user.created_at).toLocaleDateString()
+          : 'Active Member',
       };
     } catch {
       return {
@@ -121,7 +123,9 @@ export const profileService = {
     return this.getActiveSessions();
   },
 
-  async changePassword(payload: ChangePasswordPayload): Promise<{ success: boolean; message: string }> {
+  async changePassword(
+    payload: ChangePasswordPayload,
+  ): Promise<{ success: boolean; message: string }> {
     if (isSupabaseConfigured()) {
       const { error } = await supabase.auth.updateUser({
         password: payload.newPassword,

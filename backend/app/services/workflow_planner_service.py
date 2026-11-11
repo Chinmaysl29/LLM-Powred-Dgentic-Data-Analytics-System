@@ -12,6 +12,9 @@ from uuid import uuid4
 from fastapi import Depends
 
 from backend.app.core.exceptions import ValidationException
+from backend.app.core.security import get_current_user
+from backend.app.learning import failure_memory
+from backend.app.learning.memory_contract import merge_steps
 from backend.app.llm.provider import LLMProvider, get_llm_provider
 from backend.app.schemas.planner import (
     PlanDependency,
@@ -228,6 +231,7 @@ class WorkflowPlannerService:
         intent_classifier: IntentClassificationService | None = None,
         workflow_registry: WorkflowRegistry | None = None,
         llm: LLMProvider | None = None,
+        owner_id: str | None = None,
     ) -> None:
         self._intent_classifier = intent_classifier or IntentClassificationService(llm=llm)
         self._workflow_registry = workflow_registry or WorkflowRegistry()
@@ -235,6 +239,7 @@ class WorkflowPlannerService:
         self._rules_engine = RulesEngine()
         self._optimization_layer = OptimizationLayer()
         self._llm = llm
+        self._owner_id = owner_id
 
     @property
     def workflow_registry(self) -> WorkflowRegistry:
@@ -258,6 +263,14 @@ class WorkflowPlannerService:
 
         # 2. Get Baseline Workflow Template
         base_template = self._workflow_registry.get_workflow(intent)
+        memory_applied = False
+        try:
+            hints = await failure_memory.recall(self._owner_id, request.dataset_id, cleaned_query, intent)
+            augmented = merge_steps(base_template, hints, intent)
+            memory_applied = augmented != base_template
+            base_template = augmented
+        except Exception:
+            pass  # A memory failure must not change the original planner path.
 
         # 3. Apply Contextual Rules Engine
         (
@@ -274,6 +287,8 @@ class WorkflowPlannerService:
             quality=request.quality,
             dataset_type=request.dataset_type,
         )
+        if memory_applied:
+            rules_triggered.append("Added analytical checks from a reviewed past failure.")
 
         # 4. Resolve Prerequisites and Dependency Graph Ordering
         ordered_steps = self._dependency_engine.resolve_and_order(modified_steps)
@@ -314,6 +329,7 @@ class WorkflowPlannerService:
 
 def get_workflow_planner_service(
     intent_service: IntentClassificationService = Depends(get_intent_classification_service),
+    current_user: Any = Depends(get_current_user),
 ) -> WorkflowPlannerService:
     """FastAPI dependency yielding WorkflowPlannerService instance."""
     try:
@@ -323,4 +339,5 @@ def get_workflow_planner_service(
     return WorkflowPlannerService(
         intent_classifier=intent_service,
         llm=llm,
+        owner_id=str(current_user.id) if getattr(current_user, "id", None) else None,
     )

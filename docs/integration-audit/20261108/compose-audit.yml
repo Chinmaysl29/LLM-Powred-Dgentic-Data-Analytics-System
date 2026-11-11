@@ -1,0 +1,26 @@
+﻿services:
+  runner:
+    image: dataanalyst-backend:integration-audit
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATAPLANE_TEST_CA: /verification/test-ca.crt
+      BACKGROUND_WORKER_ENABLED: 'false'
+      PYTHONDONTWRITEBYTECODE: '1'
+  api:
+    image: dataanalyst-backend:integration-audit
+    environment:
+      BACKGROUND_WORKER_ENABLED: 'true'
+      DATAPLANE_ENABLED: ${AUDIT_DATAPLANE:-false}
+      LEARNING_ENABLED: ${AUDIT_LEARNING:-false}
+      DATAPLANE_ROOT: /verification/dataplane
+      DATAPLANE_CREDENTIAL_KEY_FILE: /verification/dataplane/credential.key
+  frontend-verify:
+    image: dataanalyst-frontend:integration-audit
+    build:
+      context: ./frontend
+      target: development
+  dataplane-worker:
+    image: dataanalyst-backend:integration-audit
+

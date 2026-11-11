@@ -11,10 +11,15 @@ def run(request):
     limits = Limits(**request["limits"])
     root, output = Path(request["root"]), Path(request["output"])
     kind = request["kind"]
+    if kind == 'selector_train':
+        from backend.app.services.adaptive_selector import fit_models
+        bundles, measurements = fit_models(**request['training'])
+        return {'bundles': bundles, 'measurements': measurements}
     if kind == "ingest":
         from backend.app.dataplane.ingestion import materialize
         return materialize(Path(request["source"]), output, root, limits,
-                           version_id=request["version_id"], resume=request.get("checkpoint"))
+                           version_id=request["version_id"], resume=request.get("checkpoint"),
+                           options=request.get('ingestion_options'))
     if kind == "postgres":
         from backend.app.dataplane.postgres import PostgresEngine
         engine = PostgresEngine(request["connection"], limits)
@@ -33,6 +38,12 @@ def run(request):
             result = {**engine.execute(sql, args), "plan": plan.model_dump(), "metric": metric.model_dump(),
                     "estimate": estimate, "semantic_id": request["semantic_id"],
                     "snapshot_id": request.get("snapshot_id"), "source_id": request.get("source_id")}
+            if 'health_rules' in request:
+                from backend.app.dataplane.company_checks import health_checks
+                used = {metric.column, *plan.dimensions, *(f.column for f in plan.filters)}
+                result['quality_checks'] = health_checks(engine, request['health_rules'], used)
+            result['execution_limits'] = {key: getattr(limits, key) for key in
+                ('memory_mb', 'threads', 'timeout_s', 'spill_mb', 'scan_mb', 'result_rows', 'result_bytes')}
             # Materialize the bounded aggregate as the curated layer, with the same
             # values and digest used by the dashboard and report.
             import pyarrow as pa
@@ -64,6 +75,16 @@ def run(request):
 def main():
     request = json.loads(Path(sys.argv[1]).read_text())
     try:
+        if sys.platform != 'win32':
+            import math
+            import resource
+            budget = Limits(**request['limits'])
+            # Independent OS ceilings complement monitored RSS and container caps.
+            address_bytes = budget.worker_memory_mb * 2 * 1024**2
+            resource.setrlimit(resource.RLIMIT_AS, (address_bytes, address_bytes))
+            cpu_seconds = math.ceil(budget.timeout_s) + 1
+            resource.setrlimit(resource.RLIMIT_CPU, (cpu_seconds, cpu_seconds + 1))
+            resource.setrlimit(resource.RLIMIT_FSIZE, (budget.spill_mb * 1024**2,) * 2)
         result = run(request)
         write_new_json(Path(sys.argv[2]), {"ok": True, "result": result})
     except Exception as error:

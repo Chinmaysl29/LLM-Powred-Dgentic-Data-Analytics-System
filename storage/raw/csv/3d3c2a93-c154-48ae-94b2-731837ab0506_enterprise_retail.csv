@@ -1,0 +1,7 @@
+date,region,category,revenue
+2026-01-15,North,Electronics,100.0
+2026-01-20,North,Furniture,200.0
+2026-02-10,South,Electronics,300.0
+2026-02-15,South,Supplies,400.0
+2026-02-20,South,Electronics,500.0
+2026-03-05,North,Supplies,-50.0

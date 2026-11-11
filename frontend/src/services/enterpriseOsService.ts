@@ -121,13 +121,29 @@ export const enterpriseOsService = {
   },
 
   // 20.3 Dashboards
-  async generateDashboard(prompt: string, workspaceId = 'default-ws', title?: string): Promise<Record<string, unknown>> {
-    return apiClient.post<Record<string, unknown>>('/api/v1/os/dashboards/generate', { prompt, workspace_id: workspaceId, title });
+  async generateDashboard(
+    prompt: string,
+    workspaceId = 'default-ws',
+    title?: string,
+  ): Promise<Record<string, unknown>> {
+    return apiClient.post<Record<string, unknown>>('/api/v1/os/dashboards/generate', {
+      prompt,
+      workspace_id: workspaceId,
+      title,
+    });
   },
 
   // 20.4 Report Studio
-  async generateReport(title: string, reportType = 'Executive Report', workspaceId = 'default-ws'): Promise<Record<string, unknown>> {
-    return apiClient.post<Record<string, unknown>>('/api/v1/os/reports/studio/generate', { title, report_type: reportType, workspace_id: workspaceId });
+  async generateReport(
+    title: string,
+    reportType = 'Executive Report',
+    workspaceId = 'default-ws',
+  ): Promise<Record<string, unknown>> {
+    return apiClient.post<Record<string, unknown>>('/api/v1/os/reports/studio/generate', {
+      title,
+      report_type: reportType,
+      workspace_id: workspaceId,
+    });
   },
 
   async getReportHistory(workspaceId?: string): Promise<Record<string, unknown>[]> {
@@ -137,8 +153,14 @@ export const enterpriseOsService = {
   },
 
   // 20.5 Storytelling
-  async generateStory(query: string, dataRecords: Record<string, unknown>[] = []): Promise<Record<string, unknown>> {
-    return apiClient.post<Record<string, unknown>>('/api/v1/os/storytelling/generate', { query, data_records: dataRecords });
+  async generateStory(
+    query: string,
+    dataRecords: Record<string, unknown>[] = [],
+  ): Promise<Record<string, unknown>> {
+    return apiClient.post<Record<string, unknown>>('/api/v1/os/storytelling/generate', {
+      query,
+      data_records: dataRecords,
+    });
   },
 
   // 20.6 Marketplace
@@ -149,17 +171,24 @@ export const enterpriseOsService = {
   async applyTemplate(
     templateId: string,
     workspaceId = 'default-ws',
-    dataRecords: Record<string, unknown>[] = []
+    dataRecords: Record<string, unknown>[] = [],
   ): Promise<Record<string, unknown>> {
-    return apiClient.post<Record<string, unknown>>(`/api/v1/os/marketplace/templates/${templateId}/apply`, {
-      workspace_id: workspaceId,
-      data_records: dataRecords,
-    });
+    return apiClient.post<Record<string, unknown>>(
+      `/api/v1/os/marketplace/templates/${templateId}/apply`,
+      {
+        workspace_id: workspaceId,
+        data_records: dataRecords,
+      },
+    );
   },
 
   // 20.7 Dataset Relationships
-  async discoverRelationships(datasets: Record<string, Record<string, unknown>[]>): Promise<Record<string, unknown>> {
-    return apiClient.post<Record<string, unknown>>('/api/v1/os/relationships/discover', { datasets });
+  async discoverRelationships(
+    datasets: Record<string, Record<string, unknown>[]>,
+  ): Promise<Record<string, unknown>> {
+    return apiClient.post<Record<string, unknown>>('/api/v1/os/relationships/discover', {
+      datasets,
+    });
   },
 
   // 20.8 Semantic Layer
@@ -176,7 +205,7 @@ export const enterpriseOsService = {
   async executeAnalyst(
     query: string,
     workspaceId = 'default-ws',
-    sessionId = 'session-main'
+    sessionId = 'session-main',
   ): Promise<AutonomousAnalystResponse> {
     return apiClient.post<AutonomousAnalystResponse>('/api/v1/os/analyst/execute', {
       query,
@@ -202,7 +231,7 @@ export const enterpriseOsService = {
   async trackTelemetryEvent(
     eventType: string,
     metadata: Record<string, unknown> = {},
-    latencyMs = 0
+    latencyMs = 0,
   ): Promise<Record<string, unknown>> {
     return apiClient.post<Record<string, unknown>>('/api/v1/os/telemetry/event', {
       event_type: eventType,

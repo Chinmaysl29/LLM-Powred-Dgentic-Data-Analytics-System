@@ -1,0 +1,48 @@
+{
+  "dataset_id": "3d3c2a93-c154-48ae-94b2-731837ab0506",
+  "dataset_name": "enterprise_retail",
+  "columns": [
+    "date",
+    "region",
+    "category",
+    "revenue"
+  ],
+  "records": [
+    {
+      "date": "2026-01-15",
+      "region": "North",
+      "category": "Electronics",
+      "revenue": 100.0
+    },
+    {
+      "date": "2026-01-20",
+      "region": "North",
+      "category": "Furniture",
+      "revenue": 200.0
+    },
+    {
+      "date": "2026-02-10",
+      "region": "South",
+      "category": "Electronics",
+      "revenue": 300.0
+    },
+    {
+      "date": "2026-02-15",
+      "region": "South",
+      "category": "Supplies",
+      "revenue": 400.0
+    },
+    {
+      "date": "2026-02-20",
+      "region": "South",
+      "category": "Electronics",
+      "revenue": 500.0
+    },
+    {
+      "date": "2026-03-05",
+      "region": "North",
+      "category": "Supplies",
+      "revenue": -50.0
+    }
+  ]
+}

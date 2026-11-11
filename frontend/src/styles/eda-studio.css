@@ -22,7 +22,7 @@
   min-height: 100vh;
   background: #0e1111;
   font-family: 'Inter', system-ui, 'Segoe UI', sans-serif;
-  color: #F4F5F0;
+  color: #f4f5f0;
   padding: 0 0 80px 0;
 }
 
@@ -50,7 +50,7 @@
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.12em;
-  color: #D6FA43;
+  color: #d6fa43;
   text-transform: uppercase;
   margin-bottom: 6px;
 }
@@ -59,14 +59,14 @@
   font-size: 26px;
   font-weight: 700;
   letter-spacing: -0.03em;
-  color: #F4F5F0;
+  color: #f4f5f0;
   margin: 0 0 4px;
   line-height: 1.1;
 }
 
 .eda-header-sub {
   font-size: 12px;
-  color: #AEB5AF;
+  color: #aeb5af;
   margin: 0;
   font-weight: 400;
 }
@@ -83,9 +83,9 @@
 }
 
 .eda-dataset-select {
-  background: #181C1C;
-  border: 1px solid #2A3030;
-  color: #F4F5F0;
+  background: #181c1c;
+  border: 1px solid #2a3030;
+  color: #f4f5f0;
   font-size: 12px;
   font-family: inherit;
   padding: 8px 12px;
@@ -97,14 +97,14 @@
 }
 
 .eda-dataset-select:focus {
-  border-color: #D6FA43;
+  border-color: #d6fa43;
 }
 
 .eda-run-btn {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #D6FA43;
+  background: #d6fa43;
   color: #101313;
   font-size: 12px;
   font-weight: 700;
@@ -113,7 +113,9 @@
   border-radius: 6px;
   border: none;
   cursor: pointer;
-  transition: background 0.15s, transform 0.1s;
+  transition:
+    background 0.15s,
+    transform 0.1s;
   font-family: inherit;
 }
 
@@ -136,19 +138,21 @@
   align-items: center;
   gap: 6px;
   background: transparent;
-  border: 1px solid #2A3030;
-  color: #AEB5AF;
+  border: 1px solid #2a3030;
+  color: #aeb5af;
   font-size: 12px;
   font-family: inherit;
   padding: 8px 14px;
   border-radius: 6px;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
 }
 
 .eda-secondary-btn:hover {
-  border-color: #AEB5AF;
-  color: #F4F5F0;
+  border-color: #aeb5af;
+  color: #f4f5f0;
 }
 
 /* =========================================================================
@@ -161,9 +165,9 @@
   gap: 16px;
   padding: 10px 32px;
   background: #141818;
-  border-bottom: 1px solid #1E2424;
+  border-bottom: 1px solid #1e2424;
   font-size: 11px;
-  color: #AEB5AF;
+  color: #aeb5af;
   flex-wrap: wrap;
 }
 
@@ -177,12 +181,16 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #D6FA43;
+  background: #d6fa43;
   flex-shrink: 0;
 }
 
-.eda-meta-dot.warn { background: #f59e0b; }
-.eda-meta-dot.muted { background: #3A4040; }
+.eda-meta-dot.warn {
+  background: #f59e0b;
+}
+.eda-meta-dot.muted {
+  background: #3a4040;
+}
 
 /* =========================================================================
    STATE PANELS
@@ -203,24 +211,24 @@
   width: 56px;
   height: 56px;
   border-radius: 12px;
-  background: #181C1C;
-  border: 1px solid #2A3030;
+  background: #181c1c;
+  border: 1px solid #2a3030;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #3A4040;
+  color: #3a4040;
 }
 
 .eda-empty-title {
   font-size: 16px;
   font-weight: 600;
-  color: #F4F5F0;
+  color: #f4f5f0;
   margin: 0;
 }
 
 .eda-empty-sub {
   font-size: 12px;
-  color: #AEB5AF;
+  color: #aeb5af;
   margin: 0;
   max-width: 340px;
   line-height: 1.6;
@@ -251,19 +259,21 @@
 .eda-spinner {
   width: 28px;
   height: 28px;
-  border: 2px solid #1E2424;
-  border-top-color: #D6FA43;
+  border: 2px solid #1e2424;
+  border-top-color: #d6fa43;
   border-radius: 50%;
   animation: eda-spin 0.75s linear infinite;
 }
 
 @keyframes eda-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .eda-loading-text {
   font-size: 12px;
-  color: #AEB5AF;
+  color: #aeb5af;
   font-family: ui-monospace, Consolas, monospace;
 }
 
@@ -300,28 +310,66 @@
 }
 
 /* Column span utilities */
-.eda-span-12 { grid-column: span 12; }
-.eda-span-8  { grid-column: span 8;  }
-.eda-span-7  { grid-column: span 7;  }
-.eda-span-6  { grid-column: span 6;  }
-.eda-span-5  { grid-column: span 5;  }
-.eda-span-4  { grid-column: span 4;  }
-.eda-span-3  { grid-column: span 3;  }
+.eda-span-12 {
+  grid-column: span 12;
+}
+.eda-span-8 {
+  grid-column: span 8;
+}
+.eda-span-7 {
+  grid-column: span 7;
+}
+.eda-span-6 {
+  grid-column: span 6;
+}
+.eda-span-5 {
+  grid-column: span 5;
+}
+.eda-span-4 {
+  grid-column: span 4;
+}
+.eda-span-3 {
+  grid-column: span 3;
+}
 
 @media (max-width: 1200px) {
-  .eda-span-12, .eda-span-8, .eda-span-7 { grid-column: span 8; }
-  .eda-span-6, .eda-span-5              { grid-column: span 4; }
-  .eda-span-4, .eda-span-3              { grid-column: span 4; }
+  .eda-span-12,
+  .eda-span-8,
+  .eda-span-7 {
+    grid-column: span 8;
+  }
+  .eda-span-6,
+  .eda-span-5 {
+    grid-column: span 4;
+  }
+  .eda-span-4,
+  .eda-span-3 {
+    grid-column: span 4;
+  }
 }
 
 @media (max-width: 900px) {
-  .eda-span-12, .eda-span-8, .eda-span-7,
-  .eda-span-6, .eda-span-5, .eda-span-4, .eda-span-3 { grid-column: span 4; }
+  .eda-span-12,
+  .eda-span-8,
+  .eda-span-7,
+  .eda-span-6,
+  .eda-span-5,
+  .eda-span-4,
+  .eda-span-3 {
+    grid-column: span 4;
+  }
 }
 
 @media (max-width: 600px) {
-  .eda-span-12, .eda-span-8, .eda-span-7,
-  .eda-span-6, .eda-span-5, .eda-span-4, .eda-span-3 { grid-column: span 1; }
+  .eda-span-12,
+  .eda-span-8,
+  .eda-span-7,
+  .eda-span-6,
+  .eda-span-5,
+  .eda-span-4,
+  .eda-span-3 {
+    grid-column: span 1;
+  }
 }
 
 /* =========================================================================
@@ -331,7 +379,7 @@
 /* Dark surface card (primary) */
 .eda-card {
   background: #141818;
-  border: 1px solid #1E2828;
+  border: 1px solid #1e2828;
   border-radius: 8px;
   overflow: hidden;
   display: flex;
@@ -340,29 +388,41 @@
 }
 
 .eda-card:hover {
-  border-color: #2A3838;
+  border-color: #2a3838;
 }
 
 /* Light surface card (alternating) */
 .eda-card-light {
-  background: #F0F0E9;
-  border: 1px solid #D8D8D0;
+  background: #f0f0e9;
+  border: 1px solid #d8d8d0;
   border-radius: 8px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
-.eda-card-light .eda-card-eyebrow { color: #6B7280; }
-.eda-card-light .eda-card-title   { color: #161A16; }
-.eda-card-light .eda-card-body    { color: #374151; }
-.eda-card-light .eda-stat-value   { color: #101313; }
-.eda-card-light .eda-stat-label   { color: #6B7280; }
-.eda-card-light .eda-section-divider { background: #D8D8D0; }
+.eda-card-light .eda-card-eyebrow {
+  color: #6b7280;
+}
+.eda-card-light .eda-card-title {
+  color: #161a16;
+}
+.eda-card-light .eda-card-body {
+  color: #374151;
+}
+.eda-card-light .eda-stat-value {
+  color: #101313;
+}
+.eda-card-light .eda-stat-label {
+  color: #6b7280;
+}
+.eda-card-light .eda-section-divider {
+  background: #d8d8d0;
+}
 
 /* Lime accent card */
 .eda-card-lime {
-  background: #D6FA43;
+  background: #d6fa43;
   border: 1px solid #c8f030;
   border-radius: 8px;
   overflow: hidden;
@@ -370,10 +430,18 @@
   flex-direction: column;
 }
 
-.eda-card-lime .eda-card-eyebrow { color: #4a5a00; }
-.eda-card-lime .eda-card-title   { color: #101313; }
-.eda-card-lime .eda-stat-value   { color: #101313; }
-.eda-card-lime .eda-stat-label   { color: #4a5a00; }
+.eda-card-lime .eda-card-eyebrow {
+  color: #4a5a00;
+}
+.eda-card-lime .eda-card-title {
+  color: #101313;
+}
+.eda-card-lime .eda-stat-value {
+  color: #101313;
+}
+.eda-card-lime .eda-stat-label {
+  color: #4a5a00;
+}
 
 /* =========================================================================
    CARD ANATOMY
@@ -381,7 +449,7 @@
 
 .eda-card-header {
   padding: 16px 18px 12px;
-  border-bottom: 1px solid #1E2828;
+  border-bottom: 1px solid #1e2828;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -389,24 +457,31 @@
   flex-shrink: 0;
 }
 
-.eda-card-light .eda-card-header { border-bottom-color: #D8D8D0; }
-.eda-card-lime  .eda-card-header { border-bottom-color: rgba(0,0,0,0.12); }
+.eda-card-light .eda-card-header {
+  border-bottom-color: #d8d8d0;
+}
+.eda-card-lime .eda-card-header {
+  border-bottom-color: rgba(0, 0, 0, 0.12);
+}
 
-.eda-card-header-left { flex: 1; min-width: 0; }
+.eda-card-header-left {
+  flex: 1;
+  min-width: 0;
+}
 
 .eda-card-eyebrow {
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #AEB5AF;
+  color: #aeb5af;
   margin-bottom: 4px;
 }
 
 .eda-card-title {
   font-size: 13px;
   font-weight: 700;
-  color: #F4F5F0;
+  color: #f4f5f0;
   margin: 0;
   letter-spacing: -0.01em;
   line-height: 1.3;
@@ -414,12 +489,14 @@
 
 .eda-card-desc {
   font-size: 10px;
-  color: #5A6A6A;
+  color: #5a6a6a;
   margin: 3px 0 0;
   line-height: 1.4;
 }
 
-.eda-card-light .eda-card-desc { color: #9CA3AF; }
+.eda-card-light .eda-card-desc {
+  color: #9ca3af;
+}
 
 .eda-card-badge {
   font-size: 9px;
@@ -427,7 +504,7 @@
   padding: 3px 7px;
   border-radius: 3px;
   background: rgba(214, 250, 67, 0.1);
-  color: #D6FA43;
+  color: #d6fa43;
   letter-spacing: 0.06em;
   white-space: nowrap;
   flex-shrink: 0;
@@ -436,13 +513,13 @@
 .eda-card-body {
   padding: 16px 18px;
   flex: 1;
-  color: #AEB5AF;
+  color: #aeb5af;
   font-size: 12px;
 }
 
 .eda-section-divider {
   height: 1px;
-  background: #1E2828;
+  background: #1e2828;
   margin: 0;
 }
 
@@ -454,11 +531,15 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1px;
-  background: #1E2828;
+  background: #1e2828;
 }
 
-.eda-stat-grid-2 { grid-template-columns: repeat(2, 1fr); }
-.eda-stat-grid-4 { grid-template-columns: repeat(4, 1fr); }
+.eda-stat-grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+.eda-stat-grid-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
 
 .eda-stat-cell {
   background: #141818;
@@ -468,15 +549,19 @@
   gap: 3px;
 }
 
-.eda-card-light .eda-stat-cell { background: #F0F0E9; }
-.eda-card-lime  .eda-stat-cell { background: #D6FA43; }
+.eda-card-light .eda-stat-cell {
+  background: #f0f0e9;
+}
+.eda-card-lime .eda-stat-cell {
+  background: #d6fa43;
+}
 
 .eda-stat-value {
   font-size: 22px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.03em;
-  color: #F4F5F0;
+  color: #f4f5f0;
   line-height: 1;
 }
 
@@ -484,17 +569,23 @@
   font-size: 15px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: #F4F5F0;
+  color: #f4f5f0;
   line-height: 1.2;
 }
 
-.eda-stat-value-lime { color: #D6FA43; }
-.eda-stat-value-warn { color: #f59e0b; }
-.eda-stat-value-ok   { color: #6ee7b7; }
+.eda-stat-value-lime {
+  color: #d6fa43;
+}
+.eda-stat-value-warn {
+  color: #f59e0b;
+}
+.eda-stat-value-ok {
+  color: #6ee7b7;
+}
 
 .eda-stat-label {
   font-size: 10px;
-  color: #5A6A6A;
+  color: #5a6a6a;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.07em;
@@ -516,12 +607,14 @@
 
 .eda-chart-caption {
   font-size: 10px;
-  color: #3A4A4A;
+  color: #3a4a4a;
   padding: 6px 18px 14px;
   line-height: 1.4;
 }
 
-.eda-card-light .eda-chart-caption { color: #9CA3AF; }
+.eda-card-light .eda-chart-caption {
+  color: #9ca3af;
+}
 
 /* =========================================================================
    CORRELATION HEATMAP GRID
@@ -535,7 +628,7 @@
 .eda-heatmap-table {
   border-collapse: collapse;
   font-size: 9px;
-  color: #AEB5AF;
+  color: #aeb5af;
   font-family: ui-monospace, Consolas, monospace;
   min-width: 100%;
 }
@@ -585,7 +678,7 @@
 
 .eda-bar-label {
   font-size: 10px;
-  color: #AEB5AF;
+  color: #aeb5af;
   min-width: 80px;
   max-width: 80px;
   overflow: hidden;
@@ -595,42 +688,54 @@
   flex-shrink: 0;
 }
 
-.eda-card-light .eda-bar-label { color: #6B7280; }
+.eda-card-light .eda-bar-label {
+  color: #6b7280;
+}
 
 .eda-bar-track {
   flex: 1;
   height: 18px;
-  background: #1A2020;
+  background: #1a2020;
   border-radius: 3px;
   overflow: hidden;
   position: relative;
 }
 
-.eda-card-light .eda-bar-track { background: #E5E5DC; }
+.eda-card-light .eda-bar-track {
+  background: #e5e5dc;
+}
 
 .eda-bar-fill {
   height: 100%;
   border-radius: 3px;
-  background: #2A3838;
+  background: #2a3838;
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
 }
 
-.eda-bar-fill-lime { background: #D6FA43; }
-.eda-bar-fill-teal { background: #14b8a6; }
-.eda-bar-fill-muted { background: #2A3838; }
+.eda-bar-fill-lime {
+  background: #d6fa43;
+}
+.eda-bar-fill-teal {
+  background: #14b8a6;
+}
+.eda-bar-fill-muted {
+  background: #2a3838;
+}
 
 .eda-bar-value {
   font-size: 10px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: #6A8080;
+  color: #6a8080;
   min-width: 44px;
   text-align: right;
   flex-shrink: 0;
 }
 
-.eda-card-light .eda-bar-value { color: #9CA3AF; }
+.eda-card-light .eda-bar-value {
+  color: #9ca3af;
+}
 
 /* =========================================================================
    QUALITY METER
@@ -658,19 +763,19 @@
 .eda-quality-name {
   font-size: 11px;
   font-weight: 500;
-  color: #AEB5AF;
+  color: #aeb5af;
 }
 
 .eda-quality-score {
   font-size: 11px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: #F4F5F0;
+  color: #f4f5f0;
 }
 
 .eda-quality-track {
   height: 4px;
-  background: #1A2020;
+  background: #1a2020;
   border-radius: 2px;
   overflow: hidden;
 }
@@ -678,12 +783,16 @@
 .eda-quality-fill {
   height: 100%;
   border-radius: 2px;
-  background: #D6FA43;
+  background: #d6fa43;
   transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.eda-quality-fill-warn { background: #f59e0b; }
-.eda-quality-fill-err  { background: #ef4444; }
+.eda-quality-fill-warn {
+  background: #f59e0b;
+}
+.eda-quality-fill-err {
+  background: #ef4444;
+}
 
 /* =========================================================================
    DATA TABLE (scrollable, compact)
@@ -708,36 +817,45 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #5A6A6A;
-  border-bottom: 1px solid #1E2828;
+  color: #5a6a6a;
+  border-bottom: 1px solid #1e2828;
   white-space: nowrap;
 }
 
 .eda-card-light .eda-table th {
-  color: #9CA3AF;
-  border-bottom-color: #D8D8D0;
+  color: #9ca3af;
+  border-bottom-color: #d8d8d0;
 }
 
 .eda-table td {
   padding: 6px 10px;
-  color: #AEB5AF;
-  border-bottom: 1px solid #181C1C;
+  color: #aeb5af;
+  border-bottom: 1px solid #181c1c;
   white-space: nowrap;
 }
 
 .eda-card-light .eda-table td {
   color: #374151;
-  border-bottom-color: #E5E5DC;
+  border-bottom-color: #e5e5dc;
 }
 
 .eda-table tr:hover td {
   background: rgba(255, 255, 255, 0.02);
 }
 
-.eda-table td.lime { color: #D6FA43; font-weight: 600; }
-.eda-table td.ok   { color: #6ee7b7; }
-.eda-table td.warn { color: #fbbf24; }
-.eda-table td.err  { color: #f87171; }
+.eda-table td.lime {
+  color: #d6fa43;
+  font-weight: 600;
+}
+.eda-table td.ok {
+  color: #6ee7b7;
+}
+.eda-table td.warn {
+  color: #fbbf24;
+}
+.eda-table td.err {
+  color: #f87171;
+}
 
 /* =========================================================================
    INSIGHT CARDS (EDA Findings)
@@ -753,7 +871,7 @@
 .eda-insight-item {
   padding: 10px 12px;
   background: #0e1111;
-  border: 1px solid #1E2828;
+  border: 1px solid #1e2828;
   border-radius: 6px;
   display: flex;
   flex-direction: column;
@@ -761,8 +879,8 @@
 }
 
 .eda-card-light .eda-insight-item {
-  background: #E8E8E0;
-  border-color: #D0D0C8;
+  background: #e8e8e0;
+  border-color: #d0d0c8;
 }
 
 .eda-insight-category {
@@ -770,25 +888,29 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #D6FA43;
+  color: #d6fa43;
 }
 
 .eda-insight-title {
   font-size: 11px;
   font-weight: 600;
-  color: #F4F5F0;
+  color: #f4f5f0;
   line-height: 1.3;
 }
 
-.eda-card-light .eda-insight-title { color: #161A16; }
+.eda-card-light .eda-insight-title {
+  color: #161a16;
+}
 
 .eda-insight-text {
   font-size: 11px;
-  color: #7A8A8A;
+  color: #7a8a8a;
   line-height: 1.5;
 }
 
-.eda-card-light .eda-insight-text { color: #6B7280; }
+.eda-card-light .eda-insight-text {
+  color: #6b7280;
+}
 
 .eda-insight-impact {
   display: inline-flex;
@@ -799,9 +921,15 @@
   margin-top: 2px;
 }
 
-.eda-insight-impact.high  { color: #f87171; }
-.eda-insight-impact.medium { color: #fbbf24; }
-.eda-insight-impact.low   { color: #6ee7b7; }
+.eda-insight-impact.high {
+  color: #f87171;
+}
+.eda-insight-impact.medium {
+  color: #fbbf24;
+}
+.eda-insight-impact.low {
+  color: #6ee7b7;
+}
 
 /* =========================================================================
    MISSING VALUES MATRIX
@@ -822,7 +950,7 @@
 .eda-missing-col-name {
   font-size: 10px;
   font-family: ui-monospace, Consolas, monospace;
-  color: #7A8A8A;
+  color: #7a8a8a;
   min-width: 110px;
   max-width: 110px;
   overflow: hidden;
@@ -833,7 +961,7 @@
 .eda-missing-bar-track {
   flex: 1;
   height: 14px;
-  background: #1A2020;
+  background: #1a2020;
   border-radius: 2px;
   overflow: hidden;
 }
@@ -860,8 +988,8 @@
 
 .eda-dist-select {
   background: #0e1111;
-  border: 1px solid #2A3030;
-  color: #AEB5AF;
+  border: 1px solid #2a3030;
+  color: #aeb5af;
   font-size: 11px;
   font-family: inherit;
   padding: 5px 8px;
@@ -871,7 +999,9 @@
   cursor: pointer;
 }
 
-.eda-dist-select:focus { border-color: #D6FA43; }
+.eda-dist-select:focus {
+  border-color: #d6fa43;
+}
 
 /* =========================================================================
    TREND INDICATOR
@@ -886,7 +1016,7 @@
 .eda-trend-item {
   padding: 10px 12px;
   background: #0e1111;
-  border: 1px solid #1E2828;
+  border: 1px solid #1e2828;
   border-radius: 6px;
   display: flex;
   align-items: flex-start;
@@ -904,10 +1034,22 @@
   font-size: 14px;
 }
 
-.eda-trend-dir.growth     { background: rgba(110, 231, 183, 0.1); color: #6ee7b7; }
-.eda-trend-dir.decline    { background: rgba(248, 113, 113, 0.1); color: #f87171; }
-.eda-trend-dir.stable     { background: rgba(214, 250, 67, 0.1);  color: #D6FA43; }
-.eda-trend-dir.fluctuating { background: rgba(251, 191, 36, 0.1); color: #fbbf24; }
+.eda-trend-dir.growth {
+  background: rgba(110, 231, 183, 0.1);
+  color: #6ee7b7;
+}
+.eda-trend-dir.decline {
+  background: rgba(248, 113, 113, 0.1);
+  color: #f87171;
+}
+.eda-trend-dir.stable {
+  background: rgba(214, 250, 67, 0.1);
+  color: #d6fa43;
+}
+.eda-trend-dir.fluctuating {
+  background: rgba(251, 191, 36, 0.1);
+  color: #fbbf24;
+}
 
 .eda-trend-meta {
   flex: 1;
@@ -917,12 +1059,12 @@
 .eda-trend-col {
   font-size: 11px;
   font-weight: 600;
-  color: #F4F5F0;
+  color: #f4f5f0;
 }
 
 .eda-trend-desc {
   font-size: 10px;
-  color: #7A8A8A;
+  color: #7a8a8a;
   margin-top: 2px;
   line-height: 1.4;
 }
@@ -931,7 +1073,7 @@
   font-size: 13px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: #D6FA43;
+  color: #d6fa43;
   flex-shrink: 0;
 }
 
@@ -941,8 +1083,8 @@
 
 .eda-outlier-col-select {
   background: #0e1111;
-  border: 1px solid #2A3030;
-  color: #AEB5AF;
+  border: 1px solid #2a3030;
+  color: #aeb5af;
   font-size: 11px;
   font-family: inherit;
   padding: 5px 8px;
@@ -953,7 +1095,9 @@
   width: 100%;
 }
 
-.eda-outlier-col-select:focus { border-color: #D6FA43; }
+.eda-outlier-col-select:focus {
+  border-color: #d6fa43;
+}
 
 .eda-outlier-methods {
   display: grid;
@@ -963,7 +1107,7 @@
 
 .eda-outlier-method {
   background: #0e1111;
-  border: 1px solid #1E2828;
+  border: 1px solid #1e2828;
   border-radius: 6px;
   padding: 10px;
 }
@@ -973,7 +1117,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: #5A6A6A;
+  color: #5a6a6a;
   margin-bottom: 6px;
 }
 
@@ -988,7 +1132,7 @@
 
 .eda-outlier-pct {
   font-size: 10px;
-  color: #7A8A8A;
+  color: #7a8a8a;
 }
 
 /* =========================================================================
@@ -1006,33 +1150,36 @@
   width: 26px;
   height: 26px;
   border-radius: 5px;
-  border: 1px solid #1E2828;
+  border: 1px solid #1e2828;
   background: transparent;
-  color: #5A6A6A;
+  color: #5a6a6a;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    background 0.15s;
   font-family: inherit;
   padding: 0;
 }
 
 .eda-ctrl-btn:hover {
-  border-color: #D6FA43;
-  color: #D6FA43;
+  border-color: #d6fa43;
+  color: #d6fa43;
   background: rgba(214, 250, 67, 0.06);
 }
 
 .eda-card-light .eda-ctrl-btn {
-  border-color: #D0D0C8;
-  color: #9CA3AF;
+  border-color: #d0d0c8;
+  color: #9ca3af;
 }
 
 .eda-card-light .eda-ctrl-btn:hover {
   border-color: #101313;
   color: #101313;
-  background: rgba(0,0,0,0.06);
+  background: rgba(0, 0, 0, 0.06);
 }
 
 /* =========================================================================
@@ -1050,15 +1197,15 @@
   font-weight: 500;
   padding: 3px 8px;
   border-radius: 3px;
-  background: #1A2020;
-  border: 1px solid #2A3030;
-  color: #7A8A8A;
+  background: #1a2020;
+  border: 1px solid #2a3030;
+  color: #7a8a8a;
 }
 
 .eda-pill-lime {
   background: rgba(214, 250, 67, 0.08);
   border-color: rgba(214, 250, 67, 0.25);
-  color: #D6FA43;
+  color: #d6fa43;
 }
 
 /* =========================================================================
@@ -1102,25 +1249,45 @@
    ========================================================================= */
 
 .eda-skeleton {
-  background: linear-gradient(90deg, #1A2020 25%, #222828 50%, #1A2020 75%);
+  background: linear-gradient(90deg, #1a2020 25%, #222828 50%, #1a2020 75%);
   background-size: 200% 100%;
   animation: eda-shimmer 1.4s infinite;
   border-radius: 4px;
 }
 
 @keyframes eda-shimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
-.eda-skeleton-h12 { height: 12px; }
-.eda-skeleton-h20 { height: 20px; }
-.eda-skeleton-h32 { height: 32px; }
-.eda-skeleton-h80 { height: 80px; }
-.eda-skeleton-h140 { height: 140px; }
-.eda-skeleton-w60  { width: 60%;  }
-.eda-skeleton-w80  { width: 80%;  }
-.eda-skeleton-w100 { width: 100%; }
+.eda-skeleton-h12 {
+  height: 12px;
+}
+.eda-skeleton-h20 {
+  height: 20px;
+}
+.eda-skeleton-h32 {
+  height: 32px;
+}
+.eda-skeleton-h80 {
+  height: 80px;
+}
+.eda-skeleton-h140 {
+  height: 140px;
+}
+.eda-skeleton-w60 {
+  width: 60%;
+}
+.eda-skeleton-w80 {
+  width: 80%;
+}
+.eda-skeleton-w100 {
+  width: 100%;
+}
 
 /* =========================================================================
    FOCUS / ACCESSIBILITY
@@ -1130,6 +1297,6 @@
 .eda-secondary-btn:focus-visible,
 .eda-ctrl-btn:focus-visible,
 .eda-dataset-select:focus-visible {
-  outline: 2px solid #D6FA43;
+  outline: 2px solid #d6fa43;
   outline-offset: 2px;
 }

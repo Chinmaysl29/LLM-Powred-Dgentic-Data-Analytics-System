@@ -184,12 +184,20 @@ async function request<T>(
   }
 
   try {
-    const response = await fetchWithRecovery(url.toString(), {
-      method,
-      headers,
-      body: isFormData ? (body as FormData) : (body !== undefined ? JSON.stringify(body) : undefined),
-      signal: controller.signal,
-    }, { timeoutMs });
+    const response = await fetchWithRecovery(
+      url.toString(),
+      {
+        method,
+        headers,
+        body: isFormData
+          ? (body as FormData)
+          : body !== undefined
+            ? JSON.stringify(body)
+            : undefined,
+        signal: controller.signal,
+      },
+      { timeoutMs },
+    );
 
     // --- Success path ---
     if (response.ok) {
@@ -197,7 +205,7 @@ async function request<T>(
       if (response.status === 204) {
         return undefined as T;
       }
-      if (options.responseType === 'blob') return await response.blob() as T;
+      if (options.responseType === 'blob') return (await response.blob()) as T;
       return (await response.json()) as T;
     }
 
@@ -206,13 +214,21 @@ async function request<T>(
     let errorCode = errorCodeFromStatus(response.status);
     try {
       const errorBody: unknown = await response.json();
-      if (typeof errorBody === 'object' && errorBody !== null && 'message' in errorBody && typeof errorBody.message === 'string') message = errorBody.message;
-      if (typeof errorBody === 'object' && errorBody !== null && 'error_code' in errorBody && typeof errorBody.error_code === 'string') errorCode = errorBody.error_code;
       if (
         typeof errorBody === 'object' &&
         errorBody !== null &&
-        'detail' in errorBody
-      ) {
+        'message' in errorBody &&
+        typeof errorBody.message === 'string'
+      )
+        message = errorBody.message;
+      if (
+        typeof errorBody === 'object' &&
+        errorBody !== null &&
+        'error_code' in errorBody &&
+        typeof errorBody.error_code === 'string'
+      )
+        errorCode = errorBody.error_code;
+      if (typeof errorBody === 'object' && errorBody !== null && 'detail' in errorBody) {
         const detail = (errorBody as { detail: unknown }).detail;
         message = typeof detail === 'string' ? detail : JSON.stringify(detail);
       }
@@ -220,11 +236,7 @@ async function request<T>(
       // Body is not JSON â€” use statusText as the message.
     }
 
-    throw new ApiError(
-      response.status,
-      errorCode,
-      message,
-    );
+    throw new ApiError(response.status, errorCode, message);
   } catch (error: unknown) {
     // Re-throw ApiError instances as-is.
     if (error instanceof ApiError) {

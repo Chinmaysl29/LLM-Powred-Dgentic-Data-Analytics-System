@@ -1,0 +1,397 @@
+{
+  "memory_limit_bytes": 2147483648,
+  "cpus": 2,
+  "sample_interval_ms": 25,
+  "results": [
+    {
+      "mode": "analytics",
+      "rows": 500000,
+      "source_bytes": 22583440,
+      "source_sha256": "ccad278da8078c32bfa8edf839bdc9c986c813d264fdfebb8e38dfd286da4e4d",
+      "expected_region_sums": {
+        "east": 624750000,
+        "west": 624875000,
+        "north": 625000000,
+        "south": 625125000
+      },
+      "source_unchanged": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "wall_seconds": 3.633,
+      "sampled_peak_rss_bytes": 280973312,
+      "oom_kill_delta": 0,
+      "measurement": {
+        "seconds": 3.157213384998613,
+        "peak_rss_bytes": 280522752,
+        "result": {
+          "status": "complete",
+          "answer": "Sum amount_cents by region: region = south, amount_cents = 625125000; region = north, amount_cents = 625000000; region = west, amount_cents = 624875000; region = east, amount_cents = 624750000.",
+          "data": [
+            {
+              "region": "south",
+              "amount_cents": 625125000
+            },
+            {
+              "region": "north",
+              "amount_cents": 625000000
+            },
+            {
+              "region": "west",
+              "amount_cents": 624875000
+            },
+            {
+              "region": "east",
+              "amount_cents": 624750000
+            }
+          ],
+          "explanation": "Executed validated sum against the selected dataset version. Null grouping keys are retained.",
+          "actionable": [
+            "Explore distributions or relationships for 'amount_cents' in Visualization Studio.",
+            "Generate an Executive Report covering category-level performance across region."
+          ],
+          "plan": {
+            "operation": "sum",
+            "metric": "amount_cents",
+            "dimension": "region",
+            "limit": 10,
+            "dimensions": [
+              "region"
+            ],
+            "date_field": null,
+            "date_granularity": null,
+            "aggregation": "sum",
+            "clarification_required": false,
+            "validation_errors": [],
+            "metric_options": [
+              "row_id",
+              "amount_cents"
+            ],
+            "dataset_id": null,
+            "dataset_version": null,
+            "filters": [],
+            "sort": "descending"
+          },
+          "kpis": {
+            "total": 2499750000,
+            "mean": 4999.5,
+            "median": 4999.5,
+            "min": 0,
+            "max": 9999,
+            "count": 500000
+          },
+          "chart": {
+            "chart_type": "bar",
+            "x_field": "region",
+            "y_field": "amount_cents",
+            "points": [
+              {
+                "label": "south",
+                "value": 625125000.0
+              },
+              {
+                "label": "north",
+                "value": 625000000.0
+              },
+              {
+                "label": "west",
+                "value": 624875000.0
+              },
+              {
+                "label": "east",
+                "value": 624750000.0
+              }
+            ],
+            "chart_label": "Sum of amount_cents"
+          }
+        }
+      }
+    },
+    {
+      "mode": "materialize",
+      "rows": 500000,
+      "source_bytes": 22583440,
+      "source_sha256": "ccad278da8078c32bfa8edf839bdc9c986c813d264fdfebb8e38dfd286da4e4d",
+      "expected_region_sums": {
+        "east": 624750000,
+        "west": 624875000,
+        "north": 625000000,
+        "south": 625125000
+      },
+      "source_unchanged": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "wall_seconds": 13.065,
+      "sampled_peak_rss_bytes": 1153998848,
+      "oom_kill_delta": 0,
+      "measurement": {
+        "seconds": 12.698050537997915,
+        "peak_rss_bytes": 1156128768,
+        "result": {
+          "json_path": "/verification/benchmark/phase0-878d2cca33/output-500000/processed/synthetic.json",
+          "canonical_path": "/verification/benchmark/phase0-878d2cca33/output-500000/datasets/synthetic/canonical/data.parquet",
+          "canonical_format": "parquet",
+          "content_hash": "ccad278da8078c32bfa8edf839bdc9c986c813d264fdfebb8e38dfd286da4e4d",
+          "row_count": 500000,
+          "column_count": 5,
+          "artifact_bytes": 314034594
+        }
+      }
+    },
+    {
+      "mode": "analytics",
+      "rows": 1000000,
+      "source_bytes": 45277940,
+      "source_sha256": "a7034b6a7b04cbc55cb6b3e7c2d1142827e874bf25fb3834a82f955e1dd95e8a",
+      "expected_region_sums": {
+        "east": 1249500000,
+        "west": 1249750000,
+        "north": 1250000000,
+        "south": 1250250000
+      },
+      "source_unchanged": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "wall_seconds": 3.934,
+      "sampled_peak_rss_bytes": 388481024,
+      "oom_kill_delta": 0,
+      "measurement": {
+        "seconds": 3.4513795229941024,
+        "peak_rss_bytes": 387858432,
+        "result": {
+          "status": "complete",
+          "answer": "Sum amount_cents by region: region = south, amount_cents = 1250250000; region = north, amount_cents = 1250000000; region = west, amount_cents = 1249750000; region = east, amount_cents = 1249500000.",
+          "data": [
+            {
+              "region": "south",
+              "amount_cents": 1250250000
+            },
+            {
+              "region": "north",
+              "amount_cents": 1250000000
+            },
+            {
+              "region": "west",
+              "amount_cents": 1249750000
+            },
+            {
+              "region": "east",
+              "amount_cents": 1249500000
+            }
+          ],
+          "explanation": "Executed validated sum against the selected dataset version. Null grouping keys are retained.",
+          "actionable": [
+            "Explore distributions or relationships for 'amount_cents' in Visualization Studio.",
+            "Generate an Executive Report covering category-level performance across region."
+          ],
+          "plan": {
+            "operation": "sum",
+            "metric": "amount_cents",
+            "dimension": "region",
+            "limit": 10,
+            "dimensions": [
+              "region"
+            ],
+            "date_field": null,
+            "date_granularity": null,
+            "aggregation": "sum",
+            "clarification_required": false,
+            "validation_errors": [],
+            "metric_options": [
+              "row_id",
+              "amount_cents"
+            ],
+            "dataset_id": null,
+            "dataset_version": null,
+            "filters": [],
+            "sort": "descending"
+          },
+          "kpis": {
+            "total": 4999500000,
+            "mean": 4999.5,
+            "median": 4999.5,
+            "min": 0,
+            "max": 9999,
+            "count": 1000000
+          },
+          "chart": {
+            "chart_type": "bar",
+            "x_field": "region",
+            "y_field": "amount_cents",
+            "points": [
+              {
+                "label": "south",
+                "value": 1250250000.0
+              },
+              {
+                "label": "north",
+                "value": 1250000000.0
+              },
+              {
+                "label": "west",
+                "value": 1249750000.0
+              },
+              {
+                "label": "east",
+                "value": 1249500000.0
+              }
+            ],
+            "chart_label": "Sum of amount_cents"
+          }
+        }
+      }
+    },
+    {
+      "mode": "materialize",
+      "rows": 1000000,
+      "source_bytes": 45277940,
+      "source_sha256": "a7034b6a7b04cbc55cb6b3e7c2d1142827e874bf25fb3834a82f955e1dd95e8a",
+      "expected_region_sums": {
+        "east": 1249500000,
+        "west": 1249750000,
+        "north": 1250000000,
+        "south": 1250250000
+      },
+      "source_unchanged": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "wall_seconds": 35.913,
+      "sampled_peak_rss_bytes": 2151022592,
+      "oom_kill_delta": 0,
+      "measurement": {
+        "seconds": 35.52291126799537,
+        "peak_rss_bytes": 2152054784,
+        "result": {
+          "json_path": "/verification/benchmark/phase0-878d2cca33/output-1000000/processed/synthetic.json",
+          "canonical_path": "/verification/benchmark/phase0-878d2cca33/output-1000000/datasets/synthetic/canonical/data.parquet",
+          "canonical_format": "parquet",
+          "content_hash": "a7034b6a7b04cbc55cb6b3e7c2d1142827e874bf25fb3834a82f955e1dd95e8a",
+          "row_count": 1000000,
+          "column_count": 5,
+          "artifact_bytes": 628085293
+        }
+      }
+    },
+    {
+      "mode": "analytics",
+      "rows": 2000000,
+      "source_bytes": 91666940,
+      "source_sha256": "d3ec3eccdffbd6be4d144902b34fe9de29ada5d8bf30a4d83d266efe8c3bce36",
+      "expected_region_sums": {
+        "east": 2499000000,
+        "west": 2499500000,
+        "north": 2500000000,
+        "south": 2500500000
+      },
+      "source_unchanged": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "wall_seconds": 6.091,
+      "sampled_peak_rss_bytes": 604340224,
+      "oom_kill_delta": 0,
+      "measurement": {
+        "seconds": 5.514348715005326,
+        "peak_rss_bytes": 603885568,
+        "result": {
+          "status": "complete",
+          "answer": "Sum amount_cents by region: region = south, amount_cents = 2500500000; region = north, amount_cents = 2500000000; region = west, amount_cents = 2499500000; region = east, amount_cents = 2499000000.",
+          "data": [
+            {
+              "region": "south",
+              "amount_cents": 2500500000
+            },
+            {
+              "region": "north",
+              "amount_cents": 2500000000
+            },
+            {
+              "region": "west",
+              "amount_cents": 2499500000
+            },
+            {
+              "region": "east",
+              "amount_cents": 2499000000
+            }
+          ],
+          "explanation": "Executed validated sum against the selected dataset version. Null grouping keys are retained.",
+          "actionable": [
+            "Explore distributions or relationships for 'amount_cents' in Visualization Studio.",
+            "Generate an Executive Report covering category-level performance across region."
+          ],
+          "plan": {
+            "operation": "sum",
+            "metric": "amount_cents",
+            "dimension": "region",
+            "limit": 10,
+            "dimensions": [
+              "region"
+            ],
+            "date_field": null,
+            "date_granularity": null,
+            "aggregation": "sum",
+            "clarification_required": false,
+            "validation_errors": [],
+            "metric_options": [
+              "row_id",
+              "amount_cents"
+            ],
+            "dataset_id": null,
+            "dataset_version": null,
+            "filters": [],
+            "sort": "descending"
+          },
+          "kpis": {
+            "total": 9999000000,
+            "mean": 4999.5,
+            "median": 4999.5,
+            "min": 0,
+            "max": 9999,
+            "count": 2000000
+          },
+          "chart": {
+            "chart_type": "bar",
+            "x_field": "region",
+            "y_field": "amount_cents",
+            "points": [
+              {
+                "label": "south",
+                "value": 2500500000.0
+              },
+              {
+                "label": "north",
+                "value": 2500000000.0
+              },
+              {
+                "label": "west",
+                "value": 2499500000.0
+              },
+              {
+                "label": "east",
+                "value": 2499000000.0
+              }
+            ],
+            "chart_label": "Sum of amount_cents"
+          }
+        }
+      }
+    },
+    {
+      "mode": "materialize",
+      "rows": 2000000,
+      "source_bytes": 91666940,
+      "source_sha256": "d3ec3eccdffbd6be4d144902b34fe9de29ada5d8bf30a4d83d266efe8c3bce36",
+      "expected_region_sums": {
+        "east": 2499000000,
+        "west": 2499500000,
+        "north": 2500000000,
+        "south": 2500500000
+      },
+      "source_unchanged": true,
+      "exit_code": -9,
+      "timed_out": false,
+      "wall_seconds": 12.172,
+      "sampled_peak_rss_bytes": 2194591744,
+      "oom_kill_delta": 1,
+      "stderr_tail": ""
+    }
+  ]
+}

@@ -239,7 +239,9 @@ def register_exception_handlers(app: FastAPI) -> None:
             status.HTTP_422_UNPROCESSABLE_CONTENT,
             "Request validation failed",
             "VALIDATION_ERROR",
-            exc.errors(),
+            # Root/field validators may include a ValueError object in ctx.
+            # Return useful field locations without echoing inputs or non-JSON exceptions.
+            [{key: item[key] for key in ('loc', 'msg', 'type') if key in item} for item in exc.errors()],
         )
 
     @app.exception_handler(HTTPException)

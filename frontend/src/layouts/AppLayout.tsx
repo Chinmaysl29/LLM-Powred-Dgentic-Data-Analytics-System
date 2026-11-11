@@ -23,6 +23,7 @@ import {
   Command,
   LayoutGrid,
   Activity,
+  ShieldCheck,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -54,9 +55,7 @@ interface NavGroup {
 const NAV_GROUPS: NavGroup[] = [
   {
     label: 'WORKSPACE',
-    items: [
-      { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    ],
+    items: [{ to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard }],
   },
   {
     label: 'DATA MANAGEMENT',
@@ -83,9 +82,7 @@ const NAV_GROUPS: NavGroup[] = [
         to: '/reports',
         label: 'Reports',
         icon: FileText,
-        subItems: [
-          { to: '/reports/create', label: 'Create Report' },
-        ],
+        subItems: [{ to: '/reports/create', label: 'Create Report' }],
       },
       { to: '/dashboard-studio', label: 'Dashboard Studio', icon: LayoutGrid },
     ],
@@ -94,6 +91,9 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'AI INTELLIGENCE',
     items: [
       { to: '/memory', label: 'AI Memory', icon: Brain },
+      { to: '/verified-learning', label: 'Verified Learning', icon: ShieldCheck },
+      { to: '/learning-dashboard', label: 'Learning Dashboard', icon: Activity },
+      { to: '/data-health', label: 'Data Health', icon: Activity },
     ],
   },
   {
@@ -123,6 +123,9 @@ const PAGE_TITLES: Record<string, string> = {
   '/reports/create': 'Create Report',
   '/forecasting': 'Forecasting Workbench',
   '/memory': 'AI Memory Explorer',
+  '/verified-learning': 'Verified Learning',
+  '/learning-dashboard': 'Learning Dashboard',
+  '/data-health': 'Data Health',
   '/dashboard-studio': 'Dashboard Studio',
   '/profile': 'Profile',
   '/settings': 'Settings',
@@ -157,8 +160,14 @@ interface DockIconProps {
 function DockIcon({ children, isCollapsed, label }: DockIconProps) {
   return (
     <>
-      <span className="ws-dock-icon" aria-hidden="true">{children}</span>
-      {isCollapsed && <span className="ws-tooltip" role="tooltip">{label}</span>}
+      <span className="ws-dock-icon" aria-hidden="true">
+        {children}
+      </span>
+      {isCollapsed && (
+        <span className="ws-tooltip" role="tooltip">
+          {label}
+        </span>
+      )}
     </>
   );
 }
@@ -168,7 +177,9 @@ function subscribeMobile(callback: () => void) {
   query.addEventListener('change', callback);
   return () => query.removeEventListener('change', callback);
 }
-function mobileSnapshot() { return window.matchMedia('(max-width: 768px)').matches; }
+function mobileSnapshot() {
+  return window.matchMedia('(max-width: 768px)').matches;
+}
 
 // ---------------------------------------------------------------------------
 // Sidebar Component
@@ -182,7 +193,13 @@ interface SidebarProps {
   onMobileClose: () => void;
 }
 
-function Sidebar({ isCollapsed, onToggleCollapse, mobileOpen, isMobile, onMobileClose }: SidebarProps) {
+function Sidebar({
+  isCollapsed,
+  onToggleCollapse,
+  mobileOpen,
+  isMobile,
+  onMobileClose,
+}: SidebarProps) {
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -191,16 +208,28 @@ function Sidebar({ isCollapsed, onToggleCollapse, mobileOpen, isMobile, onMobile
     if (!mobileOpen) return;
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const sidebar = sidebarRef.current;
-    const focusable = () => (sidebar ? Array.from(sidebar.querySelectorAll<HTMLElement>('a[href], button:not([disabled])')) : []).filter(el => el.getClientRects().length > 0);
+    const focusable = () =>
+      (sidebar
+        ? Array.from(sidebar.querySelectorAll<HTMLElement>('a[href], button:not([disabled])'))
+        : []
+      ).filter((el) => el.getClientRects().length > 0);
     focusable()[0]?.focus();
     const handleKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') { event.preventDefault(); onMobileClose(); }
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onMobileClose();
+      }
       if (event.key === 'Tab') {
         const items = focusable();
         const first = items[0];
         const last = items[items.length - 1];
-        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
-        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus();
+        }
       }
     };
     sidebar?.addEventListener('keydown', handleKey);
@@ -232,8 +261,9 @@ function Sidebar({ isCollapsed, onToggleCollapse, mobileOpen, isMobile, onMobile
       />
 
       <aside
-        className={`ws-sidebar ${isCollapsed ? 'ws-sidebar--collapsed' : 'ws-sidebar--expanded'} ${mobileOpen ? 'ws-sidebar--open' : ''
-          }`}
+        className={`ws-sidebar ${isCollapsed ? 'ws-sidebar--collapsed' : 'ws-sidebar--expanded'} ${
+          mobileOpen ? 'ws-sidebar--open' : ''
+        }`}
         aria-label="Main navigation"
         id="workspace-navigation"
         ref={sidebarRef}
@@ -267,7 +297,9 @@ function Sidebar({ isCollapsed, onToggleCollapse, mobileOpen, isMobile, onMobile
             )}
             {/* CSS tooltip for the toggle button when collapsed */}
             {isCollapsed && (
-              <span className="ws-tooltip" role="tooltip">Expand sidebar</span>
+              <span className="ws-tooltip" role="tooltip">
+                Expand sidebar
+              </span>
             )}
           </button>
 
@@ -294,9 +326,7 @@ function Sidebar({ isCollapsed, onToggleCollapse, mobileOpen, isMobile, onMobile
               <Plus size={20} strokeWidth={1.9} />
             </DockIcon>
             {/* Label rendered when sidebar is expanded OR mobile drawer is open */}
-            {showLabels && (
-              <span className="ws-new-analysis-label">New Analysis</span>
-            )}
+            {showLabels && <span className="ws-new-analysis-label">New Analysis</span>}
           </Link>
         </div>
 
@@ -319,19 +349,16 @@ function Sidebar({ isCollapsed, onToggleCollapse, mobileOpen, isMobile, onMobile
                     <NavLink
                       to={to}
                       end={to === '/dashboard' || Boolean(subItems)}
-                      className={({ isActive }) => `ws-nav-link${isActive || (Boolean(subItems) && isGroupActive) ? ' ws-nav-link--active' : ''}`}
+                      className={({ isActive }) =>
+                        `ws-nav-link${isActive || (Boolean(subItems) && isGroupActive) ? ' ws-nav-link--active' : ''}`
+                      }
                       aria-label={label}
                       onClick={onMobileClose}
                     >
-                      <DockIcon
-                        isCollapsed={effectivelyCollapsed}
-                        label={label}
-                      >
+                      <DockIcon isCollapsed={effectivelyCollapsed} label={label}>
                         <Icon size={20} strokeWidth={1.9} />
                       </DockIcon>
-                      {showLabels && (
-                        <span className="ws-nav-label">{label}</span>
-                      )}
+                      {showLabels && <span className="ws-nav-label">{label}</span>}
                     </NavLink>
                     {showLabels && subItems && isGroupActive && (
                       <div className="ws-nav-subitems">
@@ -340,7 +367,9 @@ function Sidebar({ isCollapsed, onToggleCollapse, mobileOpen, isMobile, onMobile
                             key={sub.to}
                             to={sub.to}
                             end={sub.to === '/reports'}
-                            className={({ isActive }) => `ws-nav-sublink${isActive ? ' ws-nav-sublink--active' : ''}`}
+                            className={({ isActive }) =>
+                              `ws-nav-sublink${isActive ? ' ws-nav-sublink--active' : ''}`
+                            }
                             onClick={onMobileClose}
                           >
                             <span className="ws-nav-sublink-dot" aria-hidden="true" />
@@ -367,9 +396,7 @@ function Sidebar({ isCollapsed, onToggleCollapse, mobileOpen, isMobile, onMobile
             <DockIcon isCollapsed={effectivelyCollapsed} label="Sign out">
               <LogOut size={20} strokeWidth={1.9} />
             </DockIcon>
-            {showLabels && (
-              <span className="ws-nav-label">Sign out</span>
-            )}
+            {showLabels && <span className="ws-nav-label">Sign out</span>}
           </button>
         </div>
       </aside>
@@ -384,7 +411,12 @@ function Sidebar({ isCollapsed, onToggleCollapse, mobileOpen, isMobile, onMobile
 export default function AppLayout() {
   useApplyAppearance();
   const { user } = useAuth();
-  const initials = (user?.full_name || user?.email || 'Account').split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase();
+  const initials = (user?.full_name || user?.email || 'Account')
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase();
   const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
     try {
       return localStorage.getItem(SIDEBAR_STORAGE_KEY) === 'true';
@@ -426,7 +458,9 @@ export default function AppLayout() {
 
   return (
     <div className={`ws-shell ${isCollapsed ? 'ws-shell--collapsed' : 'ws-shell--expanded'}`}>
-      <a href="#main-content" className="product-skip">Skip to main content</a>
+      <a href="#main-content" className="product-skip">
+        Skip to main content
+      </a>
       <div className="ws-app-frame">
         {/* Mobile hamburger button */}
         <button
@@ -450,10 +484,17 @@ export default function AppLayout() {
         />
 
         {/* Main Content Area */}
-        <div className={`ws-main ${isCollapsed ? 'ws-main--collapsed' : 'ws-main--expanded'}`} inert={drawerOpen || cmdPalette.isOpen}>
+        <div
+          className={`ws-main ${isCollapsed ? 'ws-main--collapsed' : 'ws-main--expanded'}`}
+          inert={drawerOpen || cmdPalette.isOpen}
+        >
           {/* Topbar */}
           <header className="ws-topbar">
-            <nav className="ws-topbar-title" aria-label="Breadcrumb"><Link to="/dashboard">Workspace</Link><span aria-hidden="true"> / </span><span aria-current="page">{pageTitle}</span></nav>
+            <nav className="ws-topbar-title" aria-label="Breadcrumb">
+              <Link to="/dashboard">Workspace</Link>
+              <span aria-hidden="true"> / </span>
+              <span aria-current="page">{pageTitle}</span>
+            </nav>
             <div className="ws-topbar-actions">
               {/* Command Palette trigger */}
               <button
@@ -467,16 +508,33 @@ export default function AppLayout() {
                 <span className="ws-topbar-cmd-label">Search</span>
                 <kbd className="ws-topbar-cmd-kbd">⌘K</kbd>
               </button>
-              <Link
-                to="/settings"
-                className="ws-topbar-btn"
-                aria-label="Settings"
-              >
+              <Link to="/settings" className="ws-topbar-btn" aria-label="Settings">
                 <Settings size={16} aria-hidden="true" />
               </Link>
-              <details className="account-disclosure" onKeyDown={event => { if (event.key === 'Escape') { event.currentTarget.open = false; event.currentTarget.querySelector('summary')?.focus(); } }} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.open = false; }}>
-                <summary className="ws-topbar-avatar" aria-label="Account options">{initials}</summary>
-                <nav className="account-options" aria-label="Account" onClick={event => { if ((event.target as HTMLElement).closest('a')) event.currentTarget.closest('details')?.removeAttribute('open'); }}>
+              <details
+                className="account-disclosure"
+                onKeyDown={(event) => {
+                  if (event.key === 'Escape') {
+                    event.currentTarget.open = false;
+                    event.currentTarget.querySelector('summary')?.focus();
+                  }
+                }}
+                onBlur={(event) => {
+                  if (!event.currentTarget.contains(event.relatedTarget))
+                    event.currentTarget.open = false;
+                }}
+              >
+                <summary className="ws-topbar-avatar" aria-label="Account options">
+                  {initials}
+                </summary>
+                <nav
+                  className="account-options"
+                  aria-label="Account"
+                  onClick={(event) => {
+                    if ((event.target as HTMLElement).closest('a'))
+                      event.currentTarget.closest('details')?.removeAttribute('open');
+                  }}
+                >
                   <span>{user?.full_name || 'Your account'}</span>
                   <Link to="/profile">View profile</Link>
                   <Link to="/settings">Account settings</Link>
@@ -489,7 +547,13 @@ export default function AppLayout() {
           <main id="main-content" tabIndex={-1}>
             <Outlet />
           </main>
-          <footer className="product-footer"><span>AI Data Analyst OS</span><nav aria-label="Legal"><Link to="/privacy">Privacy policy</Link><Link to="/terms">Terms</Link></nav></footer>
+          <footer className="product-footer">
+            <span>AI Data Analyst OS</span>
+            <nav aria-label="Legal">
+              <Link to="/privacy">Privacy policy</Link>
+              <Link to="/terms">Terms</Link>
+            </nav>
+          </footer>
         </div>
       </div>
 

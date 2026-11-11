@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="38.336" timestamp="2026-11-07T14:31:24.307213+00:00" hostname="34ac08cb5071"><testcase classname="backend.tests.test_perceptron_memory" name="test_authenticated_planner_uses_only_owners_memory" time="1.095" /></testsuite></testsuites>

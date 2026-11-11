@@ -11,8 +11,14 @@ const transientStatuses = new Set([429, 502, 503, 504]);
 
 function wait(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
-    const abort = () => { clearTimeout(timer); reject(new DOMException('Request aborted', 'AbortError')); };
-    const timer = setTimeout(() => { signal.removeEventListener('abort', abort); resolve(); }, ms);
+    const abort = () => {
+      clearTimeout(timer);
+      reject(new DOMException('Request aborted', 'AbortError'));
+    };
+    const timer = setTimeout(() => {
+      signal.removeEventListener('abort', abort);
+      resolve();
+    }, ms);
     if (signal.aborted) abort();
     else signal.addEventListener('abort', abort, { once: true });
   });
@@ -61,7 +67,8 @@ export async function fetchWithRecovery(
     try {
       while (true) {
         const { done, value } = await Promise.race([reader.read(), cancelled]);
-        if (controller.signal.aborted) throw new DOMException('Response body cancelled', 'AbortError');
+        if (controller.signal.aborted)
+          throw new DOMException('Response body cancelled', 'AbortError');
         if (done) break;
         chunks.push(value);
       }
@@ -69,7 +76,9 @@ export async function fetchWithRecovery(
       headers.delete('content-encoding');
       headers.delete('content-length');
       return new Response(new Blob(chunks as BlobPart[]), {
-        status: response.status, statusText: response.statusText, headers,
+        status: response.status,
+        statusText: response.statusText,
+        headers,
       });
     } finally {
       if (rejectAbort) controller.signal.removeEventListener('abort', rejectAbort);
@@ -87,7 +96,8 @@ export async function fetchWithRecovery(
         if (controller.signal.aborted || !(error instanceof TypeError)) throw error;
         failure = error;
       }
-      if (response && (!transientStatuses.has(response.status) || attempt >= retries)) return await finish(response);
+      if (response && (!transientStatuses.has(response.status) || attempt >= retries))
+        return await finish(response);
       if (!response && attempt >= retries) throw failure;
       const delay = retryDelay(response, attempt, policy.baseDelayMs ?? 300);
       if (Date.now() + delay >= deadline) {

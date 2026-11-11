@@ -1,0 +1,19 @@
+{
+  "configured": true,
+  "project": "qjcudbkamhldswcyxypv.supabase.co",
+  "projectScopedStorage": true,
+  "anonymousSession": true,
+  "sessionError": null,
+  "authSettingsHttp": 200,
+  "emailAuthEnabled": true,
+  "profilesProbe": {
+    "http": 404,
+    "errorCode": "PGRST205"
+  },
+  "returnedRows": 0,
+  "errors": [],
+  "responsesMocked": false,
+  "accountCreated": false,
+  "signedInUserTest": "Not run: a confirmed project account and password were not supplied.",
+  "hostedDatabaseMigration": "Pending PostgreSQL connection credentials; no hosted schema/data writes performed."
+}

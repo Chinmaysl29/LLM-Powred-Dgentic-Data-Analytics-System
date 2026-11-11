@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "legacy_records_preserved": true,
+  "historical_governance": "unknown",
+  "upgrade_idempotent": true,
+  "downgrade_upgrade": true,
+  "lossy_downgrade_rejected": true,
+  "reviewer_history_downgrade_rejected": true
+}

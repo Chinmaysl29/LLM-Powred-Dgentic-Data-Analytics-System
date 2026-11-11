@@ -47,6 +47,11 @@ logs/
 logs/*.log
 *.log
 
+# Downloaded model weights belong to persistent runtime storage, not source control.
+/storage/model-cache/
+# Private dataset-derived golden answers and evaluation reports stay local.
+/storage/learning/golden/
+
 # Node / frontend
 node_modules/
 dist/
@@ -59,7 +64,11 @@ dist/
 *.sqlite3
 
 # IDE
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
 .idea/
 *.swp
 *.swo

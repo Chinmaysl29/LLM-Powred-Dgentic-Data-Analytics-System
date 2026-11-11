@@ -38,10 +38,19 @@ export const PortfolioOnboardingBanner: React.FC<PortfolioOnboardingProps> = ({
 
   const sampleQueries = [
     { label: '📉 Why did revenue decline?', query: 'Why did revenue decline in Q3?' },
-    { label: '💎 What products drive profit?', query: 'What products drive profit and net margin?' },
-    { label: '📈 Forecast next 12 months', query: 'Forecast next 12 months for enterprise revenue' },
+    {
+      label: '💎 What products drive profit?',
+      query: 'What products drive profit and net margin?',
+    },
+    {
+      label: '📈 Forecast next 12 months',
+      query: 'Forecast next 12 months for enterprise revenue',
+    },
     { label: '📊 Create executive dashboard', query: 'Create executive dashboard for C-suite' },
-    { label: '🚨 Find anomalies in sales', query: 'Find anomalies in sales volume and transactions' },
+    {
+      label: '🚨 Find anomalies in sales',
+      query: 'Find anomalies in sales volume and transactions',
+    },
   ];
 
   const handleLaunchPortfolio = async () => {
@@ -71,7 +80,15 @@ export const PortfolioOnboardingBanner: React.FC<PortfolioOnboardingProps> = ({
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.25)',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '16px',
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           <div
             style={{
@@ -109,7 +126,8 @@ export const PortfolioOnboardingBanner: React.FC<PortfolioOnboardingProps> = ({
               </span>
             </div>
             <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#94a3b8' }}>
-              Explore the full AI data analyst stack: 5 enterprise demo datasets, self-orchestrating multi-agent reasoning, and automated executive dossiers.
+              Explore the full AI data analyst stack: 5 enterprise demo datasets, self-orchestrating
+              multi-agent reasoning, and automated executive dossiers.
             </p>
           </div>
         </div>
@@ -157,7 +175,11 @@ export const PortfolioOnboardingBanner: React.FC<PortfolioOnboardingProps> = ({
             }}
           >
             {demoLoaded ? <CheckCircle2 size={16} /> : <Sparkles size={16} />}
-            {loadingDemo ? 'Provisioning...' : demoLoaded ? 'Demo Workspace Ready' : 'Load Enterprise Demo'}
+            {loadingDemo
+              ? 'Provisioning...'
+              : demoLoaded
+                ? 'Demo Workspace Ready'
+                : 'Load Enterprise Demo'}
           </button>
         </div>
       </div>
@@ -173,7 +195,9 @@ export const PortfolioOnboardingBanner: React.FC<PortfolioOnboardingProps> = ({
             border: '1px solid rgba(255, 255, 255, 0.05)',
           }}
         >
-          <div style={{ fontSize: '12px', fontWeight: 600, color: '#a5b4fc', marginBottom: '10px' }}>
+          <div
+            style={{ fontSize: '12px', fontWeight: 600, color: '#a5b4fc', marginBottom: '10px' }}
+          >
             VERIFIED END-TO-END DATA JOURNEY:
           </div>
           <div

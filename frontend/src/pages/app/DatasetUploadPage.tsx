@@ -196,8 +196,7 @@ export default function DatasetUploadPage() {
       }
       navigate('/datasets');
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : 'Upload failed. Please try again.';
+      const message = err instanceof Error ? err.message : 'Upload failed. Please try again.';
       setUploadError(message);
     } finally {
       setIsUploading(false);
@@ -351,13 +350,11 @@ export default function DatasetUploadPage() {
 
       {/* Upload Card */}
       <div className="upload-card">
-
         {/* Card Header */}
         <div className="upload-card-header">
           <h2 className="upload-card-title">Upload your files</h2>
           <p className="upload-card-subtitle">CSV, XLSX, JSON, PDF</p>
         </div>
-
 
         {/* Drop Zone */}
         {/*
@@ -405,11 +402,7 @@ export default function DatasetUploadPage() {
 
         {/* Validation errors — shown when unsupported files are dropped */}
         {validationErrors.length > 0 && (
-          <div
-            className="upload-error-banner"
-            role="alert"
-            aria-live="assertive"
-          >
+          <div className="upload-error-banner" role="alert" aria-live="assertive">
             <div className="upload-error-banner-header">
               <IconAlertCircle className="upload-error-icon" />
               <span>
@@ -453,11 +446,7 @@ export default function DatasetUploadPage() {
               aria-label={`${selectedFiles.length} file${selectedFiles.length === 1 ? '' : 's'} selected`}
             >
               {selectedFiles.map((entry) => (
-                <div
-                  key={entry.key}
-                  className="upload-file-item"
-                  role="listitem"
-                >
+                <div key={entry.key} className="upload-file-item" role="listitem">
                   {/* File icon */}
                   <div className="upload-file-icon" aria-hidden="true">
                     <IconFile />
@@ -465,15 +454,10 @@ export default function DatasetUploadPage() {
 
                   {/* File info */}
                   <div className="upload-file-info">
-                    <span
-                      className="upload-file-name"
-                      title={entry.file.name}
-                    >
+                    <span className="upload-file-name" title={entry.file.name}>
                       {entry.file.name}
                     </span>
-                    <span className="upload-file-size">
-                      {formatFileSize(entry.file.size)}
-                    </span>
+                    <span className="upload-file-size">{formatFileSize(entry.file.size)}</span>
                   </div>
 
                   {/* Remove button */}
@@ -515,7 +499,6 @@ export default function DatasetUploadPage() {
             </button>
           </div>
         )}
-
       </div>
     </div>
   );

@@ -1,0 +1,10 @@
+{"operation": "modify_nullable", "table": "audit_entries", "column": "event_id", "database": "True", "model": "False"}
+{"operation": "modify_default", "table": "audit_entries", "column": "actor_type", "database": "DefaultClause(<sqlalchemy.sql.elements.TextClause object at 0x790df9982610>, for_update=False)", "model": "None"}
+{"operation": "modify_default", "table": "audit_entries", "column": "metadata", "database": "DefaultClause(<sqlalchemy.sql.elements.TextClause object at 0x790df9982950>, for_update=False)", "model": "None"}
+{"operation": "modify_default", "table": "audit_entries", "column": "status", "database": "DefaultClause(<sqlalchemy.sql.elements.TextClause object at 0x790df9982c50>, for_update=False)", "model": "None"}
+{"operation": "modify_default", "table": "cleaning_recommendations", "column": "status", "database": "DefaultClause(<sqlalchemy.sql.elements.TextClause object at 0x790dfa3af7d0>, for_update=False)", "model": "None"}
+{"operation": "modify_default", "table": "cleaning_recommendations", "column": "estimated_quality_gain", "database": "DefaultClause(<sqlalchemy.sql.elements.TextClause object at 0x790dfa3aff10>, for_update=False)", "model": "None"}
+{"operation": "modify_default", "table": "cleaning_recommendations", "column": "created_at", "database": "DefaultClause(<sqlalchemy.sql.elements.TextClause object at 0x790dfa3bc510>, for_update=False)", "model": "None"}
+{"operation": "modify_default", "table": "dataset_versions", "column": "is_active", "database": "DefaultClause(<sqlalchemy.sql.elements.TextClause object at 0x790dfa3eef50>, for_update=False)", "model": "None"}
+{"operation": "modify_default", "table": "datasets", "column": "version", "database": "DefaultClause(<sqlalchemy.sql.elements.TextClause object at 0x790dfa339bd0>, for_update=False)", "model": "None"}
+{"operation": "modify_default", "table": "datasets", "column": "status", "database": "DefaultClause(<sqlalchemy.sql.elements.TextClause object at 0x790dfa33a510>, for_update=False)", "model": "None"}

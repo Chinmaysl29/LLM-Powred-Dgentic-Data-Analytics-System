@@ -2,10 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { datasetService } from '../../services/datasetService';
 import { analysisService } from '../../services/analysisService';
+import { useAsyncResource } from '../../hooks/useAsyncResource';
+import VerifiedTrendChart from '../../components/analytics/VerifiedTrendChart';
+import CalculationDrawer from '../../components/CalculationDrawer';
 import type { Dataset } from '../../types/datasets';
 import type {
   AnalysisSessionDetail,
-  AnalysisSessionSummary,
   AnalysisTurn,
   ChartSpec,
   KpiMetrics,
@@ -14,13 +16,17 @@ import type {
 export default function AnalysisPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const initial = location.state as { question?: string; datasetId?: string; sessionId?: string } | null;
+  const initial = location.state as {
+    question?: string;
+    datasetId?: string;
+    sessionId?: string;
+  } | null;
   const searchParams = new URLSearchParams(location.search);
 
   // Core state
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [datasetId, setDatasetId] = useState<string>(
-    initial?.datasetId ?? searchParams.get('datasetId') ?? searchParams.get('dataset') ?? ''
+    initial?.datasetId ?? searchParams.get('datasetId') ?? searchParams.get('dataset') ?? '',
   );
   const [question, setQuestion] = useState<string>(initial?.question ?? '');
   const [loadingDatasets, setLoadingDatasets] = useState(true);
@@ -28,11 +34,10 @@ export default function AnalysisPage() {
   const [error, setError] = useState<string>('');
 
   // Persistent Sessions state
-  const [sessions, setSessions] = useState<AnalysisSessionSummary[]>([]);
-  const [loadingSessions, setLoadingSessions] = useState(false);
+  const [sessionsRevision, setSessionsRevision] = useState(0);
   const [sessionSearch, setSessionSearch] = useState<string>('');
   const [activeSessionId, setActiveSessionId] = useState<string | null>(
-    initial?.sessionId ?? searchParams.get('session_id') ?? null
+    initial?.sessionId ?? searchParams.get('session_id') ?? null,
   );
   const [activeSession, setActiveSession] = useState<AnalysisSessionDetail | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -49,7 +54,7 @@ export default function AnalysisPage() {
         if (!active) return;
         setDatasets(items);
         setDatasetId((current) =>
-          items.some((d) => d.dataset_id === current) ? current : items[0]?.dataset_id ?? ''
+          items.some((d) => d.dataset_id === current) ? current : (items[0]?.dataset_id ?? ''),
         );
       })
       .catch((e) => {
@@ -64,28 +69,17 @@ export default function AnalysisPage() {
   }, []);
 
   // 2. Load persistent session history
-  const loadSessions = useCallback(async () => {
-    setLoadingSessions(true);
-    try {
-      const list = await analysisService.listSessions(null, sessionSearch);
-      setSessions(list);
-    } catch {
-      // Non-blocking error for session list
-    } finally {
-      setLoadingSessions(false);
-    }
+  const fetchSessions = useCallback(() => {
+    return analysisService.listSessions(null, sessionSearch);
   }, [sessionSearch]);
-
-  useEffect(() => {
-    void loadSessions();
-  }, [loadSessions]);
+  const sessionList = useAsyncResource(fetchSessions, sessionsRevision);
+  const sessions = sessionList.data ?? [];
+  const loadingSessions = sessionList.loading;
+  const loadSessions = () => setSessionsRevision((value) => value + 1);
 
   // 3. Load active session details when activeSessionId changes
   useEffect(() => {
-    if (!activeSessionId) {
-      setActiveSession(null);
-      return;
-    }
+    if (!activeSessionId) return;
 
     let active = true;
     analysisService
@@ -93,7 +87,7 @@ export default function AnalysisPage() {
       .then((detail) => {
         if (!active) return;
         setActiveSession(detail);
-        if (detail.dataset_id && (!datasetId || datasetId !== detail.dataset_id)) {
+        if (detail.dataset_id) {
           setDatasetId(detail.dataset_id);
         }
       })
@@ -129,6 +123,7 @@ export default function AnalysisPage() {
   function handleSelectSession(sid: string) {
     if (sid === activeSessionId) return;
     setActiveSessionId(sid);
+    setActiveSession(null);
     setError('');
     navigate(`/analysis?session_id=${encodeURIComponent(sid)}`, { replace: true });
   }
@@ -192,12 +187,16 @@ export default function AnalysisPage() {
 
   return (
     <div className="ws-page" style={{ padding: '24px 32px', maxWidth: 1600 }}>
+      <Link to="/verified-learning" className="btn btn--ghost">
+        Open verified analysis and learning evidence
+      </Link>
       {/* Editorial Hero Header */}
       <header className="analysis-hero" style={{ marginBottom: 20 }}>
         <div>
           <p className="eyebrow">AI ANALYSIS & PERSISTENT CONVERSATIONAL WORKSPACE</p>
           <h1 style={{ margin: '14px 0' }}>
-            Good questions.<br />
+            Good questions.
+            <br />
             <em>Verifiable answers.</em>
           </h1>
           <p style={{ margin: 0 }}>
@@ -250,7 +249,10 @@ export default function AnalysisPage() {
           Loading analytical workspace…
         </p>
       ) : datasets.length === 0 ? (
-        <section className="dataset-empty surface-panel" style={{ textAlign: 'center', padding: 48 }}>
+        <section
+          className="dataset-empty surface-panel"
+          style={{ textAlign: 'center', padding: 48 }}
+        >
           <h2>No datasets uploaded yet.</h2>
           <p style={{ color: 'var(--text-muted)' }}>
             Upload your Excel or CSV dataset to start asking analytical questions.
@@ -346,7 +348,14 @@ export default function AnalysisPage() {
                   {loadingSessions && sessions.length === 0 ? (
                     <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Loading history…</p>
                   ) : sessions.length === 0 ? (
-                    <p style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', padding: '16px 0' }}>
+                    <p
+                      style={{
+                        fontSize: 12,
+                        color: 'var(--text-muted)',
+                        textAlign: 'center',
+                        padding: '16px 0',
+                      }}
+                    >
                       No previous sessions.
                     </p>
                   ) : (
@@ -359,7 +368,9 @@ export default function AnalysisPage() {
                           style={{
                             padding: '12px',
                             borderRadius: 10,
-                            border: isActive ? '1px solid var(--accent)' : '1px solid var(--border)',
+                            border: isActive
+                              ? '1px solid var(--accent)'
+                              : '1px solid var(--border)',
                             background: isActive ? 'var(--accent-bg)' : 'var(--surface-raised)',
                             cursor: 'pointer',
                             display: 'flex',
@@ -368,7 +379,13 @@ export default function AnalysisPage() {
                             transition: 'all 0.15s ease',
                           }}
                         >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'flex-start',
+                            }}
+                          >
                             <span
                               style={{
                                 fontSize: 13,
@@ -394,7 +411,9 @@ export default function AnalysisPage() {
                                 opacity: 0.6,
                               }}
                               onMouseEnter={(e) => ((e.target as HTMLElement).style.opacity = '1')}
-                              onMouseLeave={(e) => ((e.target as HTMLElement).style.opacity = '0.6')}
+                              onMouseLeave={(e) =>
+                                ((e.target as HTMLElement).style.opacity = '0.6')
+                              }
                             >
                               ✕
                             </button>
@@ -410,7 +429,9 @@ export default function AnalysisPage() {
                             }}
                           >
                             <span>{sess.dataset_name || 'Dataset'}</span>
-                            <span>{sess.turn_count} {sess.turn_count === 1 ? 'turn' : 'turns'}</span>
+                            <span>
+                              {sess.turn_count} {sess.turn_count === 1 ? 'turn' : 'turns'}
+                            </span>
                           </div>
                         </div>
                       );
@@ -481,7 +502,8 @@ export default function AnalysisPage() {
               {activeSession && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-                    Session: <strong style={{ color: 'var(--text-h)' }}>{activeSession.title}</strong>
+                    Session:{' '}
+                    <strong style={{ color: 'var(--text-h)' }}>{activeSession.title}</strong>
                   </span>
                   <Link
                     to="/reports"
@@ -501,7 +523,9 @@ export default function AnalysisPage() {
                   <TurnCard
                     key={turn.turn_id || index}
                     turn={turn}
-                    datasetName={selectedDataset?.filename || activeSession.dataset_name || 'Dataset'}
+                    datasetName={
+                      selectedDataset?.filename || activeSession.dataset_name || 'Dataset'
+                    }
                     sessionId={activeSession.session_id}
                   />
                 ))}
@@ -537,10 +561,18 @@ export default function AnalysisPage() {
                 </div>
                 <h2 style={{ margin: '8px 0 4px', fontSize: 20 }}>Ask the AI Data Analyst</h2>
                 <p style={{ color: 'var(--text-muted)', maxWidth: 520, margin: 0, fontSize: 14 }}>
-                  Submit an analytical question or request a calculation. Results, charts, tables, and KPIs
-                  will be saved into this session automatically.
+                  Submit an analytical question or request a calculation. Results, charts, tables,
+                  and KPIs will be saved into this session automatically.
                 </p>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12, justifyContent: 'center' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: 8,
+                    flexWrap: 'wrap',
+                    marginTop: 12,
+                    justifyContent: 'center',
+                  }}
+                >
                   {[
                     'Summarize the numeric measures',
                     'Total revenue by company_name',
@@ -576,10 +608,17 @@ export default function AnalysisPage() {
                 boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+              >
                 <label
                   htmlFor="analysis-question"
-                  style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.04em' }}
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: 'var(--text-muted)',
+                    letterSpacing: '0.04em',
+                  }}
                 >
                   {activeSession && activeSession.turns.length > 0
                     ? 'ASK A FOLLOW-UP QUESTION'
@@ -624,9 +663,17 @@ export default function AnalysisPage() {
                 }}
               />
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              >
                 <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                  Press <kbd style={{ padding: '2px 5px', borderRadius: 4, background: 'var(--code-bg)' }}>Enter ↵</kbd> to execute
+                  Press{' '}
+                  <kbd
+                    style={{ padding: '2px 5px', borderRadius: 4, background: 'var(--code-bg)' }}
+                  >
+                    Enter ↵
+                  </kbd>{' '}
+                  to execute
                 </span>
 
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
@@ -670,6 +717,9 @@ function TurnCard({
   sessionId: string;
 }) {
   const navigate = useNavigate();
+  const [calculation, setCalculation] = useState<{ identity: string; workspace: string } | null>(
+    null,
+  );
   const columns = Array.from(new Set((turn.data || []).flatMap((row) => Object.keys(row))));
 
   function handleOpenReportStudio() {
@@ -721,7 +771,10 @@ function TurnCard({
           </div>
           {turn.asked_at && (
             <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
-              {new Date(turn.asked_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              {new Date(turn.asked_at).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
             </div>
           )}
         </div>
@@ -739,7 +792,15 @@ function TurnCard({
         }}
       >
         {/* Header: Status, Execution time, Source */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 10,
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span
               style={{
@@ -747,11 +808,16 @@ function TurnCard({
                 fontWeight: 700,
                 padding: '3px 8px',
                 borderRadius: 4,
-                background: turn.status === 'clarification_required' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+                background:
+                  turn.status === 'clarification_required'
+                    ? 'rgba(245, 158, 11, 0.2)'
+                    : 'rgba(16, 185, 129, 0.2)',
                 color: turn.status === 'clarification_required' ? '#f59e0b' : '#10b981',
               }}
             >
-              {turn.status === 'clarification_required' ? 'CLARIFICATION NEEDED' : 'CALCULATED & VERIFIED'}
+              {turn.status === 'clarification_required'
+                ? 'CLARIFICATION NEEDED'
+                : 'CALCULATED & VERIFIED'}
             </span>
             <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
               Source: <strong>{datasetName}</strong> · Latency: {turn.execution_time.toFixed(2)}s
@@ -783,14 +849,17 @@ function TurnCard({
         </div>
 
         {/* Population KPIs */}
-        {turn.kpis && Object.keys(turn.kpis).length > 0 && (
-          <KpiGrid kpis={turn.kpis} />
-        )}
+        {turn.kpis && Object.keys(turn.kpis).length > 0 && <KpiGrid kpis={turn.kpis} />}
 
         {/* Chart Visualization */}
-        {turn.chart && turn.chart.points && turn.chart.points.length > 0 && (
-          <BarChartRenderer chart={turn.chart} />
-        )}
+        {turn.chart &&
+          turn.chart.points &&
+          turn.chart.points.length > 0 &&
+          (turn.chart.chart_type === 'line' ? (
+            <VerifiedTrendChart chart={turn.chart} />
+          ) : (
+            <BarChartRenderer chart={turn.chart} />
+          ))}
 
         {/* Data Table */}
         {turn.data && turn.data.length > 0 && (
@@ -807,7 +876,10 @@ function TurnCard({
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
                   {columns.map((c) => (
-                    <th key={c} style={{ padding: '8px 12px', color: 'var(--text-muted)', fontWeight: 600 }}>
+                    <th
+                      key={c}
+                      style={{ padding: '8px 12px', color: 'var(--text-muted)', fontWeight: 600 }}
+                    >
                       {c}
                     </th>
                   ))}
@@ -836,10 +908,24 @@ function TurnCard({
         {/* Verified RAG Citations */}
         {turn.citations && turn.citations.length > 0 && (
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 8 }}>
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                color: 'var(--text-muted)',
+                display: 'block',
+                marginBottom: 8,
+              }}
+            >
               RETRIEVED DOCUMENT EVIDENCE ({turn.citations.length} CITATIONS)
             </span>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                gap: 10,
+              }}
+            >
               {turn.citations.map((cite, cIdx) => (
                 <div
                   key={cIdx}
@@ -854,12 +940,33 @@ function TurnCard({
                   <strong style={{ color: 'var(--brand-lime)', display: 'block', marginBottom: 4 }}>
                     {cite.title || cite.doc_id || `Source #${cIdx + 1}`}
                   </strong>
+                  {cite.evidence_id && cite.workspace_id && (
+                    <button
+                      onClick={() =>
+                        setCalculation({
+                          identity: cite.evidence_id!,
+                          workspace: cite.workspace_id!,
+                        })
+                      }
+                    >
+                      Show how this was calculated
+                    </button>
+                  )}
                   <p style={{ margin: 0, color: 'var(--text)', fontStyle: 'italic', opacity: 0.9 }}>
-                    "{cite.snippet ? cite.snippet.slice(0, 160) + '…' : 'Document passage reference'}"
+                    "
+                    {cite.snippet ? cite.snippet.slice(0, 160) + '…' : 'Document passage reference'}
+                    "
                   </p>
                 </div>
               ))}
             </div>
+            {calculation && (
+              <CalculationDrawer
+                workspace={calculation.workspace}
+                identity={calculation.identity}
+                onClose={() => setCalculation(null)}
+              />
+            )}
           </div>
         )}
 
@@ -871,7 +978,9 @@ function TurnCard({
             </span>
             <ul style={{ margin: '6px 0 0', paddingLeft: 20, fontSize: 13, color: 'var(--text)' }}>
               {turn.actionable.map((item, iIdx) => (
-                <li key={iIdx} style={{ margin: '3px 0' }}>{item}</li>
+                <li key={iIdx} style={{ margin: '3px 0' }}>
+                  {item}
+                </li>
               ))}
             </ul>
           </div>
@@ -916,7 +1025,14 @@ function KpiGrid({ kpis }: { kpis: KpiMetrics }) {
               border: '1px solid var(--border)',
             }}
           >
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: 'var(--text-muted)',
+                textTransform: 'uppercase',
+              }}
+            >
               {key}
             </div>
             <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-h)', marginTop: 4 }}>
@@ -951,16 +1067,22 @@ function BarChartRenderer({ chart }: { chart: ChartSpec }) {
         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-h)' }}>
           {chart.chart_label || `${chart.y_field} by ${chart.x_field}`}
         </span>
-        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-          Verified Aggregate Series
-        </span>
+        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Verified Aggregate Series</span>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {chart.points.map((pt, idx) => {
           const pct = Math.max(0, Math.min(100, (pt.value / maxVal) * 100));
           return (
-            <div key={idx} style={{ display: 'grid', gridTemplateColumns: '160px minmax(0, 1fr) 90px', gap: 12, alignItems: 'center' }}>
+            <div
+              key={idx}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '160px minmax(0, 1fr) 90px',
+                gap: 12,
+                alignItems: 'center',
+              }}
+            >
               <span
                 style={{
                   fontSize: 12,
@@ -993,7 +1115,14 @@ function BarChartRenderer({ chart }: { chart: ChartSpec }) {
                   }}
                 />
               </div>
-              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-h)', textAlign: 'right' }}>
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: 'var(--text-h)',
+                  textAlign: 'right',
+                }}
+              >
                 {pt.value.toLocaleString(undefined, { maximumFractionDigits: 2 })}
               </span>
             </div>

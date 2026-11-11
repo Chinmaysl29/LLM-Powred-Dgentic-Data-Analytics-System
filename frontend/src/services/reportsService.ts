@@ -46,12 +46,17 @@ export const DEFAULT_REPORT_SECTIONS: ReportSectionConfig[] = [];
 export async function getStoredReports(): Promise<StoredReport[]> {
   if (isSupabaseConfigured()) {
     const { data, error } = await supabase
-      .from('reports').select('*').order('created_at', { ascending: false });
+      .from('reports')
+      .select('*')
+      .order('created_at', { ascending: false });
     if (error) throw new Error('Report library is unavailable. Please retry.');
     if (!Array.isArray(data)) throw new Error('The report service returned an invalid history.');
     return (data as Array<Record<string, unknown>>).map((r) => ({
-      id: String(r.id), title: String(r.title), report_type: 'custom',
-      created_at: String(r.created_at), workspace_id: String(r.workspace_id || ''),
+      id: String(r.id),
+      title: String(r.title),
+      report_type: 'custom',
+      created_at: String(r.created_at),
+      workspace_id: String(r.workspace_id || ''),
       summary: String(r.title),
     }));
   }
@@ -62,20 +67,18 @@ export async function getStoredReports(): Promise<StoredReport[]> {
 }
 
 export async function getReports(filters?: ReportFilters): Promise<Report[]> {
-  const reports = (await getStoredReports()).map(
-    (r): Report => ({
-      id: r.id,
-      title: r.title,
-      dataset: 'Source not recorded',
-      dateRange: { start: '', end: '', label: 'Period not recorded' },
-      reportType: 'custom',
-      status: 'generated',
-      sections: [],
-      outputFormat: 'pdf',
-      createdAt: r.created_at,
-      updatedAt: r.created_at,
-    }),
-  );
+  const reports = (await getStoredReports()).map((r): Report => ({
+    id: r.id,
+    title: r.title,
+    dataset: 'Source not recorded',
+    dateRange: { start: '', end: '', label: 'Period not recorded' },
+    reportType: 'custom',
+    status: 'generated',
+    sections: [],
+    outputFormat: 'pdf',
+    createdAt: r.created_at,
+    updatedAt: r.created_at,
+  }));
 
   return reports.filter(
     (r) =>
@@ -96,7 +99,9 @@ export async function getReportSpecification(_id: string): Promise<ReportSpecifi
 
 export async function createReport(params: CreateReportParams): Promise<Report> {
   if (isSupabaseConfigured()) {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (user) {
       const { data, error } = await supabase
         .from('reports')
@@ -129,7 +134,10 @@ export async function createReport(params: CreateReportParams): Promise<Report> 
   throw new Error('Report creation requires Supabase database connection.');
 }
 
-export async function updateReportSections(_id: string, _sections: ReportSectionConfig[]): Promise<Report> {
+export async function updateReportSections(
+  _id: string,
+  _sections: ReportSectionConfig[],
+): Promise<Report> {
   throw new Error('Report section update is not supported.');
 }
 
@@ -153,7 +161,10 @@ export async function deleteReport(id: string): Promise<boolean> {
   return false;
 }
 
-export async function exportReport(_id: string, _format: 'pdf' | 'excel' | 'csv'): Promise<{ success: boolean; filename: string }> {
+export async function exportReport(
+  _id: string,
+  _format: 'pdf' | 'excel' | 'csv',
+): Promise<{ success: boolean; filename: string }> {
   throw new Error('Binary export requires dedicated backend worker.');
 }
 
@@ -210,4 +221,3 @@ export async function downloadReportFile(reportId: string, filename?: string): P
   document.body.removeChild(anchor);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-

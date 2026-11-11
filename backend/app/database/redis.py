@@ -77,12 +77,22 @@ class RedisCache:
             raise RedisConnectionError("Redis delete operation failed") from exc
 
     async def delete_matching(self, pattern: str) -> int:
-        """Delete keys matching a controlled cache namespace pattern."""
+        """Delete a controlled namespace with bounded command/key accumulation.
+
+        SCAN is not a snapshot; concurrent writers retain Redis's usual SCAN
+        semantics. A transport failure can occur after earlier batches succeed.
+        """
         try:
-            keys = [key async for key in self.client.scan_iter(match=pattern, count=200)]
-            if not keys:
-                return 0
-            return int(await self.client.delete(*keys))
+            deleted = 0
+            keys = []
+            async for key in self.client.scan_iter(match=pattern, count=200):
+                keys.append(key)
+                if len(keys) == 200:
+                    deleted += int(await self.client.delete(*keys))
+                    keys.clear()
+            if keys:
+                deleted += int(await self.client.delete(*keys))
+            return deleted
         except RedisError as exc:
             raise RedisConnectionError("Redis pattern delete operation failed") from exc
 

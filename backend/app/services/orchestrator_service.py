@@ -31,6 +31,9 @@ from backend.app.services.intent_classification_service import (
     get_intent_classification_service,
 )
 from backend.app.services.workflow_registry import WorkflowRegistry
+from backend.app.learning.routing import scoped_router
+from backend.app.learning import failure_memory
+from backend.app.learning.memory_contract import merge_steps
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +51,7 @@ class OrchestratorService:
         db: Session | None = None,
         owner_id: str | None = None,
     ) -> None:
-        self._intent_classifier = intent_classifier or IntentClassificationService(llm=llm)
+        self._intent_classifier = scoped_router(intent_classifier or IntentClassificationService(llm=llm), owner_id)
         self._workflow_registry = workflow_registry or WorkflowRegistry()
         self._agent_registry = agent_registry or AgentRegistry()
         self._llm = llm
@@ -62,6 +65,7 @@ class OrchestratorService:
                 intent_classifier=self._intent_classifier,
                 workflow_registry=self._workflow_registry,
                 llm=self._llm,
+                owner_id=self._owner_id,
             )
 
         if self._db:
@@ -249,6 +253,16 @@ class OrchestratorService:
 
         # 3b. Dynamic Workflow Planning
         is_dynamic = dynamic_planning or (isinstance(context, dict) and context.get("dynamic_planning", False))
+        if not is_dynamic:
+            try:
+                hints = await failure_memory.recall(self._owner_id, dataset_id, cleaned_query, intent)
+                augmented = merge_steps(workflow, hints, intent)
+                if augmented != workflow:
+                    from backend.app.services.workflow_planner_service import DependencyEngine
+                    workflow = DependencyEngine().resolve_and_order(augmented)
+                    shared_context.workflow = workflow
+            except Exception:
+                pass
         if is_dynamic and self._planner:
             from backend.app.schemas.planner import WorkflowPlanningRequest
             plan_req = WorkflowPlanningRequest(

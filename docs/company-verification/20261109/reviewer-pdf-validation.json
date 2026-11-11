@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "expected_value": 35,
+  "formula": "sum(amount)",
+  "coverage": "full",
+  "validation": "passed",
+  "source": "final two-person-review workflow PDF"
+}

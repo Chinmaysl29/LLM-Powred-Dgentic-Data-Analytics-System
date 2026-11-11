@@ -1,0 +1,14 @@
+{"operation": "remove_index", "object": "ix_dataset_workspace_bindings_workspace"}
+{"operation": "remove_table", "object": "dataset_workspace_bindings"}
+{"operation": "remove_index", "object": "ix_tenant_memberships_user"}
+{"operation": "remove_table", "object": "tenant_memberships"}
+{"operation": "remove_index", "object": "ix_workspace_memberships_user"}
+{"operation": "remove_table", "object": "workspace_memberships"}
+{"operation": "remove_index", "object": "ix_dataplane_actor_id"}
+{"operation": "remove_index", "object": "ix_dataplane_dataset_id"}
+{"operation": "remove_index", "object": "ix_dataplane_parent_id"}
+{"operation": "remove_index", "object": "ix_dataplane_scope"}
+{"operation": "remove_index", "object": "ix_dataplane_workspace_id"}
+{"operation": "remove_table", "object": "dataplane_artifacts"}
+{"column_changes": [["modify_nullable", "None", "audit_entries", "event_id"]]}
+{"operation": "add_index", "object": "uq_dataset_active_version"}

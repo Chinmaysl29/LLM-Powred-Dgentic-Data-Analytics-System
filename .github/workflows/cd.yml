@@ -46,6 +46,7 @@ jobs:
     env:
       DATABASE_URL: postgresql+psycopg://postgres:isolated-ci-only@127.0.0.1:5432/analyst_cd_test
       ENVIRONMENT: test
+      BACKGROUND_WORKER_ENABLED: "false" # Tests drive durable workers explicitly.
       DEBUG: "false"
       JWT_SECRET_KEY: ci-test-secret-do-not-use-in-production
       SKIP_EMBEDDING_TESTS: "true"

@@ -1,16 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  FileText, 
-  Database, 
-  Calendar, 
-  ExternalLink, 
-  Edit3, 
-  Download, 
-  MoreVertical, 
-  Copy, 
-  Archive, 
+import {
+  FileText,
+  Database,
+  Calendar,
+  ExternalLink,
+  Edit3,
+  Download,
+  MoreVertical,
+  Copy,
+  Archive,
   Trash2,
-  Clock
+  Clock,
 } from 'lucide-react';
 import type { Report } from '../../types/reports';
 import { ReportStatusBadge } from './ReportStatusBadge';
@@ -96,7 +96,10 @@ export const ReportCard: React.FC<ReportCardProps> = ({
               <div className="reports-dropdown-menu" role="menu">
                 <button
                   type="button"
-                  onClick={() => { setMenuOpen(false); onOpen(report.id); }}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onOpen(report.id);
+                  }}
                   role="menuitem"
                 >
                   <ExternalLink size={14} />
@@ -104,7 +107,10 @@ export const ReportCard: React.FC<ReportCardProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setMenuOpen(false); onEdit(report.id); }}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onEdit(report.id);
+                  }}
                   role="menuitem"
                 >
                   <Edit3 size={14} />
@@ -112,7 +118,10 @@ export const ReportCard: React.FC<ReportCardProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setMenuOpen(false); onDuplicate(report.id); }}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onDuplicate(report.id);
+                  }}
                   role="menuitem"
                 >
                   <Copy size={14} />
@@ -120,7 +129,10 @@ export const ReportCard: React.FC<ReportCardProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setMenuOpen(false); onArchive(report.id); }}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onArchive(report.id);
+                  }}
                   role="menuitem"
                 >
                   <Archive size={14} />
@@ -130,7 +142,10 @@ export const ReportCard: React.FC<ReportCardProps> = ({
                 <button
                   type="button"
                   className="reports-menu-delete"
-                  onClick={() => { setMenuOpen(false); onDelete(report.id); }}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onDelete(report.id);
+                  }}
                   role="menuitem"
                 >
                   <Trash2 size={14} />
@@ -143,18 +158,23 @@ export const ReportCard: React.FC<ReportCardProps> = ({
       </div>
 
       {/* Main Title & Description */}
-      <div className="reports-card-body" onClick={() => onOpen(report.id)} role="button" tabIndex={0}>
+      <div
+        className="reports-card-body"
+        onClick={() => onOpen(report.id)}
+        role="button"
+        tabIndex={0}
+      >
         <h3 className="reports-card-title">{report.title}</h3>
-        {report.description && (
-          <p className="reports-card-desc">{report.description}</p>
-        )}
+        {report.description && <p className="reports-card-desc">{report.description}</p>}
       </div>
 
       {/* Meta Attributes Strip */}
       <div className="reports-card-meta-strip">
         <div className="reports-meta-chip">
           <Database size={13} className="reports-meta-icon" />
-          <span className="reports-meta-val" title={report.dataset}>{report.dataset}</span>
+          <span className="reports-meta-val" title={report.dataset}>
+            {report.dataset}
+          </span>
         </div>
         <div className="reports-meta-chip">
           <Calendar size={13} className="reports-meta-icon" />

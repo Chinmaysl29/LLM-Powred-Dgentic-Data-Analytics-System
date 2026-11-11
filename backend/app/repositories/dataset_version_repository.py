@@ -45,15 +45,16 @@ class DatasetVersionRepository:
             raise ValueError("Versions > 1 must have a parent version")
 
         try:
+            # Serialize with reviewed activation/undo, and update the old pointer
+            # before an autoflush can insert another active version.
+            with self.db.no_autoflush:
+                self.db.scalar(select(Dataset).where(Dataset.dataset_id == version.dataset_id).with_for_update())
+                if version.is_active:
+                    self.db.query(DatasetVersion).filter(
+                        DatasetVersion.dataset_id == version.dataset_id,
+                        DatasetVersion.is_active == True
+                    ).update({"is_active": False, "deactivated_at": func.now()})
             self.db.add(version)
-            
-            if version.is_active:
-                # Deactivate all other versions
-                self.db.query(DatasetVersion).filter(
-                    DatasetVersion.dataset_id == version.dataset_id,
-                    DatasetVersion.version_id != version.version_id,
-                    DatasetVersion.is_active == True
-                ).update({"is_active": False, "deactivated_at": func.now()})
 
             self.db.flush()
             self.db.commit()
@@ -129,6 +130,7 @@ class DatasetVersionRepository:
 
     def set_active_version(self, dataset_id: str, target_version_number: int) -> DatasetVersion:
         """Rollback or set a specific version as active."""
+        self.db.scalar(select(Dataset).where(Dataset.dataset_id == dataset_id).with_for_update())
         target_version = self.get_version(dataset_id, target_version_number)
         
         if target_version.is_active:
@@ -142,6 +144,7 @@ class DatasetVersionRepository:
                 current_active.is_active = False
                 current_active.deactivated_at = now
                 self.db.add(current_active)
+                self.db.flush()  # Enforce the partial unique index before activating the target.
                 
             target_version.is_active = True
             target_version.activated_at = now

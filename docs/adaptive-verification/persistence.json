@@ -1,0 +1,25 @@
+{
+  "postgresql_api_restart": true,
+  "artifacts": [
+    {
+      "artifact": "net-revenue-report.json",
+      "bytes": 8131,
+      "sha256": "445379948468bcb98dfaa7fa015d58f4384a673edda89bb2e5f10df248ba5df8",
+      "byte_identical": true
+    },
+    {
+      "artifact": "refund-events-report.json",
+      "bytes": 7885,
+      "sha256": "565bbc49338ecc355238e51b9a67534e8101470de149463ee27b2f593a1f7625",
+      "byte_identical": true
+    },
+    {
+      "artifact": "linear-model-bundle.json",
+      "bytes": 78592,
+      "sha256": "0f905c40b60e87ff586f9d1ade48e964ef8ad695cdf6823f844d24eded0870a8",
+      "byte_identical": true
+    }
+  ],
+  "rollback_persisted": true,
+  "scope": "Real local/test auth, PostgreSQL and API; synthetic data only"
+}

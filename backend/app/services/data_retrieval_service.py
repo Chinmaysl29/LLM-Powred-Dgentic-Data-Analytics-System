@@ -178,7 +178,8 @@ class DataRetrievalService:
         dataset_id: str,
         version_number: int | None = None,
         filters: DataRetrievalFilter | None = None,
-        sample_size: int | None = None
+        sample_size: int | None = None,
+        preserve_representation: bool = False,
     ) -> tuple[pd.DataFrame, bool]:
         """Load dataset into a pandas DataFrame.
         
@@ -197,8 +198,17 @@ class DataRetrievalService:
             if version:
                 file_path = self.storage_service.retrieve_file(version.storage_path)
                 file_type = file_path.suffix.lower().lstrip(".")
-                from backend.app.services.tabular_loader import load_tabular_dataframe
-                df = load_tabular_dataframe(file_path, file_type)
+                if preserve_representation:
+                    # The supervised path must profile before heuristic financial/date parsing.
+                    # Version 1's original file is immutable; later versions use their pinned artifact.
+                    if version.version_number == 1 and dataset.original_path:
+                        file_path = self.storage_service.retrieve_file(dataset.original_path)
+                        file_type = file_path.suffix.lower().lstrip('.')
+                    from backend.app.services.learning_engine import load_preserved_frame
+                    df = load_preserved_frame(file_path, file_type)
+                else:
+                    from backend.app.services.tabular_loader import load_tabular_dataframe
+                    df = load_tabular_dataframe(file_path, file_type)
         except Exception as e:
             logger.error("Failed to load DataFrame for dataset %s: %s", dataset_id, e)
             raise CorruptedFileError(f"Failed to read dataset file: {str(e)}")

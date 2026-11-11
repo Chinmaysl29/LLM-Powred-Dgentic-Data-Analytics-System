@@ -21,8 +21,13 @@ class Limits(BaseSettings):
     result_bytes: int = Field(1048576, ge=1024, le=8388608)
     batch_rows: int = Field(10000, ge=100, le=50000)
     max_columns: int = Field(200, ge=1, le=500)
+    max_files: int = Field(1024, ge=10, le=10000)
+    expanded_mb: int = Field(512, ge=1, le=16384)
+    field_bytes: int = Field(262144, ge=128, le=1048576)
+    row_bytes: int = Field(1048576, ge=1024, le=8388608)
     postgres_hosts: str = ""
     monitoring_interval_s: int = Field(3600, ge=60, le=86400)
+    monitoring_enabled: bool = False
     postgres_ca_file: Path | None = None
     credential_key_file: Path = Path("/app/storage/dataplane/credential.key")
 

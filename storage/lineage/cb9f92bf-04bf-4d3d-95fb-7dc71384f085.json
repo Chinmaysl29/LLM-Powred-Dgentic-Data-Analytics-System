@@ -1,0 +1,15 @@
+{
+  "dataset_id": "cb9f92bf-04bf-4d3d-95fb-7dc71384f085",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "da408320-c9e5-4e17-9c49-a1e6520f38f6",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-11-11 16:35:05.046729+00:00",
+      "author": "system",
+      "description": "Initial ingestion of events.jsonl"
+    }
+  ]
+}

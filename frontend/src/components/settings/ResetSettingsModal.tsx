@@ -61,9 +61,7 @@ export const ResetSettingsModal: React.FC<ResetSettingsModalProps> = ({
           <div className="settings-callout-warning">
             <AlertCircle size={18} className="settings-warning-icon" />
             <div>
-              <p>
-                Your application preferences will be restored to their factory default values.
-              </p>
+              <p>Your application preferences will be restored to their factory default values.</p>
               <p className="settings-callout-subtext">
                 <strong>Your datasets, reports, analyses and account will not be deleted.</strong>
               </p>

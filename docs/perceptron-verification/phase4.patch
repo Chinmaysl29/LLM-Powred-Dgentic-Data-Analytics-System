@@ -1,0 +1,1053 @@
+diff --git a/backend/app/api/v1/routes/chat.py b/backend/app/api/v1/routes/chat.py
+--- a/backend/app/api/v1/routes/chat.py
++++ b/backend/app/api/v1/routes/chat.py
+@@ -24,6 +24,7 @@
+ from backend.app.services.storage_service import StorageService, get_storage_service
+ from backend.monitoring.prometheus_metrics import platform_metrics
+ from backend.app.learning.evidence import observe_chat
++from backend.app.learning.routing import scoped_router
+ 
+ router = APIRouter(prefix="/chat", tags=["Natural Language Analytics"])
+ 
+@@ -142,6 +143,7 @@
+                 result = await analytics.analyze(payload.message, context=context)
+                 intent, confidence = "analytics", 0.0
+             else:
++                intent_service = scoped_router(intent_service, str(current_user.id), payload.dataset_version)
+                 classification = await intent_service.classify(payload.message, dataset_id=payload.dataset_id)
+                 orchestrator = OrchestratorService(intent_classifier=intent_service, db=db, owner_id=str(current_user.id))
+                 outcome = await orchestrator.execute(payload.message, dataset_id=payload.dataset_id)
+diff --git a/backend/app/api/v1/routes/intent.py b/backend/app/api/v1/routes/intent.py
+--- a/backend/app/api/v1/routes/intent.py
++++ b/backend/app/api/v1/routes/intent.py
+@@ -5,6 +5,7 @@
+ from fastapi import APIRouter, Depends, status
+ from backend.app.core.security import get_current_user
+ from backend.app.learning.shadow import observe_shadow
++from backend.app.learning.routing import scoped_router
+ 
+ from backend.app.schemas.intent import (
+     IntentClassificationRequest,
+@@ -33,7 +34,7 @@
+ ) -> IntentClassificationResponse:
+     """Analyze incoming user query and return classified intent with confidence and required agents."""
+     logger.info("Received intent classification request: %s", request.query[:50])
+-    result = await service.classify(
++    result = await scoped_router(service, str(current_user.id)).classify(
+         query=request.query,
+         context=request.context,
+         dataset_id=request.dataset_id,
+diff --git a/backend/app/services/orchestrator_service.py b/backend/app/services/orchestrator_service.py
+--- a/backend/app/services/orchestrator_service.py
++++ b/backend/app/services/orchestrator_service.py
+@@ -31,6 +31,7 @@
+     get_intent_classification_service,
+ )
+ from backend.app.services.workflow_registry import WorkflowRegistry
++from backend.app.learning.routing import scoped_router
+ 
+ logger = logging.getLogger(__name__)
+ 
+@@ -48,7 +49,7 @@
+         db: Session | None = None,
+         owner_id: str | None = None,
+     ) -> None:
+-        self._intent_classifier = intent_classifier or IntentClassificationService(llm=llm)
++        self._intent_classifier = scoped_router(intent_classifier or IntentClassificationService(llm=llm), owner_id)
+         self._workflow_registry = workflow_registry or WorkflowRegistry()
+         self._agent_registry = agent_registry or AgentRegistry()
+         self._llm = llm
+diff --git a/backend/app/models/__init__.py b/backend/app/models/__init__.py
+--- a/backend/app/models/__init__.py
++++ b/backend/app/models/__init__.py
+@@ -75,3 +75,4 @@
+ from backend.app.models.adaptive import TABLES as ADAPTIVE_TABLES
+ from backend.app.learning.tables import learner_weights, feedback_events, mistakes
+ from backend.app.learning.shadow_table import shadow_predictions
++from backend.app.learning.release_table import router_releases
+diff --git a/backend/app/learning/perceptron.py b/backend/app/learning/perceptron.py
+--- a/backend/app/learning/perceptron.py
++++ b/backend/app/learning/perceptron.py
+@@ -46,7 +46,7 @@
+     def averaged_weights(self) -> np.ndarray:
+         return self._totals / self.steps if self.steps else self.weights.copy()
+ 
+-    def predict(self, features: Any, *, min_margin: float = 0.5) -> Prediction:
++    def predict(self, features: Any, *, min_margin: float = 0.5, allow_unknown: bool = False) -> Prediction:
+         if not np.isfinite(min_margin) or min_margin < 0:
+             raise ValueError("Invalid margin threshold")
+         scores = self.averaged_weights() @ self._vector(features)
+@@ -54,7 +54,9 @@
+             raise ValueError("Invalid perceptron scores")
+         winner = int(np.argmax(scores))  # Deterministic label-order tie break.
+         margin = float(scores[winner] - np.max(np.delete(scores, winner)))
+-        abstained = margin <= min_margin or LABELS[winner] == "unknown"
++        # Live routing can explicitly choose the allow-listed unknown intent.
++        # Preserve the Phase 2 shadow policy unless the caller opts in.
++        abstained = margin <= min_margin or (LABELS[winner] == "unknown" and not allow_unknown)
+         return Prediction("unknown" if abstained else LABELS[winner], LABELS[winner], margin, abstained)
+ 
+     def update(self, features: Any, truth: str, *, rate: float = 1.0, decay: float = 0.001) -> bool:
+diff --git a/backend/app/learning/golden.py b/backend/app/learning/golden.py
+--- a/backend/app/learning/golden.py
++++ b/backend/app/learning/golden.py
+@@ -121,7 +121,8 @@
+     return True
+ 
+ 
+-async def evaluate(root: Path, manifest_path: Path, expected_digest: str, candidate_payload: dict | None = None) -> dict:
++async def evaluate(root: Path, manifest_path: Path, expected_digest: str, candidate_payload: dict | None = None,
++                   *, allow_unknown: bool = False) -> dict:
+     # Imports are intentionally absent from the independent freeze/reference path.
+     from backend.app.learning.features import extract, bootstrap_prior, feature_version
+     from backend.app.learning.perceptron import AveragedPerceptron
+@@ -156,7 +157,7 @@
+             matched, _, _ = registry.match_heuristic(case["question"])
+             baseline = matched.name if matched else "unknown"
+             schema = {"columns": list(frame.columns), "dtypes": {c: str(t) for c, t in frame.dtypes.items()}}
+-            prediction = model.predict(extract(case["question"], schema))
++            prediction = model.predict(extract(case["question"], schema), allow_unknown=allow_unknown)
+             result.update(expected_intent=case["expected_intent"], baseline_intent=baseline,
+                 shadow_intent=prediction.intent, abstained=prediction.abstained,
+                 baseline_passed=baseline == case["expected_intent"], passed=prediction.intent == case["expected_intent"])
+@@ -189,6 +190,7 @@
+                   Path(__file__).parents[1] / "services/intent_classification_service.py"]
+     code_digest = digest(b"".join(path.read_bytes() for path in code_paths))
+     return {"format": 1, "manifest_digest": expected_digest, "candidate_digest": candidate_hash,
++        "unknown_policy": "explicit_if_confident" if allow_unknown else "abstain",
+         "feature_version": feature_version(), "code_digest": code_digest, "source_hashes": source_hashes,
+         "case_count": len(results), "intent_count": len(intents), "answer_count": len(answers),
+         "baseline_correct": baseline_correct, "candidate_correct": candidate_correct,
+diff --git a/backend/app/learning/release_table.py b/backend/app/learning/release_table.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/learning/release_table.py
+@@ -0,0 +1,21 @@
++"""Operator-written release history; runtime roles have read access only."""
++from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Identity, Index, Integer, String, Table, Uuid, CheckConstraint, text
++from sqlalchemy.dialects.postgresql import JSONB
++from backend.app.models.base import Base
++
++router_releases = Table(
++    "router_releases", Base.metadata,
++    Column("id", BigInteger, Identity(), primary_key=True),
++    Column("tenant_id", Uuid, ForeignKey("tenants.id"), nullable=False),
++    Column("actor_id", Uuid, ForeignKey("users.id"), nullable=False, index=True),
++    Column("action", String(20), nullable=False),
++    Column("version", Integer, nullable=False),
++    Column("previous_version", Integer, nullable=False),
++    Column("model_digest", String(64)),
++    Column("runtime_digest", String(64), nullable=False),
++    Column("evidence", JSONB, nullable=False),
++    Column("created_at", DateTime(timezone=True), server_default=text("now()"), nullable=False),
++    CheckConstraint("version >= 0 AND previous_version >= 0", name="ck_router_release_versions"),
++    CheckConstraint("action IN ('stage','promote','rollback','disable')", name="ck_router_release_action"),
++)
++Index("ix_router_releases_tenant_id", router_releases.c.tenant_id, router_releases.c.id)
+diff --git a/backend/app/learning/release.py b/backend/app/learning/release.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/learning/release.py
+@@ -0,0 +1,47 @@
++"""Shared release validation. No training, activation, or business arithmetic."""
++from pathlib import Path
++from uuid import UUID
++
++from sqlalchemy import select, func, cast, Text
++from sqlalchemy.orm import Session
++from backend.app.learning.golden import digest, encode
++from backend.app.learning.features import feature_version
++from backend.app.learning.perceptron import AveragedPerceptron
++from backend.app.learning.tables import learner_weights
++from backend.app.learning.release_table import router_releases
++
++LEARNER = "intent_router"
++
++
++def runtime_digest() -> str:
++    directory = Path(__file__).parent
++    paths = [directory / name for name in (
++        "release.py", "routing.py", "lifecycle.py", "features.py", "perceptron.py",
++        "golden.py", "golden_cases.py", "golden_reference.py")]
++    paths.append(directory.parent / "services/intent_classification_service.py")
++    return digest(b"".join(path.read_bytes() for path in paths))
++
++
++def validated_payload(payload: dict) -> dict:
++    return AveragedPerceptron.from_payload(payload, feature_version()).to_payload(feature_version())
++
++
++def read_version(db: Session, tenant: UUID, version: int) -> dict:
++    query = (learner_weights.c.tenant_id == tenant) & (learner_weights.c.learner == LEARNER) & (learner_weights.c.version == version)
++    size = db.scalar(select(func.octet_length(cast(learner_weights.c.weights, Text))).where(query))
++    if size is None or size > 1_000_000:
++        raise ValueError("Missing or oversized router version")
++    return validated_payload(db.scalar(select(learner_weights.c.weights).where(query)))
++
++
++def active_version(db: Session, tenant: UUID) -> int:
++    return db.scalar(select(learner_weights.c.version).where(
++        learner_weights.c.tenant_id == tenant, learner_weights.c.learner == LEARNER,
++        learner_weights.c.is_active.is_(True))) or 0
++
++
++def approved(db: Session, tenant: UUID, version: int, payload: dict) -> bool:
++    return db.scalar(select(router_releases.c.id).where(
++        router_releases.c.tenant_id == tenant, router_releases.c.version == version,
++        router_releases.c.action == "promote", router_releases.c.model_digest == digest(encode(payload)),
++        router_releases.c.runtime_digest == runtime_digest()).limit(1)) is not None
+diff --git a/backend/app/learning/routing.py b/backend/app/learning/routing.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/learning/routing.py
+@@ -0,0 +1,106 @@
++"""Tenant-scoped runtime router. Errors and abstention delegate to the original service."""
++from __future__ import annotations
++
++import asyncio
++from typing import Any
++from uuid import UUID
++
++from sqlalchemy import create_engine, select, text
++from sqlalchemy.orm import Session
++from sqlalchemy.pool import NullPool
++
++from backend.app.core.config import get_settings
++from backend.app.core.database_target import bind_database_schema
++from backend.app.core.workspace_authorization import authorize_workspace, authorize_bound_dataset, dataset_workspace_bindings
++from backend.app.models import DatasetVersion
++from backend.app.learning.evidence import enabled
++from backend.app.learning.features import extract, feature_version
++from backend.app.learning.perceptron import AveragedPerceptron, Prediction
++from backend.app.learning.release import active_version, read_version, approved
++from backend.app.schemas.intent import IntentClassificationResponse
++
++
++def read_prediction(actor_id: str | UUID, dataset_id: str | None, question: str,
++                    version_number: int | None = None) -> tuple[Prediction, int] | None:
++    if not enabled() or not actor_id or not dataset_id:
++        return None
++    engine = None
++    try:
++        settings = get_settings()
++        engine = create_engine(settings.postgres_dsn, poolclass=NullPool, hide_parameters=True,
++                               connect_args={"connect_timeout": 2})
++        bind_database_schema(engine, settings.database_schema)
++        with Session(engine) as db, db.begin():
++            db.execute(text("SET LOCAL statement_timeout='300ms'"))
++            db.execute(text("SET LOCAL lock_timeout='100ms'"))
++            workspace = db.scalar(select(dataset_workspace_bindings.c.workspace_id).where(
++                dataset_workspace_bindings.c.dataset_id == dataset_id))
++            if workspace is None:
++                return None
++            access = authorize_workspace(db, actor_id, workspace)
++            authorize_bound_dataset(db, access, dataset_id)
++            for key, value in (("actor_id", access.actor_id), ("tenant_id", access.tenant_id)):
++                db.execute(text("SELECT set_config(:key,:value,true)"), {"key": f"app.{key}", "value": str(value)})
++            query = select(DatasetVersion).where(DatasetVersion.dataset_id == dataset_id)
++            query = query.where(DatasetVersion.version_number == version_number) if version_number is not None else query.where(DatasetVersion.is_active.is_(True))
++            dataset_version = db.scalar(query)
++            if dataset_version is None:
++                return None
++            version = active_version(db, access.tenant_id)
++            if not version:
++                return None
++            payload = read_version(db, access.tenant_id, version)
++            if not approved(db, access.tenant_id, version, payload):
++                return None
++            snapshot = dataset_version.metadata_snapshot or {}
++            schema = {key: snapshot[key] for key in ("columns", "dtypes") if key in snapshot}
++            prediction = AveragedPerceptron.from_payload(payload, feature_version()).predict(extract(question, schema), allow_unknown=True)
++            return None if prediction.abstained else (prediction, version)
++    except Exception:
++        return None
++    finally:
++        if engine is not None:
++            try:
++                engine.dispose()
++            except Exception:
++                pass
++
++
++class TenantIntentRouter:
++    def __init__(self, service: Any, actor_id: str | UUID, version_number: int | None = None) -> None:
++        self.service, self.actor_id, self.version_number = service, actor_id, version_number
++
++    @property
++    def registry(self):
++        return self.service.registry
++
++    async def classify(self, query: str, context: dict | None = None,
++                       dataset_id: str | None = None) -> IntentClassificationResponse:
++        if enabled():
++            try:
++                self.service.validate_query(query)
++                result = await asyncio.wait_for(asyncio.to_thread(
++                    read_prediction, self.actor_id, dataset_id, query, self.version_number), timeout=2.5)
++                if result:
++                    prediction, version = result
++                    definition = self.registry.get(prediction.intent)
++                    if definition:
++                        return IntentClassificationResponse(intent=definition.name,
++                            confidence=0.5,  # Compatibility field; margin is not a calibrated probability.
++                            reasoning=f"Approved tenant router version {version}; margin {prediction.margin:.3f} (uncalibrated).",
++                            required_agents=definition.required_agents)
++            except Exception:
++                pass
++        return await self.service.classify(query=query, context=context, dataset_id=dataset_id)
++
++
++def scoped_router(service: Any, actor_id: str | UUID | None, version_number: int | None = None) -> Any:
++    if isinstance(service, TenantIntentRouter):
++        return service if str(service.actor_id) == str(actor_id) else service.service
++    # Offline promotion validates the deterministic fallback only. Existing LLM
++    # deployments and custom classifiers keep their original path unchanged.
++    from backend.app.services.intent_classification_service import IntentClassificationService
++    if (not enabled() or not actor_id or not isinstance(service, IntentClassificationService)
++            or service._llm is not None):
++        return service
++    return TenantIntentRouter(service, actor_id, version_number)
+diff --git a/backend/app/learning/lifecycle.py b/backend/app/learning/lifecycle.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/learning/lifecycle.py
+@@ -0,0 +1,184 @@
++"""Privileged operator lifecycle. Golden reports are recomputed, never accepted as input."""
++from __future__ import annotations
++
++import hashlib
++import json
++from pathlib import Path
++from typing import Any, Callable
++from uuid import UUID, uuid4
++
++from sqlalchemy import select, text, func
++from sqlalchemy.orm import Session
++from backend.app.core.workspace_authorization import authorize_tenant
++from backend.app.learning.golden import evaluate, digest, encode
++from backend.app.learning.golden_cases import question_contracts
++from backend.app.learning.features import feature_version
++from backend.app.learning.release import LEARNER, active_version, approved, read_version, runtime_digest, validated_payload
++from backend.app.learning.release_table import router_releases
++from backend.app.learning.shadow_table import shadow_predictions
++from backend.app.learning.tables import learner_weights
++
++SessionFactory = Callable[[], Session]
++
++
++def operator(db: Session, actor_id: str | UUID, tenant_id: str | UUID) -> tuple[UUID, UUID]:
++    # RLS-protected runtime accounts cannot use lifecycle functions even if the
++    # supplied actor is an owner. DB operators must also name an authorized actor.
++    if not db.scalar(text("SELECT rolsuper OR rolbypassrls FROM pg_roles WHERE rolname=current_user")):
++        raise PermissionError("Router lifecycle requires an operator database role")
++    tenant = authorize_tenant(db, actor_id, tenant_id, "manage")
++    return UUID(str(actor_id)), tenant
++
++
++def lock(db: Session, tenant: UUID) -> None:
++    db.execute(text("SET LOCAL lock_timeout='2s'"))
++    db.execute(text("SET LOCAL statement_timeout='5s'"))
++    key = int.from_bytes(hashlib.sha256(f"{tenant}:{LEARNER}".encode()).digest()[:8], "big", signed=True)
++    db.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": key})
++    # Also exclude direct concurrent updates of existing versions while switching.
++    db.execute(select(learner_weights.c.id).where(learner_weights.c.tenant_id == tenant,
++        learner_weights.c.learner == LEARNER).with_for_update()).all()
++
++
++def state(db: Session, tenant: UUID) -> tuple[int, int]:
++    return (active_version(db, tenant), db.scalar(select(func.max(router_releases.c.id)).where(
++        router_releases.c.tenant_id == tenant)) or 0)
++
++
++def event(db: Session, actor: UUID, tenant: UUID, action: str, version: int, previous: int,
++          payload: dict | None = None, evidence: dict | None = None) -> None:
++    db.execute(router_releases.insert().values(tenant_id=tenant, actor_id=actor, action=action,
++        version=version, previous_version=previous, model_digest=digest(encode(payload)) if payload else None,
++        runtime_digest=runtime_digest(), evidence=evidence or {}))
++
++
++def stage(factory: SessionFactory, actor_id: str | UUID, tenant_id: str | UUID, payload: dict) -> dict[str, Any]:
++    payload = validated_payload(payload)
++    with factory() as db, db.begin():
++        actor, tenant = operator(db, actor_id, tenant_id)
++        lock(db, tenant)
++        version = (db.scalar(select(func.max(learner_weights.c.version)).where(
++            learner_weights.c.tenant_id == tenant, learner_weights.c.learner == LEARNER)) or 0) + 1
++        db.execute(learner_weights.insert().values(id=uuid4(), tenant_id=tenant, learner=LEARNER,
++            version=version, weights=payload, is_active=False))
++        event(db, actor, tenant, "stage", version, active_version(db, tenant), payload)
++    return {"version": version, "model_digest": digest(encode(payload)), "active": False}
++
++
++def has_shadow(db: Session, tenant: UUID, version: int, payload: dict) -> bool:
++    # Match the Phase 2 observation digest exactly; raw JSON formatting differs
++    # from the offline report's canonical indented representation.
++    shadow_digest = hashlib.sha256(json.dumps(payload, sort_keys=True, allow_nan=False).encode()).hexdigest()
++    return db.scalar(select(shadow_predictions.c.id).where(
++        shadow_predictions.c.tenant_id == tenant, shadow_predictions.c.model_version == version,
++        shadow_predictions.c.model_source == "tenant_candidate", shadow_predictions.c.model_digest == shadow_digest,
++        shadow_predictions.c.feature_version == feature_version()).limit(1)) is not None
++
++
++def effective(report: dict) -> tuple[dict[str, bool], dict[str, bool], bool]:
++    contracts = question_contracts()
++    cases = report["cases"]
++    if [row["id"] for row in cases] != [row["id"] for row in contracts]:
++        raise ValueError("Evaluation coverage mismatch")
++    result, baseline = {}, {}
++    answers_pass = True
++    for row, contract in zip(cases, contracts):
++        if contract["kind"] == "intent":
++            if row["expected_intent"] != contract["expected_intent"]:
++                raise ValueError("Evaluation label mismatch")
++            routed = row["baseline_intent"] if row["abstained"] else row["shadow_intent"]
++            result[row["id"]] = routed == contract["expected_intent"]
++            baseline[row["id"]] = row["baseline_intent"] == contract["expected_intent"]
++        else:
++            answers_pass = answers_pass and row["passed"] is True
++    return result, baseline, answers_pass
++
++
++def promotion_gate(candidate_report: dict, live_report: dict | None = None) -> dict[str, Any]:
++    if candidate_report.get("unknown_policy") != "explicit_if_confident" or (
++            live_report is not None and live_report.get("unknown_policy") != "explicit_if_confident"):
++        raise ValueError("Evaluation runtime policy mismatch")
++    candidate, baseline, answers = effective(candidate_report)
++    live = baseline if live_report is None else effective(live_report)[0]
++    regressions = [key for key in candidate if live[key] and not candidate[key]]
++    candidate_correct, live_correct = sum(candidate.values()), sum(live.values())
++    passed = (candidate_report["quality_gate_passed"] is True and answers and all(candidate.values())
++              and not regressions and candidate_correct > live_correct)
++    return {"passed": passed, "candidate_correct": candidate_correct, "live_correct": live_correct,
++            "intent_count": len(candidate), "answers_passed": answers, "regressions": regressions,
++            "beats_live": candidate_correct > live_correct}
++
++
++async def promote(factory: SessionFactory, actor_id: str | UUID, tenant_id: str | UUID,
++                  version: int, expected_version: int, root: Path, manifest: Path,
++                  manifest_digest: str) -> dict[str, Any]:
++    if type(version) is not int or version <= 0:
++        raise ValueError("Invalid version")
++    fingerprint = runtime_digest()
++    with factory() as db, db.begin():
++        actor, tenant = operator(db, actor_id, tenant_id)
++        before = state(db, tenant)
++        if before[0] != expected_version or version == expected_version:
++            raise ValueError("Active version changed or already active")
++        payload = read_version(db, tenant, version)
++        if not has_shadow(db, tenant, version, payload):
++            raise ValueError("Candidate has no matching tenant shadow observation")
++        current = read_version(db, tenant, before[0]) if before[0] else None
++        if current is not None and not approved(db, tenant, before[0], current):
++            raise ValueError("Current version has no compatible approval; disable it first")
++    # File loading and evaluation occur outside any database lock/transaction.
++    report = await evaluate(root, manifest, manifest_digest, payload, allow_unknown=True)
++    live_report = await evaluate(root, manifest, manifest_digest, current, allow_unknown=True) if current else None
++    gate = promotion_gate(report, live_report)
++    if not gate["passed"]:
++        return {"promoted": False, "version": version, "gate": gate}
++    if report["candidate_digest"] != digest(encode(payload)) or runtime_digest() != fingerprint:
++        raise ValueError("Evaluation provenance changed")
++    with factory() as db, db.begin():
++        actor, tenant = operator(db, actor_id, tenant_id)  # Catch revocation during evaluation.
++        lock(db, tenant)
++        if state(db, tenant) != before or read_version(db, tenant, version) != payload:
++            raise ValueError("Router state changed during evaluation; retry")
++        if current is not None and read_version(db, tenant, before[0]) != current:
++            raise ValueError("Live weights changed during evaluation")
++        if not has_shadow(db, tenant, version, payload) or runtime_digest() != fingerprint:
++            raise ValueError("Shadow evidence or runtime changed")
++        db.execute(learner_weights.update().where(learner_weights.c.tenant_id == tenant,
++            learner_weights.c.learner == LEARNER).values(is_active=False))
++        db.execute(learner_weights.update().where(learner_weights.c.tenant_id == tenant,
++            learner_weights.c.learner == LEARNER, learner_weights.c.version == version).values(is_active=True))
++        evidence = {key: report[key] for key in ("manifest_digest", "candidate_digest", "feature_version", "code_digest", "source_hashes", "case_count", "unknown_policy")}
++        evidence.update(gate=gate, live_model_digest=digest(encode(current)) if current else None)
++        event(db, actor, tenant, "promote", version, before[0], payload, evidence)
++    return {"promoted": True, "version": version, "gate": gate}
++
++
++def rollback(factory: SessionFactory, actor_id: str | UUID, tenant_id: str | UUID,
++             version: int, expected_version: int) -> dict[str, Any]:
++    if type(version) is not int or version < 0:
++        raise ValueError("Invalid rollback version")
++    with factory() as db, db.begin():
++        actor, tenant = operator(db, actor_id, tenant_id)
++        lock(db, tenant)
++        previous = active_version(db, tenant)
++        if previous != expected_version:
++            raise ValueError("Active version changed")
++        payload = read_version(db, tenant, version) if version else None
++        if payload is not None and not approved(db, tenant, version, payload):
++            raise ValueError("Rollback target was never compatibly promoted")
++        db.execute(learner_weights.update().where(learner_weights.c.tenant_id == tenant,
++            learner_weights.c.learner == LEARNER).values(is_active=False))
++        if version:
++            db.execute(learner_weights.update().where(learner_weights.c.tenant_id == tenant,
++                learner_weights.c.learner == LEARNER, learner_weights.c.version == version).values(is_active=True))
++        event(db, actor, tenant, "rollback" if version else "disable", version, previous, payload)
++    return {"version": version, "previous_version": previous, "rolled_back": True}
++
++
++def status(factory: SessionFactory, actor_id: str | UUID, tenant_id: str | UUID) -> dict[str, Any]:
++    with factory() as db, db.begin():
++        _, tenant = operator(db, actor_id, tenant_id)
++        versions = db.execute(select(learner_weights.c.version, learner_weights.c.is_active).where(
++            learner_weights.c.tenant_id == tenant, learner_weights.c.learner == LEARNER
++        ).order_by(learner_weights.c.version)).mappings().all()
++        return {"active_version": active_version(db, tenant), "versions": [dict(row) for row in versions]}
+diff --git a/migrations/versions/015_router_releases.py b/migrations/versions/015_router_releases.py
+new file mode 100644
+--- /dev/null
++++ b/migrations/versions/015_router_releases.py
+@@ -0,0 +1,43 @@
++"""Add operator release history; no changes to existing table schemas or policies."""
++from alembic import op
++import sqlalchemy as sa
++from sqlalchemy.dialects.postgresql import JSONB
++
++revision = "015_router_releases"
++down_revision = "014_perceptron_shadow"
++branch_labels = None
++depends_on = None
++
++
++def upgrade():
++    op.create_table("router_releases",
++        sa.Column("id", sa.BigInteger, sa.Identity(), primary_key=True),
++        sa.Column("tenant_id", sa.Uuid, sa.ForeignKey("tenants.id"), nullable=False),
++        sa.Column("actor_id", sa.Uuid, sa.ForeignKey("users.id"), nullable=False),
++        sa.Column("action", sa.String(20), nullable=False),
++        sa.Column("version", sa.Integer, nullable=False),
++        sa.Column("previous_version", sa.Integer, nullable=False),
++        sa.Column("model_digest", sa.String(64)),
++        sa.Column("runtime_digest", sa.String(64), nullable=False),
++        sa.Column("evidence", JSONB, nullable=False),
++        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
++        sa.CheckConstraint("version >= 0 AND previous_version >= 0", name="ck_router_release_versions"),
++        sa.CheckConstraint("action IN ('stage','promote','rollback','disable')", name="ck_router_release_action"))
++    op.create_index("ix_router_releases_tenant_id", "router_releases", ["tenant_id", "id"])
++    op.create_index("ix_router_releases_actor_id", "router_releases", ["actor_id"])
++    op.execute("ALTER TABLE router_releases ENABLE ROW LEVEL SECURITY")
++    op.execute("ALTER TABLE router_releases FORCE ROW LEVEL SECURITY")
++    op.execute("""CREATE POLICY router_release_read ON router_releases FOR SELECT USING (
++      tenant_id::text=current_setting('app.tenant_id',true) AND EXISTS (
++        SELECT 1 FROM tenant_memberships tm JOIN tenants t ON t.id=tm.tenant_id
++        JOIN users u ON u.id=tm.user_id
++        WHERE tm.tenant_id=router_releases.tenant_id AND tm.active
++        AND t.tenant_status='active' AND u.is_active
++        AND u.id::text=current_setting('app.actor_id',true)
++        AND tm.role IN ('viewer','analyst','admin','owner')))""")
++    # No runtime INSERT/UPDATE/DELETE policy. The explicit operator CLI requires
++    # a privileged DB connection and an active tenant owner/admin identity.
++
++
++def downgrade():
++    op.drop_table("router_releases")
+diff --git a/scripts/perceptron_router.py b/scripts/perceptron_router.py
+new file mode 100644
+--- /dev/null
++++ b/scripts/perceptron_router.py
+@@ -0,0 +1,66 @@
++"""Explicit local operator commands; no HTTP promotion surface or golden training."""
++import argparse
++import asyncio
++import json
++from pathlib import Path
++import sys
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT))
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("command", choices=("stage", "promote", "rollback", "status"))
++    parser.add_argument("--actor-id", required=True)
++    parser.add_argument("--tenant-id", required=True)
++    parser.add_argument("--candidate", type=Path)
++    parser.add_argument("--version", type=int)
++    parser.add_argument("--expected-version", type=int)
++    parser.add_argument("--root", type=Path, default=ROOT)
++    parser.add_argument("--manifest", type=Path)
++    parser.add_argument("--manifest-sha256")
++    args = parser.parse_args()
++    if args.command == "stage" and not args.candidate:
++        parser.error("stage requires --candidate")
++    if args.command in {"promote", "rollback"} and (args.version is None or args.expected_version is None):
++        parser.error("promote/rollback require --version and --expected-version (0 means baseline)")
++    if args.command == "promote" and (not args.manifest or not args.manifest_sha256):
++        parser.error("promote requires --manifest and --manifest-sha256")
++    engine = None
++    try:
++        from sqlalchemy import create_engine
++        from sqlalchemy.orm import sessionmaker
++        from sqlalchemy.pool import NullPool
++        from backend.app.core.config import get_settings
++        from backend.app.core.database_target import bind_database_schema
++        from backend.app.learning import lifecycle
++        settings = get_settings()
++        engine = create_engine(settings.postgres_dsn, poolclass=NullPool, hide_parameters=True,
++                               connect_args={"connect_timeout": 2})
++        bind_database_schema(engine, settings.database_schema)
++        factory = sessionmaker(engine)
++        common = (factory, args.actor_id, args.tenant_id)
++        if args.command == "stage":
++            if args.candidate.stat().st_size > 1_000_000:
++                raise ValueError("Oversized candidate")
++            result = lifecycle.stage(*common, json.loads(args.candidate.read_bytes()))
++        elif args.command == "promote":
++            result = asyncio.run(lifecycle.promote(*common, args.version, args.expected_version,
++                args.root, args.manifest, args.manifest_sha256))
++        elif args.command == "rollback":
++            result = lifecycle.rollback(*common, args.version, args.expected_version)
++        else:
++            result = lifecycle.status(*common)
++        print(json.dumps(result, allow_nan=False))
++        return 1 if result.get("promoted") is False else 0
++    except Exception:
++        print("Router command refused: check operator authorization, version, shadow evidence and golden integrity.", file=sys.stderr)
++        return 2
++    finally:
++        if engine is not None:
++            engine.dispose()
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/scripts/verify_router_release_migration.py b/scripts/verify_router_release_migration.py
+new file mode 100644
+--- /dev/null
++++ b/scripts/verify_router_release_migration.py
+@@ -0,0 +1,58 @@
++"""Phase 4 additive migration roundtrip; isolated verification database only."""
++from pathlib import Path
++import os
++import sys
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT))
++
++
++def main():
++    from sqlalchemy import create_engine, inspect, text
++    from sqlalchemy.engine import make_url
++    from alembic import command
++    from alembic.config import Config
++    from backend.app.core.config import Settings, get_settings
++    Settings.model_config = {**Settings.model_config, "env_file": None}
++    get_settings.cache_clear()
++    target = make_url(os.environ["DATABASE_URL"])
++    if (target.database != "analyst_setup_test" or target.username != "setup"
++            or target.host != "postgres" or os.environ.get("ENVIRONMENT") != "test"):
++        raise SystemExit("Refusing migration roundtrip outside isolated setup database")
++    engine = create_engine(target)
++    config = Config(str(ROOT / "alembic.ini"))
++    config.set_main_option("script_location", str(ROOT / "migrations"))
++
++    def snapshot():
++        with engine.connect() as db:
++            inspector = inspect(db)
++            result = {}
++            for name in inspector.get_table_names():
++                if name in {"router_releases", "alembic_version"}:
++                    continue
++                quoted = engine.dialect.identifier_preparer.quote(name)
++                result[name] = {
++                    "columns": [(col["name"], str(col["type"]), col["nullable"]) for col in inspector.get_columns(name)],
++                    "pk": inspector.get_pk_constraint(name), "fk": inspector.get_foreign_keys(name),
++                    "indexes": inspector.get_indexes(name),
++                    "count": db.scalar(text(f"SELECT count(*) FROM {quoted}")),
++                    "policies": db.execute(text("SELECT policyname, cmd, qual, with_check FROM pg_policies WHERE schemaname=current_schema() AND tablename=:name ORDER BY policyname"), {"name": name}).all(),
++                }
++            return result
++
++    before = snapshot()
++    command.upgrade(config, "015_router_releases")
++    assert "router_releases" in inspect(engine).get_table_names()
++    assert snapshot() == before
++    command.downgrade(config, "014_perceptron_shadow")
++    assert "router_releases" not in inspect(engine).get_table_names()
++    assert snapshot() == before
++    command.upgrade(config, "015_router_releases")
++    assert "router_releases" in inspect(engine).get_table_names()
++    assert snapshot() == before
++    engine.dispose()
++    print(f"PASS: upgrade / downgrade / upgrade; {len(before)} existing tables unchanged, including policies and row counts")
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/backend/tests/test_perceptron_releases.py b/backend/tests/test_perceptron_releases.py
+new file mode 100644
+--- /dev/null
++++ b/backend/tests/test_perceptron_releases.py
+@@ -0,0 +1,368 @@
++"""Release isolation/atomicity using synthetic tenants, workbooks and gate reports."""
++import asyncio
++from concurrent.futures import ThreadPoolExecutor
++from copy import deepcopy
++import json
++from pathlib import Path
++import subprocess
++import sys
++
++import numpy as np
++import pytest
++from fastapi import HTTPException
++from sqlalchemy import select, text
++from sqlalchemy.exc import DBAPIError
++
++from backend.app.core.config import get_settings
++from backend.app.core.workspace_authorization import tenant_memberships
++from backend.app.learning import lifecycle, release, routing, shadow
++from backend.app.learning.features import bootstrap_prior, feature_version
++from backend.app.learning.golden import digest, encode
++from backend.app.learning.golden_cases import question_contracts
++from backend.app.learning.perceptron import AveragedPerceptron, LABELS, FEATURE_SIZE
++from backend.app.learning.release_table import router_releases
++from backend.app.learning.tables import learner_weights
++from backend.app.models import Workspace
++from backend.app.services.intent_classification_service import IntentClassificationService, get_intent_classification_service
++from backend.tests.test_verified_learning_integration import environment, identity, dataset
++from backend.tests.test_perceptron_golden import frozen
++
++
++@pytest.fixture
++def learning_on(monkeypatch):
++    monkeypatch.setattr(get_settings(), "learning_enabled", True)
++
++
++def tenant_of(env, account):
++    with env["admin"]() as db:
++        return db.get(Workspace, account["workspace"]).tenant_id
++
++
++def forced(intent):
++    weights = np.zeros((len(LABELS), FEATURE_SIZE))
++    weights[LABELS.index(intent), 0] = 100
++    return AveragedPerceptron(weights).to_payload(feature_version())
++
++
++def staged(env, account, payload):
++    tenant = tenant_of(env, account)
++    version = lifecycle.stage(env["admin"], account["user"], tenant, payload)["version"]
++    return tenant, version
++
++
++def approved_fixture(env, account, payload):
++    # Runtime tests install an operator-written synthetic approval. This is not
++    # a claim that these deliberately forced weights pass the real golden set.
++    tenant, version = staged(env, account, payload)
++    with env["admin"]() as db, db.begin():
++        db.execute(learner_weights.update().where(learner_weights.c.tenant_id == tenant).values(is_active=True))
++        lifecycle.event(db, account["user"], tenant, "promote", version, 0, payload, {"synthetic_fixture": True})
++    return tenant, version
++
++
++def synthetic_report(payload, *, wrong=False):
++    # A hypothetical perfect candidate over a baseline with one miss. Lifecycle
++    # transaction tests stub the evaluator; actual evaluation is tested below.
++    cases = []
++    for contract in question_contracts():
++        row = {"id": contract["id"], "kind": contract["kind"], "passed": True}
++        if contract["kind"] == "intent":
++            expected = contract["expected_intent"]
++            baseline = "forecasting" if contract["id"] == "intent-dataset_overview-1" else expected
++            row.update(expected_intent=expected, baseline_intent=baseline, baseline_passed=baseline == expected,
++                       shadow_intent=expected, abstained=expected == "unknown")
++        cases.append(row)
++    if wrong:
++        cases[0]["passed"] = False
++    return {"cases": cases, "quality_gate_passed": not wrong, "candidate_digest": digest(encode(payload)),
++            "unknown_policy": "explicit_if_confident",
++            "manifest_digest": "m" * 64, "feature_version": feature_version(), "code_digest": "c" * 64,
++            "source_hashes": {}, "case_count": len(cases)}
++
++
++def install_evaluator(monkeypatch, hook=None, *, wrong=False):
++    async def evaluate(root, manifest, fingerprint, payload, *, allow_unknown=False):
++        assert allow_unknown
++        if hook:
++            hook()
++        return synthetic_report(payload, wrong=wrong)
++    monkeypatch.setattr(lifecycle, "evaluate", evaluate)
++
++
++def promote(env, account, tenant, version, expected=0):
++    return asyncio.run(lifecycle.promote(env["admin"], account["user"], tenant, version,
++        expected, Path("."), Path("manifest.json"), "m" * 64))
++
++
++def test_disabled_and_llm_paths_preserve_original_service(monkeypatch):
++    original = IntentClassificationService(llm=None)
++    monkeypatch.setattr(get_settings(), "learning_enabled", False)
++    def forbidden(*args, **kwargs):
++        pytest.fail("Disabled router must not open a connection")
++    monkeypatch.setattr(routing, "create_engine", forbidden)
++    assert routing.scoped_router(original, "actor") is original
++    assert routing.read_prediction("actor", "dataset", "forecast") is None
++    monkeypatch.setattr(get_settings(), "learning_enabled", True)
++    with_llm = IntentClassificationService(llm=object())
++    assert routing.scoped_router(with_llm, "actor") is with_llm
++    assert routing.scoped_router(original, None) is original
++
++
++def test_stage_versions_are_immutable_serialized_and_tenant_local(environment):
++    env = environment
++    a, b = identity(env), identity(env)
++    tenant = tenant_of(env, a)
++    payload = forced("forecasting")
++    with ThreadPoolExecutor(max_workers=2) as executor:
++        futures = [executor.submit(lifecycle.stage, env["admin"], a["user"], tenant, payload) for _ in range(2)]
++        assert sorted(f.result()["version"] for f in futures) == [1, 2]
++    assert staged(env, b, payload)[1] == 1
++    assert lifecycle.status(env["admin"], a["user"], tenant) == {"active_version": 0,
++        "versions": [{"version": 1, "is_active": False}, {"version": 2, "is_active": False}]}
++    with env["admin"]() as db:
++        assert release.read_version(db, tenant, 1) == release.read_version(db, tenant, 2) == payload
++
++
++def test_stage_denies_wrong_tenant_viewer_and_runtime_database_role(environment):
++    env = environment
++    owner, other, viewer = identity(env), identity(env), identity(env, role="viewer")
++    payload = forced("forecasting")
++    for actor, tenant in ((other["user"], tenant_of(env, owner)), (viewer["user"], tenant_of(env, viewer))):
++        with pytest.raises(HTTPException):
++            lifecycle.stage(env["admin"], actor, tenant, payload)
++    with pytest.raises(PermissionError):
++        lifecycle.stage(env["api"], owner["user"], tenant_of(env, owner), payload)
++    invalid = deepcopy(payload)
++    invalid["feature_version"] = "stale"
++    with pytest.raises(ValueError):
++        staged(env, owner, invalid)
++
++
++def test_runtime_requires_approval_and_ownership(environment, tmp_path, learning_on):
++    env = environment
++    a, b = identity(env), identity(env)
++    ds_a, ds_b = dataset(env, a, tmp_path), dataset(env, b, tmp_path)
++    tenant, version = staged(env, a, forced("correlation_analysis"))
++    assert routing.read_prediction(a["user"], ds_a, "forecast sales") is None
++    with env["admin"]() as db, db.begin():
++        db.execute(learner_weights.update().where(learner_weights.c.tenant_id == tenant).values(is_active=True))
++    assert routing.read_prediction(a["user"], ds_a, "forecast sales") is None
++    with env["admin"]() as db, db.begin():
++        lifecycle.event(db, a["user"], tenant, "promote", version, 0, forced("correlation_analysis"))
++    approved_fixture(env, b, forced("data_quality"))
++    assert routing.read_prediction(a["user"], ds_a, "forecast sales")[0].intent == "correlation_analysis"
++    assert routing.read_prediction(b["user"], ds_b, "forecast sales")[0].intent == "data_quality"
++    assert routing.read_prediction(b["user"], ds_a, "forecast sales") is None
++    assert routing.read_prediction(a["user"], ds_a, "forecast sales", 99) is None
++    with env["admin"]() as db, db.begin():
++        db.execute(tenant_memberships.update().where(tenant_memberships.c.user_id == a["user"]).values(active=False))
++    assert routing.read_prediction(a["user"], ds_a, "forecast sales") is None
++
++
++@pytest.mark.parametrize("damage", ["digest", "incompatible", "low_margin", "code_changed", "database"])
++def test_runtime_corruption_and_outage_fall_back(environment, tmp_path, learning_on, monkeypatch, damage):
++    env = environment
++    a = identity(env)
++    ds = dataset(env, a, tmp_path)
++    payload = AveragedPerceptron().to_payload(feature_version()) if damage == "low_margin" else forced("data_quality")
++    tenant, _ = approved_fixture(env, a, payload)
++    if damage in {"digest", "incompatible"}:
++        altered = forced("forecasting")
++        if damage == "incompatible":
++            altered["feature_version"] = "wrong"
++        with env["admin"]() as db, db.begin():
++            db.execute(learner_weights.update().where(learner_weights.c.tenant_id == tenant).values(weights=altered))
++    elif damage == "code_changed":
++        monkeypatch.setattr(release, "runtime_digest", lambda: "changed")
++    elif damage == "database":
++        def broken(*args, **kwargs):
++            raise RuntimeError("private database error")
++        monkeypatch.setattr(routing, "create_engine", broken)
++    assert routing.read_prediction(a["user"], ds, "forecast sales") is None
++
++
++def test_intent_api_flag_off_parity_active_route_and_exception_fallback(environment, tmp_path, monkeypatch):
++    env = environment
++    a = identity(env)
++    ds = dataset(env, a, tmp_path)
++    approved_fixture(env, a, forced("correlation_analysis"))
++    monkeypatch.setitem(env["client"].app.dependency_overrides, get_intent_classification_service,
++                        lambda: IntentClassificationService(llm=None))
++    def call():
++        response = env["client"].post("/api/v1/intent/classify", headers=a["headers"],
++            json={"query": "forecast sales", "dataset_id": ds})
++        assert response.status_code == 200, response.text
++        return response.json()
++    monkeypatch.setattr(get_settings(), "learning_enabled", False)
++    baseline = call()
++    assert baseline["intent"] == "forecasting"
++    monkeypatch.setattr(get_settings(), "learning_enabled", True)
++    learned = call()
++    assert learned["intent"] == "correlation_analysis" and set(learned) == set(baseline)
++    assert learned["required_agents"] == IntentClassificationService().registry.get("correlation_analysis").required_agents
++    def broken(*args, **kwargs):
++        raise RuntimeError("private learner error")
++    monkeypatch.setattr(routing, "read_prediction", broken)
++    assert call() == baseline
++
++
++def test_approved_router_never_changes_chat_arithmetic_or_trains(environment, tmp_path, monkeypatch):
++    env = environment
++    a = identity(env)
++    ds = dataset(env, a, tmp_path)
++    tenant, version = approved_fixture(env, a, forced("forecasting"))
++    def forbidden(*args, **kwargs):
++        pytest.fail("Request must not train")
++    monkeypatch.setattr(AveragedPerceptron, "update", forbidden)
++    outputs = []
++    for flag in (False, True):
++        monkeypatch.setattr(get_settings(), "learning_enabled", flag)
++        response = env["client"].post("/api/v1/chat", headers=a["headers"], json={
++            "message": "total amount by region", "dataset_id": ds, "workspace_id": str(a["workspace"])})
++        assert response.status_code == 200, response.text
++        outputs.append({key: response.json()[key] for key in ("data", "plan", "kpis", "answer", "intent", "confidence")})
++    assert outputs[0] == outputs[1]
++    assert outputs[1]["data"] == [{"region": "a", "amount": 1180}]
++    with env["admin"]() as db:
++        assert release.read_version(db, tenant, version) == forced("forecasting")
++
++
++def test_orchestrator_receives_scoped_router(environment, tmp_path, learning_on):
++    from backend.app.services.orchestrator_service import OrchestratorService
++    env = environment
++    a = identity(env)
++    ds = dataset(env, a, tmp_path)
++    approved_fixture(env, a, forced("data_quality"))
++    service = OrchestratorService(intent_classifier=IntentClassificationService(), owner_id=str(a["user"]))
++    assert asyncio.run(service._intent_classifier.classify("forecast sales", dataset_id=ds)).intent == "data_quality"
++
++
++def test_promotion_gate_checks_effective_fallback_and_strict_improvement():
++    report = synthetic_report(forced("data_quality"))
++    assert lifecycle.promotion_gate(report)["passed"]
++    assert not lifecycle.promotion_gate(report, report)["passed"]
++    unknown = next(row for row in report["cases"] if row["id"] == "intent-unknown-2")
++    unknown["baseline_intent"] = "rag_query"
++    assert not lifecycle.promotion_gate(report)["passed"]  # Raw model unknown is an abstention.
++    unknown["abstained"] = False  # Confident explicit unknown corrects the fallback miss.
++    assert lifecycle.promotion_gate(report)["passed"]
++    report = synthetic_report(forced("data_quality"), wrong=True)
++    assert not lifecycle.promotion_gate(report)["passed"]
++    report["cases"].pop()
++    with pytest.raises(ValueError):
++        lifecycle.promotion_gate(report)
++
++
++def test_confident_unknown_is_a_live_decision_but_shadow_default_is_preserved(environment, tmp_path, learning_on):
++    from backend.app.learning.features import extract
++    model = AveragedPerceptron.from_payload(forced("unknown"), feature_version())
++    vector = extract("an out of domain question")
++    assert model.predict(vector).abstained
++    assert not model.predict(vector, allow_unknown=True).abstained
++    assert AveragedPerceptron().predict(vector, allow_unknown=True).abstained
++    env = environment
++    a = identity(env)
++    ds = dataset(env, a, tmp_path)
++    approved_fixture(env, a, forced("unknown"))
++    result = routing.read_prediction(a["user"], ds, "Tell me a bedtime story about a dragon")
++    assert result[0].intent == "unknown" and not result[0].abstained
++
++
++def test_promotion_requires_shadow_then_recomputes_real_golden(environment, tmp_path, frozen, learning_on):
++    env = environment
++    a = identity(env)
++    ds = dataset(env, a, tmp_path)
++    tenant, version = staged(env, a, bootstrap_prior().to_payload(feature_version()))
++    with pytest.raises(ValueError, match="shadow"):
++        promote(env, a, tenant, version)
++    assert shadow.record_shadow(actor_id=str(a["user"]), dataset_id=ds, question="forecast sales")
++    root, _, manifest, fingerprint = frozen
++    result = asyncio.run(lifecycle.promote(env["admin"], a["user"], tenant, version, 0, root, manifest, fingerprint))
++    assert not result["promoted"] and result["gate"]["candidate_correct"] == 33
++    assert lifecycle.status(env["admin"], a["user"], tenant)["active_version"] == 0
++    with env["admin"]() as db:
++        assert db.execute(select(router_releases.c.action).where(router_releases.c.tenant_id == tenant)).scalars().all() == ["stage"]
++
++
++def test_atomic_promotion_and_one_command_rollback(environment, tmp_path, learning_on, monkeypatch):
++    env = environment
++    a = identity(env)
++    ds = dataset(env, a, tmp_path)
++    tenant, version = staged(env, a, forced("data_quality"))
++    assert shadow.record_shadow(actor_id=str(a["user"]), dataset_id=ds, question="forecast sales")
++    install_evaluator(monkeypatch)
++    assert promote(env, a, tenant, version)["promoted"]
++    assert routing.read_prediction(a["user"], ds, "forecast sales")[0].intent == "data_quality"
++    lifecycle.rollback(env["admin"], a["user"], tenant, 0, version)
++    assert routing.read_prediction(a["user"], ds, "forecast sales") is None
++    lifecycle.rollback(env["admin"], a["user"], tenant, version, 0)
++    assert lifecycle.status(env["admin"], a["user"], tenant)["active_version"] == version
++    _, unapproved = staged(env, a, forced("forecasting"))
++    with pytest.raises(ValueError, match="never"):
++        lifecycle.rollback(env["admin"], a["user"], tenant, unapproved, version)
++    with pytest.raises(ValueError, match="changed"):
++        lifecycle.rollback(env["admin"], a["user"], tenant, 0, 99)
++    with env["admin"]() as db:
++        actions = db.execute(select(router_releases.c.action).where(router_releases.c.tenant_id == tenant).order_by(router_releases.c.id)).scalars().all()
++        assert actions == ["stage", "promote", "disable", "rollback", "stage"]
++
++
++@pytest.mark.parametrize("interference", ["state", "revocation", "audit_failure", "bad_score"])
++def test_failed_promotion_never_partially_activates(environment, tmp_path, learning_on, monkeypatch, interference):
++    env = environment
++    a = identity(env)
++    ds = dataset(env, a, tmp_path)
++    tenant, version = staged(env, a, forced("data_quality"))
++    assert shadow.record_shadow(actor_id=str(a["user"]), dataset_id=ds, question="forecast sales")
++    def hook():
++        if interference == "state":
++            staged(env, a, forced("forecasting"))
++        elif interference == "revocation":
++            with env["admin"]() as db, db.begin():
++                db.execute(tenant_memberships.update().where(tenant_memberships.c.user_id == a["user"]).values(active=False))
++    install_evaluator(monkeypatch, hook, wrong=interference == "bad_score")
++    if interference == "audit_failure":
++        def broken(*args, **kwargs):
++            raise RuntimeError("Audit persistence failed")
++        monkeypatch.setattr(lifecycle, "event", broken)
++    if interference == "bad_score":
++        assert not promote(env, a, tenant, version)["promoted"]
++    else:
++        with pytest.raises((ValueError, HTTPException, RuntimeError)):
++            promote(env, a, tenant, version)
++    with env["admin"]() as db:
++        assert release.active_version(db, tenant) == 0
++        assert not db.scalar(select(router_releases.c.id).where(router_releases.c.tenant_id == tenant, router_releases.c.action == "promote"))
++
++
++def test_release_rls_disallows_forgery_mutation_and_other_tenants(environment):
++    env = environment
++    a, b = identity(env), identity(env)
++    tenant, _ = staged(env, a, forced("data_quality"))
++    with env["admin"]() as db:
++        row = dict(db.execute(select(router_releases).where(router_releases.c.tenant_id == tenant)).mappings().one())
++    with env["api"]() as db, db.begin():
++        for key, value in (("tenant_id", tenant), ("actor_id", a["user"])):
++            db.execute(text("SELECT set_config(:key,:value,true)"), {"key": f"app.{key}", "value": str(value)})
++        assert db.scalar(select(router_releases.c.id).where(router_releases.c.id == row["id"])) == row["id"]
++        with pytest.raises(DBAPIError), db.begin_nested():
++            db.execute(router_releases.insert().values(**{key: value for key, value in row.items() if key != "id"}))
++        assert db.execute(router_releases.update().where(router_releases.c.id == row["id"]).values(action="promote")).rowcount == 0
++        assert db.execute(router_releases.delete().where(router_releases.c.id == row["id"])).rowcount == 0
++        assert db.execute(learner_weights.update().where(learner_weights.c.tenant_id == tenant).values(is_active=True)).rowcount == 0
++        db.execute(text("SELECT set_config('app.actor_id',:actor,true)"), {"actor": str(b["user"])})
++        assert db.scalar(select(router_releases.c.id).where(router_releases.c.id == row["id"])) is None
++
++
++def test_operator_cli_status_and_disable(environment):
++    env = environment
++    a = identity(env)
++    tenant, version = approved_fixture(env, a, forced("data_quality"))
++    script = str(Path(__file__).resolve().parents[2] / "scripts/perceptron_router.py")
++    common = ["--actor-id", str(a["user"]), "--tenant-id", str(tenant)]
++    result = subprocess.run([sys.executable, script, "status", *common], text=True, capture_output=True)
++    assert result.returncode == 0, result.stderr
++    assert json.loads(result.stdout)["active_version"] == version
++    result = subprocess.run([sys.executable, script, "rollback", *common, "--version", "0", "--expected-version", str(version)], text=True, capture_output=True)
++    assert result.returncode == 0, result.stderr
++    assert json.loads(result.stdout)["version"] == 0

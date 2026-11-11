@@ -1,0 +1,2 @@
+[dataanalyst-backend:integration-audit] sha256:4ba2aca6c4864700c1e879de62721e3ebabf399f28b9d8447747863b27559c20
+[dataanalyst-frontend:integration-audit] sha256:56930bff980fa31787ddb4e725a5500c758920edf6f33b290d999c9ea9ddddfe

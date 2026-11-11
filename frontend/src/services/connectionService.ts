@@ -43,10 +43,16 @@ export interface SaveConnectionPayload extends ConnectionTestPayload {
 }
 
 export const connectionService = {
-  testConnection(payload: ConnectionTestPayload, signal?: AbortSignal): Promise<ConnectionTestResult> {
+  testConnection(
+    payload: ConnectionTestPayload,
+    signal?: AbortSignal,
+  ): Promise<ConnectionTestResult> {
     return apiClient.post<ConnectionTestResult>('/api/v1/connections/test', payload, { signal });
   },
-  saveConnection(payload: SaveConnectionPayload, signal?: AbortSignal): Promise<DatabaseConnection> {
+  saveConnection(
+    payload: SaveConnectionPayload,
+    signal?: AbortSignal,
+  ): Promise<DatabaseConnection> {
     return apiClient.post<DatabaseConnection>('/api/v1/connections', payload, { signal });
   },
   listConnections(workspaceId: string, signal?: AbortSignal): Promise<DatabaseConnection[]> {
@@ -55,10 +61,17 @@ export const connectionService = {
       params: { workspace_id: workspaceId },
     });
   },
-  deleteConnection(connectionId: string, workspaceId: string, signal?: AbortSignal): Promise<{ success: boolean; message: string }> {
-    return apiClient.delete<{ success: boolean; message: string }>(`/api/v1/connections/${encodeURIComponent(connectionId)}`, {
-      signal,
-      params: { workspace_id: workspaceId },
-    });
+  deleteConnection(
+    connectionId: string,
+    workspaceId: string,
+    signal?: AbortSignal,
+  ): Promise<{ success: boolean; message: string }> {
+    return apiClient.delete<{ success: boolean; message: string }>(
+      `/api/v1/connections/${encodeURIComponent(connectionId)}`,
+      {
+        signal,
+        params: { workspace_id: workspaceId },
+      },
+    );
   },
 };

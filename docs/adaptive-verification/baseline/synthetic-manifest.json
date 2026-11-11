@@ -1,0 +1,25 @@
+{
+  "case_ids": [
+    "285a817f-0aa2-436d-8f38-dd663bdb268b",
+    "a20a8643-1dcf-40ef-befe-661ac605c258"
+  ],
+  "split_version": "synthetic-heldout-scenarios-v1",
+  "dataset_versions": [
+    {
+      "dataset_id": "5970f6fc-c567-41e4-9656-79fb5af4472b",
+      "version": 1
+    },
+    {
+      "dataset_id": "460102d3-f00e-402a-afa7-1861ba9f9083",
+      "version": 1
+    }
+  ],
+  "baseline_bundle": "validated-baseline-v1",
+  "candidate_bundle": "ba4ad0e6-b3f7-4589-9633-256a79bc36de",
+  "memory_cutoff": "2026-11-04T18:53:46.428714+00:00",
+  "model_configuration": "deterministic-supervisor-v1",
+  "graders": "exact-decimal-reference-v1",
+  "metrics": "paired-correctness-cost-latency-v1",
+  "budget": {},
+  "gates": {}
+}

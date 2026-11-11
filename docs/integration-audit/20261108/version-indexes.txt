@@ -1,0 +1,4 @@
+dataset_versions_pkey|CREATE UNIQUE INDEX dataset_versions_pkey ON public.dataset_versions USING btree (version_id)
+uq_dataset_version_number|CREATE UNIQUE INDEX uq_dataset_version_number ON public.dataset_versions USING btree (dataset_id, version_number)
+ix_dataset_versions_history|CREATE INDEX ix_dataset_versions_history ON public.dataset_versions USING btree (dataset_id, created_at)
+ix_dataset_versions_parent|CREATE INDEX ix_dataset_versions_parent ON public.dataset_versions USING btree (parent_version_id)

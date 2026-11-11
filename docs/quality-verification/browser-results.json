@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "fixture_mode": "mock HTTP, no real provider/database",
+  "checks": [
+    "overview initial failure and retry load the registry",
+    "command palette resets search and keyboard selection on reopening",
+    "insights ignore a late response and clear results when no dataset is selected",
+    "session search ignores out-of-order completions",
+    "report detail recovers after retry and report lists refresh",
+    "EDA recovers, refreshes and switches dataset without stale results",
+    "visualization document selection clears rows and tabular selection restores local chart fallback",
+    "dashboard studio excludes null metrics without inventing values",
+    "toast auto-dismiss and manual dismissal work in React StrictMode"
+  ],
+  "page_errors": []
+}

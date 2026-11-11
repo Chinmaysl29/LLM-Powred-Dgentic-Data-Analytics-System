@@ -1,0 +1,17 @@
+[
+    {
+        "Algorithm":  "SHA256",
+        "Hash":  "5353CC868B2EC8702F8036850853E24CEA2994F81F92F501F211102B6A43ED5D",
+        "File":  "database-before.dump"
+    },
+    {
+        "Algorithm":  "SHA256",
+        "Hash":  "13DEAD1B868950AF51FE1337AF0E8DE96420F9F7E3374269EA94065A8A4DD0D6",
+        "File":  "storage-before.tgz"
+    },
+    {
+        "Algorithm":  "SHA256",
+        "Hash":  "4FD360A06705F2034E68270B289DCC11774485B60C826AB48BC4E9ECBA30AE3F",
+        "File":  "source-before.tgz"
+    }
+]

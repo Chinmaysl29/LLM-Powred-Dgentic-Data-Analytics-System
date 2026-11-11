@@ -26,3 +26,9 @@ htmlcov/
 # Local browser profiles and maintenance evidence are not image inputs.
 frontend/.ui-review/
 reports/repository-maintenance-local/
+
+# Runtime datasets, model caches and generated artifacts are bind-mounted.
+storage/
+uploads/
+datasets/
+data/

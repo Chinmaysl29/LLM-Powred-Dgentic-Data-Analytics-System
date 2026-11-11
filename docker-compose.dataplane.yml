@@ -1,0 +1,8 @@
+# Explicit opt-in deployment; the base Compose file remains disabled by default.
+services:
+  backend:
+    environment:
+      DATAPLANE_ENABLED: ${DATAPLANE_ENABLED:-true}
+      DATAPLANE_POSTGRES_HOSTS: ${DATAPLANE_POSTGRES_HOSTS:-}
+  dataplane-worker:
+    profiles: []

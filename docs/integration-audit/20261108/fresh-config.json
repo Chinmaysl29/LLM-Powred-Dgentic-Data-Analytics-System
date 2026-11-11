@@ -1,0 +1,1 @@
+{"dataplane_enabled": true, "learning_enabled": true, "database_driver": "postgresql+psycopg", "chroma_host": "chromadb", "chroma_port": 8000}

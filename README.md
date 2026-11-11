@@ -8,6 +8,17 @@ AI Data Analyst OS brings dataset management, natural-language analytics, explor
 
 ## Contents
 
+The [company review checkpoint](docs/EIGHT_FEATURE_CHECKPOINT.md) records the
+eight-feature continuation, tested dictionary/evidence/health/cleaning/comparison/
+workflow paths, and remaining gaps. See its linked architecture and local
+operations guides before treating the full master specification as complete.
+
+The [Verified Learning Supervisor guide](docs/VERIFIED_LEARNING_SUPERVISOR.md) documents the implemented descriptive-analysis supervisor, durable scoped lessons, evaluation gates, `/verified-learning` UI, migration and reproducible evidence. Collection/application start disabled; the synthetic comparison found no accuracy gain, and numeric confidence remains unavailable.
+
+The [Adaptive System guide](docs/ADAPTIVE_SYSTEM.md) covers typed diagnosis, tested executable skills, real CPU logistic/MLP repair-selector training, scoped replay/evaluation, shadow mode and rollback. Synthetic trained candidates remain release blocked; main LLM/embedding weights are frozen. See the [implementation checklist and evidence](docs/ADAPTIVE_IMPLEMENTATION_PROGRESS.md).
+
+The [Supabase connection guide](docs/SUPABASE_CONNECTION.md) documents the configured Auth project, session handling and the prepared migration of the analytics database into a separate hosted schema. The database move requires a server-only PostgreSQL connection URI; the publishable browser key does not grant migration access.
+
 1. [Overview](#overview)
 2. [Core capabilities](#core-capabilities)
 3. [System architecture](#system-architecture)

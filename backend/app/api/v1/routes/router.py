@@ -65,5 +65,17 @@ from backend.app.api.v1.routes.connections import router as connections_router
 router.include_router(connections_router, dependencies=[Depends(get_current_user)])
 from backend.app.api.v1.routes.analysis_history import router as analysis_history_router
 router.include_router(analysis_history_router, dependencies=[Depends(get_current_user)])
+from backend.app.api.v1.routes.learning import router as learning_router
+router.include_router(learning_router, dependencies=[Depends(get_current_user)])
+from backend.app.api.v1.routes.adaptive import router as adaptive_router
+router.include_router(adaptive_router, dependencies=[Depends(get_current_user)])
+from backend.app.api.v1.routes.perceptron_dashboard import router as perceptron_dashboard_router
+router.include_router(perceptron_dashboard_router, dependencies=[Depends(get_current_user)])
+from backend.app.dataplane.api import router as dataplane_router
+router.include_router(dataplane_router, dependencies=[Depends(get_current_user)])
+from backend.app.dataplane.company_api import router as company_router
+router.include_router(company_router, dependencies=[Depends(get_current_user)])
+from backend.app.dataplane.reviewer_api import router as reviewer_router
+router.include_router(reviewer_router, dependencies=[Depends(get_current_user)])
 
 

@@ -6,13 +6,7 @@
  * and what-if simulation outputs.
  */
 
-export type InsightType =
-  | 'trend'
-  | 'pattern'
-  | 'anomaly'
-  | 'driver'
-  | 'change'
-  | 'correlation';
+export type InsightType = 'trend' | 'pattern' | 'anomaly' | 'driver' | 'change' | 'correlation';
 
 export interface InsightMetric {
   label: string;
@@ -109,11 +103,11 @@ export interface BusinessHealthMetric {
 
 export interface ScenarioInputVariables {
   marketingSpendDelta: number; // percentage (-50% to +100%)
-  priceDelta: number;          // percentage (-30% to +50%)
-  churnDelta: number;          // percentage (-20% to +30%)
+  priceDelta: number; // percentage (-30% to +50%)
+  churnDelta: number; // percentage (-20% to +30%)
   marketingSpendDeltaPct?: number; // alias
-  priceAdjustmentPct?: number;     // alias
-  churnRateDeltaPct?: number;      // alias
+  priceAdjustmentPct?: number; // alias
+  churnRateDeltaPct?: number; // alias
   region?: string;
   targetRegion?: string;
   productCategory?: string;

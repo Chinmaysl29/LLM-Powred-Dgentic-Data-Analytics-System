@@ -1,0 +1,493 @@
+{
+  "pairs": [
+    {
+      "case_id": "579e4d5a-69c0-4aad-bb60-6eb7502002c0",
+      "scenario_group": "final-synthetic-schema-scenario-0",
+      "source_kind": "synthetic",
+      "baseline": {
+        "correct": true,
+        "first_attempt_correct": true,
+        "status": "verified",
+        "verified_repairs": 1,
+        "failed_repairs": 0,
+        "repair_attempts": 1,
+        "harmful_repair": false,
+        "error_code": null,
+        "latency_ms": 12.874300000476069,
+        "provider_cost_usd": 0,
+        "selected_skills": [
+          "decimal_exact"
+        ],
+        "fallbacks": []
+      },
+      "linear": {
+        "correct": true,
+        "first_attempt_correct": true,
+        "status": "verified",
+        "verified_repairs": 1,
+        "failed_repairs": 0,
+        "repair_attempts": 1,
+        "harmful_repair": false,
+        "error_code": null,
+        "latency_ms": 12.942299999849638,
+        "provider_cost_usd": 0,
+        "selected_skills": [
+          "decimal_exact"
+        ],
+        "fallbacks": []
+      },
+      "mlp": {
+        "correct": true,
+        "first_attempt_correct": true,
+        "status": "verified",
+        "verified_repairs": 1,
+        "failed_repairs": 0,
+        "repair_attempts": 1,
+        "harmful_repair": false,
+        "error_code": null,
+        "latency_ms": 22.032900000340305,
+        "provider_cost_usd": 0,
+        "selected_skills": [
+          "decimal_exact"
+        ],
+        "fallbacks": []
+      }
+    },
+    {
+      "case_id": "cb2e697b-eef4-4961-a95f-c63c036315f7",
+      "scenario_group": "final-synthetic-schema-scenario-1",
+      "source_kind": "synthetic",
+      "baseline": {
+        "correct": true,
+        "first_attempt_correct": true,
+        "status": "verified",
+        "verified_repairs": 1,
+        "failed_repairs": 0,
+        "repair_attempts": 1,
+        "harmful_repair": false,
+        "error_code": null,
+        "latency_ms": 14.763099999981932,
+        "provider_cost_usd": 0,
+        "selected_skills": [
+          "decimal_exact"
+        ],
+        "fallbacks": []
+      },
+      "linear": {
+        "correct": true,
+        "first_attempt_correct": true,
+        "status": "verified",
+        "verified_repairs": 1,
+        "failed_repairs": 0,
+        "repair_attempts": 1,
+        "harmful_repair": false,
+        "error_code": null,
+        "latency_ms": 13.446099999782746,
+        "provider_cost_usd": 0,
+        "selected_skills": [
+          "decimal_exact"
+        ],
+        "fallbacks": []
+      },
+      "mlp": {
+        "correct": true,
+        "first_attempt_correct": true,
+        "status": "verified",
+        "verified_repairs": 1,
+        "failed_repairs": 0,
+        "repair_attempts": 1,
+        "harmful_repair": false,
+        "error_code": null,
+        "latency_ms": 18.940600000860286,
+        "provider_cost_usd": 0,
+        "selected_skills": [
+          "decimal_exact"
+        ],
+        "fallbacks": []
+      }
+    },
+    {
+      "case_id": "1c5fa0d9-a137-48f3-92da-ad47907c1b28",
+      "scenario_group": "final-synthetic-schema-scenario-2",
+      "source_kind": "synthetic",
+      "baseline": {
+        "correct": true,
+        "first_attempt_correct": true,
+        "status": "verified",
+        "verified_repairs": 1,
+        "failed_repairs": 0,
+        "repair_attempts": 1,
+        "harmful_repair": false,
+        "error_code": null,
+        "latency_ms": 12.633499998628395,
+        "provider_cost_usd": 0,
+        "selected_skills": [
+          "decimal_exact"
+        ],
+        "fallbacks": []
+      },
+      "linear": {
+        "correct": true,
+        "first_attempt_correct": true,
+        "status": "verified",
+        "verified_repairs": 1,
+        "failed_repairs": 0,
+        "repair_attempts": 1,
+        "harmful_repair": false,
+        "error_code": null,
+        "latency_ms": 14.249400001062895,
+        "provider_cost_usd": 0,
+        "selected_skills": [
+          "decimal_exact"
+        ],
+        "fallbacks": []
+      },
+      "mlp": {
+        "correct": true,
+        "first_attempt_correct": true,
+        "status": "verified",
+        "verified_repairs": 1,
+        "failed_repairs": 0,
+        "repair_attempts": 1,
+        "harmful_repair": false,
+        "error_code": null,
+        "latency_ms": 20.06930000061402,
+        "provider_cost_usd": 0,
+        "selected_skills": [
+          "decimal_exact"
+        ],
+        "fallbacks": []
+      }
+    },
+    {
+      "case_id": "b11b29c0-6e21-460b-b245-33f7ad6d28df",
+      "scenario_group": "final-synthetic-schema-scenario-3",
+      "source_kind": "synthetic",
+      "baseline": {
+        "correct": true,
+        "first_attempt_correct": true,
+        "status": "verified",
+        "verified_repairs": 1,
+        "failed_repairs": 0,
+        "repair_attempts": 1,
+        "harmful_repair": false,
+        "error_code": null,
+        "latency_ms": 10.744200000772253,
+        "provider_cost_usd": 0,
+        "selected_skills": [
+          "decimal_exact"
+        ],
+        "fallbacks": []
+      },
+      "linear": {
+        "correct": true,
+        "first_attempt_correct": true,
+        "status": "verified",
+        "verified_repairs": 1,
+        "failed_repairs": 0,
+        "repair_attempts": 1,
+        "harmful_repair": false,
+        "error_code": null,
+        "latency_ms": 13.346699999601697,
+        "provider_cost_usd": 0,
+        "selected_skills": [
+          "decimal_exact"
+        ],
+        "fallbacks": []
+      },
+      "mlp": {
+        "correct": true,
+        "first_attempt_correct": true,
+        "status": "verified",
+        "verified_repairs": 1,
+        "failed_repairs": 0,
+        "repair_attempts": 1,
+        "harmful_repair": false,
+        "error_code": null,
+        "latency_ms": 22.405499999877065,
+        "provider_cost_usd": 0,
+        "selected_skills": [
+          "decimal_exact"
+        ],
+        "fallbacks": []
+      }
+    },
+    {
+      "case_id": "3f62765d-f66d-400c-9216-5ef1b7b9b7a9",
+      "scenario_group": "final-synthetic-schema-scenario-4",
+      "source_kind": "synthetic",
+      "baseline": {
+        "correct": true,
+        "first_attempt_correct": true,
+        "status": "verified",
+        "verified_repairs": 1,
+        "failed_repairs": 0,
+        "repair_attempts": 1,
+        "harmful_repair": false,
+        "error_code": null,
+        "latency_ms": 11.540000001332373,
+        "provider_cost_usd": 0,
+        "selected_skills": [
+          "decimal_exact"
+        ],
+        "fallbacks": []
+      },
+      "linear": {
+        "correct": true,
+        "first_attempt_correct": true,
+        "status": "verified",
+        "verified_repairs": 1,
+        "failed_repairs": 0,
+        "repair_attempts": 1,
+        "harmful_repair": false,
+        "error_code": null,
+        "latency_ms": 12.18449999942095,
+        "provider_cost_usd": 0,
+        "selected_skills": [
+          "decimal_exact"
+        ],
+        "fallbacks": []
+      },
+      "mlp": {
+        "correct": true,
+        "first_attempt_correct": true,
+        "status": "verified",
+        "verified_repairs": 1,
+        "failed_repairs": 0,
+        "repair_attempts": 1,
+        "harmful_repair": false,
+        "error_code": null,
+        "latency_ms": 21.021000000473578,
+        "provider_cost_usd": 0,
+        "selected_skills": [
+          "decimal_exact"
+        ],
+        "fallbacks": []
+      }
+    },
+    {
+      "case_id": "2e8da61b-be81-4113-9011-7dea2785f6b8",
+      "scenario_group": "final-synthetic-schema-scenario-5",
+      "source_kind": "synthetic",
+      "baseline": {
+        "correct": true,
+        "first_attempt_correct": true,
+        "status": "verified",
+        "verified_repairs": 1,
+        "failed_repairs": 0,
+        "repair_attempts": 1,
+        "harmful_repair": false,
+        "error_code": null,
+        "latency_ms": 12.363800000457559,
+        "provider_cost_usd": 0,
+        "selected_skills": [
+          "decimal_exact"
+        ],
+        "fallbacks": []
+      },
+      "linear": {
+        "correct": true,
+        "first_attempt_correct": true,
+        "status": "verified",
+        "verified_repairs": 1,
+        "failed_repairs": 0,
+        "repair_attempts": 1,
+        "harmful_repair": false,
+        "error_code": null,
+        "latency_ms": 16.43070000136504,
+        "provider_cost_usd": 0,
+        "selected_skills": [
+          "decimal_exact"
+        ],
+        "fallbacks": []
+      },
+      "mlp": {
+        "correct": true,
+        "first_attempt_correct": true,
+        "status": "verified",
+        "verified_repairs": 1,
+        "failed_repairs": 0,
+        "repair_attempts": 1,
+        "harmful_repair": false,
+        "error_code": null,
+        "latency_ms": 20.910900000671973,
+        "provider_cost_usd": 0,
+        "selected_skills": [
+          "decimal_exact"
+        ],
+        "fallbacks": []
+      }
+    },
+    {
+      "case_id": "0d432ada-0ff0-4c86-84eb-d50c4d7f894d",
+      "scenario_group": "final-synthetic-schema-scenario-6",
+      "source_kind": "synthetic",
+      "baseline": {
+        "correct": true,
+        "first_attempt_correct": true,
+        "status": "verified",
+        "verified_repairs": 1,
+        "failed_repairs": 0,
+        "repair_attempts": 1,
+        "harmful_repair": false,
+        "error_code": null,
+        "latency_ms": 11.5869000001112,
+        "provider_cost_usd": 0,
+        "selected_skills": [
+          "decimal_exact"
+        ],
+        "fallbacks": []
+      },
+      "linear": {
+        "correct": true,
+        "first_attempt_correct": true,
+        "status": "verified",
+        "verified_repairs": 1,
+        "failed_repairs": 0,
+        "repair_attempts": 1,
+        "harmful_repair": false,
+        "error_code": null,
+        "latency_ms": 16.414800000347896,
+        "provider_cost_usd": 0,
+        "selected_skills": [
+          "decimal_exact"
+        ],
+        "fallbacks": []
+      },
+      "mlp": {
+        "correct": true,
+        "first_attempt_correct": true,
+        "status": "verified",
+        "verified_repairs": 1,
+        "failed_repairs": 0,
+        "repair_attempts": 1,
+        "harmful_repair": false,
+        "error_code": null,
+        "latency_ms": 22.935200000574696,
+        "provider_cost_usd": 0,
+        "selected_skills": [
+          "decimal_exact"
+        ],
+        "fallbacks": []
+      }
+    },
+    {
+      "case_id": "aa9f52f2-4ffb-4099-abc2-d2fb33cd3897",
+      "scenario_group": "final-synthetic-schema-scenario-7",
+      "source_kind": "synthetic",
+      "baseline": {
+        "correct": true,
+        "first_attempt_correct": true,
+        "status": "verified",
+        "verified_repairs": 1,
+        "failed_repairs": 0,
+        "repair_attempts": 1,
+        "harmful_repair": false,
+        "error_code": null,
+        "latency_ms": 12.12390000000596,
+        "provider_cost_usd": 0,
+        "selected_skills": [
+          "decimal_exact"
+        ],
+        "fallbacks": []
+      },
+      "linear": {
+        "correct": true,
+        "first_attempt_correct": true,
+        "status": "verified",
+        "verified_repairs": 1,
+        "failed_repairs": 0,
+        "repair_attempts": 1,
+        "harmful_repair": false,
+        "error_code": null,
+        "latency_ms": 13.289799999256502,
+        "provider_cost_usd": 0,
+        "selected_skills": [
+          "decimal_exact"
+        ],
+        "fallbacks": []
+      },
+      "mlp": {
+        "correct": true,
+        "first_attempt_correct": true,
+        "status": "verified",
+        "verified_repairs": 1,
+        "failed_repairs": 0,
+        "repair_attempts": 1,
+        "harmful_repair": false,
+        "error_code": null,
+        "latency_ms": 19.69680000001972,
+        "provider_cost_usd": 0,
+        "selected_skills": [
+          "decimal_exact"
+        ],
+        "fallbacks": []
+      }
+    }
+  ],
+  "metrics": {
+    "baseline": {
+      "cases": 8,
+      "first_attempt_correct": 8,
+      "final_correct": 8,
+      "verified_repair_success": 8,
+      "attempted_repairs": 8,
+      "verified_repair_rate": 1.0,
+      "failed_repair_attempts": 0,
+      "repeated_errors": 0,
+      "harmful_repairs": 0,
+      "abstained": 0,
+      "unknown": 0,
+      "p50_latency_ms": 12.12390000000596,
+      "p95_latency_ms": 14.763099999981932,
+      "provider_cost_usd": 0
+    },
+    "linear": {
+      "cases": 8,
+      "first_attempt_correct": 8,
+      "final_correct": 8,
+      "verified_repair_success": 8,
+      "attempted_repairs": 8,
+      "verified_repair_rate": 1.0,
+      "failed_repair_attempts": 0,
+      "repeated_errors": 0,
+      "harmful_repairs": 0,
+      "abstained": 0,
+      "unknown": 0,
+      "p50_latency_ms": 13.346699999601697,
+      "p95_latency_ms": 16.43070000136504,
+      "provider_cost_usd": 0
+    },
+    "mlp": {
+      "cases": 8,
+      "first_attempt_correct": 8,
+      "final_correct": 8,
+      "verified_repair_success": 8,
+      "attempted_repairs": 8,
+      "verified_repair_rate": 1.0,
+      "failed_repair_attempts": 0,
+      "repeated_errors": 0,
+      "harmful_repairs": 0,
+      "abstained": 0,
+      "unknown": 0,
+      "p50_latency_ms": 20.910900000671973,
+      "p95_latency_ms": 22.935200000574696,
+      "provider_cost_usd": 0
+    }
+  },
+  "sample_size": 8,
+  "scenario_groups": 8,
+  "trusted_final_groups": 0,
+  "limits": [
+    "Synthetic classification fit does not establish production policy improvement.",
+    "No off-policy estimate is made; alternatives were executed only on isolated local fixtures.",
+    "No stochastic live exploration; routing scores are not calibrated answer probabilities."
+  ],
+  "denominators": {
+    "correctness": "All frozen final cases, including failures/unknowns.",
+    "repair_success": "Verified local action successes / all executed repair attempts.",
+    "harmful": "Wrong final answers marked verified after repairs; rejected attempts counted separately.",
+    "latency": "Whole isolated executor, including feature/ranking/validation; excludes queue and input loading.",
+    "cost": "Provider usage only; training CPU/RSS are separate measurements."
+  }
+}

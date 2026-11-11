@@ -1,0 +1,114 @@
+{
+  "dataset_id": "c46850e9-cda3-471e-93ed-aa9ce2dc5810",
+  "dataset_name": "synthetic_recovery",
+  "columns": [
+    "item",
+    "category",
+    "revenue",
+    "cost"
+  ],
+  "records": [
+    {
+      "item": "item-0",
+      "category": "B",
+      "revenue": 100,
+      "cost": 20
+    },
+    {
+      "item": "item-1",
+      "category": "A",
+      "revenue": 101,
+      "cost": 21
+    },
+    {
+      "item": "item-2",
+      "category": "B",
+      "revenue": 102,
+      "cost": 22
+    },
+    {
+      "item": "item-3",
+      "category": "A",
+      "revenue": 103,
+      "cost": 23
+    },
+    {
+      "item": "item-4",
+      "category": "B",
+      "revenue": 104,
+      "cost": 24
+    },
+    {
+      "item": "item-5",
+      "category": "A",
+      "revenue": 105,
+      "cost": 25
+    },
+    {
+      "item": "item-6",
+      "category": "B",
+      "revenue": 106,
+      "cost": 26
+    },
+    {
+      "item": "item-7",
+      "category": "A",
+      "revenue": 107,
+      "cost": 27
+    },
+    {
+      "item": "item-8",
+      "category": "B",
+      "revenue": 108,
+      "cost": 28
+    },
+    {
+      "item": "item-9",
+      "category": "A",
+      "revenue": 109,
+      "cost": 29
+    },
+    {
+      "item": "item-10",
+      "category": "B",
+      "revenue": 110,
+      "cost": 30
+    },
+    {
+      "item": "item-11",
+      "category": "A",
+      "revenue": 111,
+      "cost": 31
+    },
+    {
+      "item": "item-12",
+      "category": "B",
+      "revenue": 112,
+      "cost": 32
+    },
+    {
+      "item": "item-13",
+      "category": "A",
+      "revenue": 113,
+      "cost": 33
+    },
+    {
+      "item": "item-14",
+      "category": "B",
+      "revenue": 114,
+      "cost": 34
+    },
+    {
+      "item": "item-15",
+      "category": "A",
+      "revenue": 115,
+      "cost": 35
+    },
+    {
+      "item": "item-16",
+      "category": "B",
+      "revenue": 116,
+      "cost": 36
+    }
+  ]
+}

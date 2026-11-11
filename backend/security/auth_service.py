@@ -124,7 +124,7 @@ class AuthService:
 
         return payload
 
-    def refresh_token(self, refresh_token_str: str) -> dict[str, Any]:
+    def refresh_token(self, refresh_token_str: str, db=None) -> dict[str, Any]:
         """Rotate a refresh token: validate, revoke old, and issue a fresh pair."""
         payload = self.verify_token(refresh_token_str)
         if payload.get("token_type") != "refresh":
@@ -134,6 +134,12 @@ class AuthService:
         user_id = payload.get("sub")
         if not user_id:
             raise ValueError("Refresh token missing subject claim")
+
+        if db is not None:
+            from backend.security.token_revocations import consume
+            if not consume(db, refresh_token_str, payload):
+                raise ValueError("Refresh token has already been consumed")
+            db.commit()
 
         # Invalidate the old refresh token (single-use rotation)
         if jti:

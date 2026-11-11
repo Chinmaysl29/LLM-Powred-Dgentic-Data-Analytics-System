@@ -1,19 +1,16 @@
 import React, { useState, useMemo } from 'react';
-import { 
-  Sliders, 
-  RotateCcw, 
-  ArrowUpRight, 
-  ArrowDownRight, 
-  AlertTriangle, 
-  CheckCircle2, 
-  ShieldAlert, 
-  Info, 
-  MessageSquare 
+import {
+  Sliders,
+  RotateCcw,
+  ArrowUpRight,
+  ArrowDownRight,
+  AlertTriangle,
+  CheckCircle2,
+  ShieldAlert,
+  Info,
+  MessageSquare,
 } from 'lucide-react';
-import type { 
-  ScenarioInputVariables, 
-  ScenarioProjection 
-} from '../../types/insights';
+import type { ScenarioInputVariables, ScenarioProjection } from '../../types/insights';
 import { calculateScenarioProjection } from '../../services/insightsService';
 
 interface WhatIfSimulatorProps {
@@ -39,17 +36,38 @@ const PRESETS = [
   {
     name: 'Growth Push',
     desc: '+25% marketing, +5% price',
-    vars: { marketingSpendDelta: 25, marketingSpendDeltaPct: 25, priceDelta: 5, priceAdjustmentPct: 5, churnDelta: 0, churnRateDeltaPct: 0 },
+    vars: {
+      marketingSpendDelta: 25,
+      marketingSpendDeltaPct: 25,
+      priceDelta: 5,
+      priceAdjustmentPct: 5,
+      churnDelta: 0,
+      churnRateDeltaPct: 0,
+    },
   },
   {
     name: 'Margin Expansion',
     desc: '+12% price, -10% churn',
-    vars: { marketingSpendDelta: 0, marketingSpendDeltaPct: 0, priceDelta: 12, priceAdjustmentPct: 12, churnDelta: -10, churnRateDeltaPct: -10 },
+    vars: {
+      marketingSpendDelta: 0,
+      marketingSpendDeltaPct: 0,
+      priceDelta: 12,
+      priceAdjustmentPct: 12,
+      churnDelta: -10,
+      churnRateDeltaPct: -10,
+    },
   },
   {
     name: 'Retention Focus',
     desc: '-20% churn, -5% price',
-    vars: { marketingSpendDelta: -10, marketingSpendDeltaPct: -10, priceDelta: -5, priceAdjustmentPct: -5, churnDelta: -20, churnRateDeltaPct: -20 },
+    vars: {
+      marketingSpendDelta: -10,
+      marketingSpendDeltaPct: -10,
+      priceDelta: -5,
+      priceAdjustmentPct: -5,
+      churnDelta: -20,
+      churnRateDeltaPct: -20,
+    },
   },
 ];
 
@@ -100,7 +118,10 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
           </div>
           <div>
             <h3>What-If Scenario Simulator</h3>
-            <p>Model forward-looking business outcomes using verified price elasticity & CAC response curves.</p>
+            <p>
+              Model forward-looking business outcomes using verified price elasticity & CAC response
+              curves.
+            </p>
           </div>
         </div>
 
@@ -140,7 +161,9 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
           <div className="insights-slider-group">
             <div className="insights-slider-header">
               <label htmlFor="spend-slider">Marketing Spend Shift</label>
-              <span className={`insights-slider-val ${spendPct > 0 ? 'pos' : spendPct < 0 ? 'neg' : ''}`}>
+              <span
+                className={`insights-slider-val ${spendPct > 0 ? 'pos' : spendPct < 0 ? 'neg' : ''}`}
+              >
                 {spendPct > 0 ? `+${spendPct}%` : `${spendPct}%`}
               </span>
             </div>
@@ -165,7 +188,9 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
           <div className="insights-slider-group">
             <div className="insights-slider-header">
               <label htmlFor="price-slider">Price Adjustment</label>
-              <span className={`insights-slider-val ${pricePct > 0 ? 'pos' : pricePct < 0 ? 'neg' : ''}`}>
+              <span
+                className={`insights-slider-val ${pricePct > 0 ? 'pos' : pricePct < 0 ? 'neg' : ''}`}
+              >
                 {pricePct > 0 ? `+${pricePct}%` : `${pricePct}%`}
               </span>
             </div>
@@ -190,7 +215,9 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
           <div className="insights-slider-group">
             <div className="insights-slider-header">
               <label htmlFor="churn-slider">Target Churn Shift</label>
-              <span className={`insights-slider-val ${churnPct < 0 ? 'pos' : churnPct > 0 ? 'neg' : ''}`}>
+              <span
+                className={`insights-slider-val ${churnPct < 0 ? 'pos' : churnPct > 0 ? 'neg' : ''}`}
+              >
                 {churnPct > 0 ? `+${churnPct}%` : `${churnPct}%`}
               </span>
             </div>
@@ -248,7 +275,9 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
         <div className="insights-sim-results-pane">
           <div className="insights-sim-pane-title">
             <span>Projected Business Outcomes</span>
-            <span className={`insights-sim-risk-badge risk-${projection.riskAssessment.toLowerCase()}`}>
+            <span
+              className={`insights-sim-risk-badge risk-${projection.riskAssessment.toLowerCase()}`}
+            >
               {projection.riskAssessment === 'Low' && <CheckCircle2 size={12} />}
               {projection.riskAssessment === 'Moderate' && <AlertTriangle size={12} />}
               {projection.riskAssessment === 'Elevated' && <ShieldAlert size={12} />}
@@ -263,7 +292,9 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
               <div className="insights-sim-kpi-label">Projected Revenue</div>
               <div className="insights-sim-kpi-val">{projection.projectedRevenue.projected}</div>
               <div className="insights-sim-kpi-footer">
-                <span className="insights-sim-kpi-base">Baseline: {projection.projectedRevenue.baseline}</span>
+                <span className="insights-sim-kpi-base">
+                  Baseline: {projection.projectedRevenue.baseline}
+                </span>
                 <span className={`insights-delta-chip ${projection.projectedRevenue.direction}`}>
                   {projection.projectedRevenue.direction === 'up' && <ArrowUpRight size={11} />}
                   {projection.projectedRevenue.direction === 'down' && <ArrowDownRight size={11} />}
@@ -289,10 +320,14 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
               <div className="insights-sim-kpi-label">Projected Customers</div>
               <div className="insights-sim-kpi-val">{projection.projectedCustomers.projected}</div>
               <div className="insights-sim-kpi-footer">
-                <span className="insights-sim-kpi-base">Baseline: {projection.projectedCustomers.baseline}</span>
+                <span className="insights-sim-kpi-base">
+                  Baseline: {projection.projectedCustomers.baseline}
+                </span>
                 <span className={`insights-delta-chip ${projection.projectedCustomers.direction}`}>
                   {projection.projectedCustomers.direction === 'up' && <ArrowUpRight size={11} />}
-                  {projection.projectedCustomers.direction === 'down' && <ArrowDownRight size={11} />}
+                  {projection.projectedCustomers.direction === 'down' && (
+                    <ArrowDownRight size={11} />
+                  )}
                   {projection.projectedCustomers.delta}
                 </span>
               </div>
@@ -303,8 +338,12 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
               <div className="insights-sim-kpi-label">Projected CAC</div>
               <div className="insights-sim-kpi-val">{projection.projectedCac.projected}</div>
               <div className="insights-sim-kpi-footer">
-                <span className="insights-sim-kpi-base">Baseline: {projection.projectedCac.baseline}</span>
-                <span className={`insights-delta-chip ${projection.projectedCac.direction === 'up' ? 'down' : 'up'}`}>
+                <span className="insights-sim-kpi-base">
+                  Baseline: {projection.projectedCac.baseline}
+                </span>
+                <span
+                  className={`insights-delta-chip ${projection.projectedCac.direction === 'up' ? 'down' : 'up'}`}
+                >
                   {projection.projectedCac.delta}
                 </span>
               </div>

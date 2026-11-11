@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 // ---------------------------------------------------------------------------
@@ -46,9 +40,7 @@ export default function LandingNavbar() {
 
   // Refs for measuring nav items
   const navRef = useRef<HTMLDivElement>(null);
-  const itemRefs = useRef<Map<string, HTMLButtonElement | HTMLAnchorElement>>(
-    new Map()
-  );
+  const itemRefs = useRef<Map<string, HTMLButtonElement | HTMLAnchorElement>>(new Map());
 
   // Indicator position state
   const [indicator, setIndicator] = useState<{
@@ -161,11 +153,7 @@ export default function LandingNavbar() {
           aria-label="Main navigation"
         >
           {/* ----- Brand ----- */}
-          <Link
-            to="/"
-            className="landing-nav-brand"
-            aria-label="AI Data Analyst – home"
-          >
+          <Link to="/" className="landing-nav-brand" aria-label="AI Data Analyst – home">
             <span className="landing-nav-brand-dot" aria-hidden="true" />
             <span className="landing-nav-brand-text">AI Data Analyst</span>
           </Link>
