@@ -312,16 +312,25 @@ def generate_report_from_analysis(
     return report_record
 
 
+def _authorized_report(report_id: str, user: Any, db: Session) -> dict[str, Any]:
+    """Recheck the source run, workspace and dataset on every artifact read."""
+    report = ReportStudioService(storage_dir=REPORT_STUDIO_STORAGE_ROOT).get_report(report_id)
+    provenance = report.get("provenance") if report else None
+    if not isinstance(provenance, dict) or not provenance.get("analysis_run_id"):
+        raise HTTPException(404, "Report not found")
+    from backend.app.services.analysis_run_service import authorize_run
+    authorize_run(db, provenance["analysis_run_id"], user.id, "read")
+    return report
+
+
 @router.get("/reports/{report_id}")
 def get_report_record(
     report_id: str,
     user: Any = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
 ) -> dict[str, Any]:
     """Get stored report manifest by ID."""
-    svc = ReportStudioService(storage_dir=REPORT_STUDIO_STORAGE_ROOT)
-    report = svc.get_report(report_id)
-    if not report:
-        raise HTTPException(404, "Report not found")
+    report = _authorized_report(report_id, user, db)
     report["download_url"] = f"/api/v1/reports/{report_id}/download"
     return report
 
@@ -330,12 +339,10 @@ def get_report_record(
 def download_report_file(
     report_id: str,
     user: Any = Depends(get_current_user),
+    db: Session = Depends(get_db_session),
 ) -> FileResponse:
     """Download the actual generated binary report document (PDF, DOCX, XLSX, PPTX)."""
-    svc = ReportStudioService(storage_dir=REPORT_STUDIO_STORAGE_ROOT)
-    report = svc.get_report(report_id)
-    if not report:
-        raise HTTPException(404, "Report not found")
+    report = _authorized_report(report_id, user, db)
 
     fmt = report.get("format", "pdf").lower()
     filename = report.get("filename") or f"{report_id}.{fmt}"

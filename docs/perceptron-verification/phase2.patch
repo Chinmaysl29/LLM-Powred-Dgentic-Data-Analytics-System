@@ -1,0 +1,856 @@
+--- a/backend/app/learning/evidence.py
++++ b/backend/app/learning/evidence.py
+@@ -113,6 +113,7 @@
+ @dataclass
+ class Observation:
+     result: dict[str, Any] | None = None
++    live_intent: str | None = None
+ 
+ 
+ @asynccontextmanager
+@@ -142,6 +143,15 @@
+         except Exception:
+             pass
+ 
++        try:
++            from backend.app.learning.shadow import observe_shadow
++            plan = (observation.result or {}).get("plan") or {}
++            await observe_shadow(actor_id=actor_id, dataset_id=dataset_id, question=question,
++                live_intent=observation.live_intent, live_operation=plan.get("operation"),
++                version_number=plan.get("dataset_version") or version_number)
++        except Exception:
++            pass
++
+ 
+ def record_job_failure(store: Any, job: dict, number: int, *, exception: bool) -> None:
+     """Use run/stage/attempt identity to deduplicate worker delivery."""
+--- a/backend/app/api/v1/routes/chat.py
++++ b/backend/app/api/v1/routes/chat.py
+@@ -154,6 +154,7 @@
+                 intent, confidence = outcome.intent, classification.confidence
+ 
+         observation.result = result
++        observation.live_intent = intent
+ 
+     if citations and "citations" not in result:
+         result["citations"] = citations
+--- a/backend/app/api/v1/routes/intent.py
++++ b/backend/app/api/v1/routes/intent.py
+@@ -1,7 +1,10 @@
+ """Intent classification API endpoints for Phase 3.1."""
+ 
+ import logging
++from typing import Any
+ from fastapi import APIRouter, Depends, status
++from backend.app.core.security import get_current_user
++from backend.app.learning.shadow import observe_shadow
+ 
+ from backend.app.schemas.intent import (
+     IntentClassificationRequest,
+@@ -26,11 +29,15 @@
+ async def classify_intent(
+     request: IntentClassificationRequest,
+     service: IntentClassificationService = Depends(get_intent_classification_service),
++    current_user: Any = Depends(get_current_user),
+ ) -> IntentClassificationResponse:
+     """Analyze incoming user query and return classified intent with confidence and required agents."""
+     logger.info("Received intent classification request: %s", request.query[:50])
+-    return await service.classify(
++    result = await service.classify(
+         query=request.query,
+         context=request.context,
+         dataset_id=request.dataset_id,
+     )
++    await observe_shadow(actor_id=str(current_user.id), dataset_id=request.dataset_id,
++        question=request.query, live_intent=result.intent, source="intent_api")
++    return result
+--- a/backend/app/models/__init__.py
++++ b/backend/app/models/__init__.py
+@@ -74,3 +74,4 @@
+ from backend.app.models.learning import TABLES as LEARNING_TABLES
+ from backend.app.models.adaptive import TABLES as ADAPTIVE_TABLES
+ from backend.app.learning.tables import learner_weights, feedback_events, mistakes
++from backend.app.learning.shadow_table import shadow_predictions
+--- /dev/null
++++ b/backend/app/learning/perceptron.py
+@@ -0,0 +1,97 @@
++"""Small NumPy averaged multiclass perceptron. No business calculations or I/O."""
++from __future__ import annotations
++
++from dataclasses import dataclass
++from typing import Any
++import numpy as np
++
++from backend.app.schemas.intent import IntentType
++
++LABELS = tuple(intent.value for intent in IntentType)
++FEATURE_SIZE = 576
++MAX_WEIGHT = 1000.0
++
++
++@dataclass(frozen=True)
++class Prediction:
++    intent: str
++    candidate: str
++    margin: float
++    abstained: bool
++
++
++class AveragedPerceptron:
++    """Average post-update weights across all labelled examples, including hits.
++
++    `update` is an offline primitive. The shadow request path never calls it.
++    Exported JSON is an inference snapshot, not a resumable training checkpoint.
++    """
++
++    def __init__(self, weights: Any = None) -> None:
++        shape = (len(LABELS), FEATURE_SIZE)
++        matrix = np.zeros(shape, dtype=np.float64) if weights is None else np.array(weights, dtype=np.float64, copy=True)
++        if matrix.shape != shape or not np.isfinite(matrix).all() or np.any(np.abs(matrix) > MAX_WEIGHT):
++            raise ValueError("Invalid perceptron weights")
++        self.weights = matrix
++        self._totals = np.zeros(shape, dtype=np.float64)
++        self.steps = 0
++
++    @staticmethod
++    def _vector(features: Any) -> np.ndarray:
++        vector = np.asarray(features, dtype=np.float64)
++        if vector.shape != (FEATURE_SIZE,) or not np.isfinite(vector).all() or np.any(np.abs(vector) > 1):
++            raise ValueError("Invalid perceptron features")
++        return vector
++
++    def averaged_weights(self) -> np.ndarray:
++        return self._totals / self.steps if self.steps else self.weights.copy()
++
++    def predict(self, features: Any, *, min_margin: float = 0.5) -> Prediction:
++        if not np.isfinite(min_margin) or min_margin < 0:
++            raise ValueError("Invalid margin threshold")
++        scores = self.averaged_weights() @ self._vector(features)
++        if not np.isfinite(scores).all():
++            raise ValueError("Invalid perceptron scores")
++        winner = int(np.argmax(scores))  # Deterministic label-order tie break.
++        margin = float(scores[winner] - np.max(np.delete(scores, winner)))
++        abstained = margin <= min_margin or LABELS[winner] == "unknown"
++        return Prediction("unknown" if abstained else LABELS[winner], LABELS[winner], margin, abstained)
++
++    def update(self, features: Any, truth: str, *, rate: float = 1.0, decay: float = 0.001) -> bool:
++        if truth not in LABELS:
++            raise ValueError("Truth must be a verified supported intent")
++        if not np.isfinite(rate) or not 0 < rate <= 1 or not np.isfinite(decay) or not 0 <= decay < 1:
++            raise ValueError("Invalid perceptron update parameters")
++        vector = self._vector(features)
++        predicted = int(np.argmax(self.weights @ vector))
++        target = LABELS.index(truth)
++        updated = self.weights * (1 - decay)
++        if predicted != target:
++            updated[target] += rate * vector
++            updated[predicted] -= rate * vector
++        if np.any(np.abs(updated) > MAX_WEIGHT) or not np.isfinite(updated).all():
++            raise ValueError("Perceptron weight bound exceeded")
++        self.weights = updated
++        self._totals += updated
++        self.steps += 1
++        return predicted != target
++
++    def to_payload(self, feature_version: str) -> dict[str, Any]:
++        return {"format": 1, "feature_version": feature_version,
++                "labels": list(LABELS), "weights": self.averaged_weights().tolist()}
++
++    @classmethod
++    def from_payload(cls, payload: dict[str, Any], feature_version: str) -> AveragedPerceptron:
++        if (not isinstance(payload, dict) or set(payload) != {"format", "feature_version", "labels", "weights"}
++                or type(payload["format"]) is not int or payload["format"] != 1
++                or payload["feature_version"] != feature_version or payload["labels"] != list(LABELS)):
++            raise ValueError("Incompatible perceptron snapshot")
++        # Check lengths before NumPy allocates; reject ragged/oversized snapshots.
++        rows = payload["weights"]
++        if not isinstance(rows, list) or len(rows) != len(LABELS) or any(
++            not isinstance(row, list) or len(row) != FEATURE_SIZE for row in rows
++        ):
++            raise ValueError("Invalid perceptron snapshot shape")
++        if any(type(value) not in (int, float) for row in rows for value in row):
++            raise ValueError("Snapshot weights must be JSON numbers")
++        return cls(rows)
+--- /dev/null
++++ b/backend/app/learning/features.py
+@@ -0,0 +1,75 @@
++"""Versioned, bounded lexical/schema features. Persist indices, never raw tokens."""
++from __future__ import annotations
++
++from functools import lru_cache
++import hashlib
++import json
++import re
++from typing import Any
++import numpy as np
++
++from backend.app.learning.perceptron import AveragedPerceptron, FEATURE_SIZE, LABELS
++from backend.app.services.intent_classification_service import IntentRegistry
++
++HASH_START = 64
++AGGREGATIONS = ("sum", "total", "average", "mean", "count", "min", "max", "by")
++
++
++@lru_cache(maxsize=1)
++def rules() -> tuple[tuple[str, tuple[str, ...], tuple[str, ...]], ...]:
++    registry = IntentRegistry()
++    return tuple((name, tuple(registry.get(name).keywords), tuple(registry.get(name).patterns)) for name in LABELS)
++
++
++@lru_cache(maxsize=1)
++def feature_version() -> str:
++    contract = ["intent-features-v1", FEATURE_SIZE, HASH_START, AGGREGATIONS, rules()]
++    return hashlib.sha256(json.dumps(contract, ensure_ascii=True).encode()).hexdigest()
++
++
++def _slot(token: str) -> int:
++    return HASH_START + int.from_bytes(hashlib.sha256(token.encode()).digest()[:8], "big") % (FEATURE_SIZE - HASH_START)
++
++
++def extract(question: str, schema: dict[str, Any] | None = None) -> np.ndarray:
++    if not isinstance(question, str) or len(question) > 2000:
++        raise ValueError("Unsupported shadow question")
++    normalized = question.lower().strip()
++    tokens = re.findall(r"[^\W_]+", normalized, flags=re.UNICODE)[:256]
++    vector = np.zeros(FEATURE_SIZE, dtype=np.float64)
++    vector[0] = 1
++    for index, (_, keywords, patterns) in enumerate(rules()):
++        vector[1 + index] = min(8, sum(keyword in normalized for keyword in keywords)) / 8
++        vector[1 + len(LABELS) + index] = float(any(re.search(pattern, normalized, re.I) for pattern in patterns))
++    for index, word in enumerate(AGGREGATIONS):
++        vector[35 + index] = float(word in tokens)
++    for size in (1, 2, 3):
++        for start in range(len(tokens) - size + 1):
++            vector[_slot(f"ngram:{size}:" + " ".join(tokens[start:start + size]))] = 1
++    schema = schema or {}
++    columns, dtypes = schema.get("columns", []), schema.get("dtypes", {})
++    if not isinstance(columns, list) or not isinstance(dtypes, dict):
++        raise ValueError("Unsupported shadow schema")
++    normalized_tokens = " " + " ".join(tokens) + " "
++    for column in columns[:200]:
++        if not isinstance(column, str) or len(column) > 256:
++            continue
++        name = " ".join(re.findall(r"[^\W_]+", column.lower()))
++        dtype = str(dtypes.get(column, "")).lower()
++        vector[43] = max(vector[43], float(any(part in dtype for part in ("int", "float", "decimal", "numeric"))))
++        vector[44] = max(vector[44], float(any(part in dtype for part in ("date", "time"))))
++        if name and f" {name} " in normalized_tokens:
++            vector[45] = 1
++            vector[_slot("column:" + name)] = 1
++    vector[46] = float(bool(columns))
++    return vector
++
++
++def bootstrap_prior() -> AveragedPerceptron:
++    """Fixed global seed from existing keyword/pattern features, not user feedback."""
++    weights = np.zeros((len(LABELS), FEATURE_SIZE), dtype=np.float64)
++    for index in range(len(LABELS)):
++        weights[index, 1 + index] = 8
++        weights[index, 1 + len(LABELS) + index] = 16
++    weights[LABELS.index("unknown"), 0] = 0.25
++    return AveragedPerceptron(weights)
+--- /dev/null
++++ b/backend/app/learning/shadow.py
+@@ -0,0 +1,114 @@
++"""Observe the live router. Never return a shadow decision to an execution path."""
++from __future__ import annotations
++
++import asyncio
++import hashlib
++import json
++from uuid import UUID, uuid4
++
++from sqlalchemy import create_engine, select, text, func, cast, Text
++from sqlalchemy.orm import Session
++from sqlalchemy.pool import NullPool
++
++from backend.app.core.config import get_settings
++from backend.app.core.database_target import bind_database_schema
++from backend.app.core.workspace_authorization import (
++    authorize_workspace, authorize_bound_dataset, dataset_workspace_bindings,
++)
++from backend.app.models import DatasetVersion
++from backend.app.learning.tables import learner_weights
++from backend.app.learning.shadow_table import shadow_predictions
++from backend.app.learning.evidence import enabled, OPERATIONS
++from backend.app.learning.features import extract, bootstrap_prior, feature_version
++from backend.app.learning.perceptron import AveragedPerceptron, LABELS
++
++
++def _digest(value: object) -> str:
++    # Keep schema signatures compatible with Phase 1 hard-failure evidence.
++    return hashlib.sha256(json.dumps(value, sort_keys=True, allow_nan=False).encode()).hexdigest()
++
++
++def record_shadow(*, actor_id: str, dataset_id: str | None, question: str,
++                  live_intent: str | None = None, live_operation: str | None = None,
++                  version_number: int | None = None, source: str = "chat",
++                  event_id: UUID | None = None) -> bool:
++    if not enabled() or not dataset_id:
++        return False
++    engine = None
++    try:
++        settings = get_settings()
++        engine = create_engine(settings.postgres_dsn, poolclass=NullPool, hide_parameters=True,
++                               connect_args={"connect_timeout": 2})
++        bind_database_schema(engine, settings.database_schema)
++        with Session(engine) as db, db.begin():
++            db.execute(text("SET LOCAL statement_timeout='300ms'"))
++            db.execute(text("SET LOCAL lock_timeout='100ms'"))
++            workspace = db.scalar(select(dataset_workspace_bindings.c.workspace_id).where(
++                dataset_workspace_bindings.c.dataset_id == dataset_id))
++            if workspace is None:
++                return False
++            access = authorize_workspace(db, actor_id, workspace)
++            authorize_bound_dataset(db, access, dataset_id)
++            query = select(DatasetVersion).where(DatasetVersion.dataset_id == dataset_id)
++            query = query.where(DatasetVersion.version_number == version_number) if version_number is not None else query.where(DatasetVersion.is_active.is_(True))
++            version = db.scalar(query)
++            if version is None:
++                return False
++            snapshot = version.metadata_snapshot or {}
++            schema = {key: snapshot[key] for key in ("columns", "dtypes") if key in snapshot}
++            features = extract(question, schema)
++            for key, value in (("actor_id", access.actor_id), ("workspace_id", access.workspace_id), ("tenant_id", access.tenant_id)):
++                db.execute(text("SELECT set_config(:key, :value, true)"), {"key": f"app.{key}", "value": str(value)})
++            # Pin one tenant-local inactive candidate; no global or active-row writes.
++            row = db.execute(select(learner_weights.c.id, learner_weights.c.version,
++                func.octet_length(cast(learner_weights.c.weights, Text)).label("size")).where(
++                learner_weights.c.tenant_id == access.tenant_id,
++                learner_weights.c.learner == "intent_router", learner_weights.c.is_active.is_(False)
++            ).order_by(learner_weights.c.version.desc()).limit(1)).mappings().first()
++            model = bootstrap_prior()
++            model_source, model_version, rejected_version = "bootstrap", None, None
++            if row:
++                try:
++                    if row["size"] > 1_000_000:
++                        raise ValueError("Oversized candidate")
++                    payload = db.scalar(select(learner_weights.c.weights).where(
++                        learner_weights.c.id == row["id"], learner_weights.c.tenant_id == access.tenant_id))
++                    model = AveragedPerceptron.from_payload(payload, feature_version())
++                    model_source, model_version = "tenant_candidate", row["version"]
++                except (ValueError, TypeError, OverflowError):
++                    model_source, rejected_version = "invalid_candidate_fallback", row["version"]
++            prediction = model.predict(features)
++            route = "canonical" if live_intent in LABELS else live_intent if live_intent in {"analytics", "rag_search"} else "unresolved"
++            from sqlalchemy.dialects.postgresql import insert
++            db.execute(insert(shadow_predictions).values(
++                id=event_id or uuid4(), tenant_id=access.tenant_id, workspace_id=access.workspace_id,
++                actor_id=access.actor_id, dataset_id=dataset_id, dataset_version=version.version_number,
++                dataset_schema_hash=_digest(schema) if schema else None,
++                question_hash=hashlib.sha256(question.encode()).hexdigest(), feature_version=feature_version(),
++                features=[[int(index), float(features[index])] for index in features.nonzero()[0]],
++                source=source if source in {"chat", "intent_api"} else "chat", live_route=route,
++                live_intent=live_intent if live_intent in LABELS else None,
++                live_operation=live_operation if live_operation in OPERATIONS else None,
++                shadow_intent=prediction.intent, candidate_intent=prediction.candidate,
++                margin=prediction.margin, abstained=prediction.abstained,
++                model_source=model_source, model_version=model_version, rejected_version=rejected_version,
++                model_digest=_digest(model.to_payload(feature_version()))
++            ).on_conflict_do_nothing(index_elements=["id"]))
++        return True
++    except Exception:
++        return False  # Never log raw questions, driver details, or dataset values.
++    finally:
++        if engine is not None:
++            try:
++                engine.dispose()
++            except Exception:
++                pass
++
++
++async def observe_shadow(**kwargs) -> None:
++    if not enabled():
++        return
++    try:
++        await asyncio.to_thread(record_shadow, **kwargs)
++    except Exception:
++        pass
+--- /dev/null
++++ b/backend/app/learning/shadow_table.py
+@@ -0,0 +1,35 @@
++"""Append-only shadow comparisons, separate from trusted teacher feedback."""
++from sqlalchemy import (Boolean, CheckConstraint, Column, DateTime, Float, ForeignKey, Index,
++                        Integer, String, Table, Uuid, text)
++from sqlalchemy.dialects.postgresql import JSONB
++from backend.app.models.base import Base
++
++shadow_predictions = Table(
++    "shadow_predictions", Base.metadata,
++    Column("id", Uuid, primary_key=True),
++    Column("tenant_id", Uuid, ForeignKey("tenants.id"), nullable=False),
++    Column("workspace_id", Uuid, ForeignKey("workspaces.id"), nullable=False, index=True),
++    Column("actor_id", Uuid, ForeignKey("users.id"), nullable=False, index=True),
++    Column("dataset_id", String(36), ForeignKey("datasets.dataset_id"), nullable=False, index=True),
++    Column("dataset_version", Integer, nullable=False),
++    Column("dataset_schema_hash", String(64)),
++    Column("question_hash", String(64), nullable=False),
++    Column("feature_version", String(64), nullable=False),
++    Column("features", JSONB, nullable=False),
++    Column("source", String(20), nullable=False),
++    Column("live_route", String(20), nullable=False),
++    Column("live_intent", String(80)),
++    Column("live_operation", String(30)),
++    Column("shadow_intent", String(80), nullable=False),
++    Column("candidate_intent", String(80), nullable=False),
++    Column("margin", Float, nullable=False),
++    Column("abstained", Boolean, nullable=False),
++    Column("model_source", String(30), nullable=False),
++    Column("model_version", Integer),
++    Column("rejected_version", Integer),
++    Column("model_digest", String(64), nullable=False),
++    Column("created_at", DateTime(timezone=True), nullable=False, server_default=text("now()")),
++    CheckConstraint("dataset_version > 0", name="ck_shadow_dataset_version"),
++    CheckConstraint("margin >= 0 AND margin < 'Infinity'::float8", name="ck_shadow_finite_margin"),
++)
++Index("ix_shadow_predictions_tenant_created", shadow_predictions.c.tenant_id, shadow_predictions.c.created_at)
+--- /dev/null
++++ b/migrations/versions/014_perceptron_shadow.py
+@@ -0,0 +1,64 @@
++"""Append-only scoped shadow observations; no changes to existing tables."""
++from alembic import op
++import sqlalchemy as sa
++from sqlalchemy.dialects.postgresql import JSONB
++
++revision = "014_perceptron_shadow"
++down_revision = "013_perceptron_foundations"
++branch_labels = None
++depends_on = None
++
++
++def upgrade():
++    op.create_table("shadow_predictions",
++        sa.Column("id", sa.Uuid, primary_key=True),
++        sa.Column("tenant_id", sa.Uuid, sa.ForeignKey("tenants.id"), nullable=False),
++        sa.Column("workspace_id", sa.Uuid, sa.ForeignKey("workspaces.id"), nullable=False),
++        sa.Column("actor_id", sa.Uuid, sa.ForeignKey("users.id"), nullable=False),
++        sa.Column("dataset_id", sa.String(36), sa.ForeignKey("datasets.dataset_id"), nullable=False),
++        sa.Column("dataset_version", sa.Integer, nullable=False),
++        sa.Column("dataset_schema_hash", sa.String(64)),
++        sa.Column("question_hash", sa.String(64), nullable=False),
++        sa.Column("feature_version", sa.String(64), nullable=False),
++        sa.Column("features", JSONB, nullable=False),
++        sa.Column("source", sa.String(20), nullable=False),
++        sa.Column("live_route", sa.String(20), nullable=False),
++        sa.Column("live_intent", sa.String(80)), sa.Column("live_operation", sa.String(30)),
++        sa.Column("shadow_intent", sa.String(80), nullable=False),
++        sa.Column("candidate_intent", sa.String(80), nullable=False),
++        sa.Column("margin", sa.Float, nullable=False),
++        sa.Column("abstained", sa.Boolean, nullable=False),
++        sa.Column("model_source", sa.String(30), nullable=False),
++        sa.Column("model_version", sa.Integer), sa.Column("rejected_version", sa.Integer),
++        sa.Column("model_digest", sa.String(64), nullable=False),
++        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
++        sa.CheckConstraint("dataset_version > 0", name="ck_shadow_dataset_version"),
++        sa.CheckConstraint("margin >= 0 AND margin < 'Infinity'::float8", name="ck_shadow_finite_margin"))
++    op.create_index("ix_shadow_predictions_tenant_created", "shadow_predictions", ["tenant_id", "created_at"])
++    for column in ("workspace_id", "actor_id", "dataset_id"):
++        op.create_index(f"ix_shadow_predictions_{column}", "shadow_predictions", [column])
++    op.execute("ALTER TABLE shadow_predictions ENABLE ROW LEVEL SECURITY")
++    op.execute("ALTER TABLE shadow_predictions FORCE ROW LEVEL SECURITY")
++    predicate = """tenant_id::text=current_setting('app.tenant_id',true)
++      AND workspace_id::text=current_setting('app.workspace_id',true)
++      AND EXISTS (
++        SELECT 1 FROM workspaces w JOIN tenants t ON t.id=w.tenant_id AND t.tenant_status='active'
++        JOIN tenant_memberships tm ON tm.tenant_id=t.id AND tm.active
++        JOIN users u ON u.id=tm.user_id AND u.is_active
++        LEFT JOIN workspace_memberships wm ON wm.workspace_id=w.id AND wm.user_id=u.id AND wm.active
++        WHERE w.id=shadow_predictions.workspace_id AND w.tenant_id=shadow_predictions.tenant_id
++        AND w.status='active' AND u.id::text=current_setting('app.actor_id',true)
++        AND tm.role IN ('viewer','analyst','admin','owner')
++        AND (tm.role IN ('owner','admin') OR wm.role IN ('viewer','analyst','admin','owner')))
++      AND EXISTS (
++        SELECT 1 FROM datasets d JOIN dataset_workspace_bindings b ON b.dataset_id=d.dataset_id
++        WHERE d.dataset_id=shadow_predictions.dataset_id AND b.workspace_id=shadow_predictions.workspace_id
++        AND d.owner_id=current_setting('app.actor_id',true) AND d.status NOT IN ('deleted','archived','purged'))"""
++    op.execute(f"CREATE POLICY shadow_read ON shadow_predictions FOR SELECT USING ({predicate})")
++    op.execute(f"""CREATE POLICY shadow_insert ON shadow_predictions FOR INSERT WITH CHECK (
++        {predicate} AND actor_id::text=current_setting('app.actor_id',true))""")
++    # No runtime UPDATE/DELETE policy. Observation is not a teacher label.
++
++
++def downgrade():
++    op.drop_table("shadow_predictions")
+--- /dev/null
++++ b/backend/tests/test_perceptron_shadow.py
+@@ -0,0 +1,317 @@
++"""Numerical correctness and shadow-only integration; all examples synthetic."""
++import asyncio
++from copy import deepcopy
++import json
++import hashlib
++import os
++import subprocess
++import sys
++from uuid import uuid4
++
++import numpy as np
++import pytest
++from sqlalchemy import select, text
++from sqlalchemy.exc import DBAPIError
++
++from backend.app.core.config import get_settings
++from backend.app.models import DatasetVersion, Workspace
++from backend.app.learning.perceptron import AveragedPerceptron, FEATURE_SIZE, LABELS
++from backend.app.learning.features import extract, feature_version, bootstrap_prior
++from backend.app.learning import shadow
++from backend.app.learning.tables import learner_weights, feedback_events
++from backend.app.learning.shadow_table import shadow_predictions
++from backend.tests.test_verified_learning_integration import environment, identity, dataset
++
++
++def test_rosenblatt_update_and_post_update_average():
++    x = np.zeros(FEATURE_SIZE)
++    x[:2] = [1, 0.5]
++    model = AveragedPerceptron()
++    assert model.update(x, "forecasting", decay=0)
++    assert not model.update(x, "forecasting", decay=0)
++    assert model.update(x, "trend_analysis", decay=0)
++    average = model.averaged_weights()
++    np.testing.assert_allclose(average[LABELS.index("forecasting"), :2], [2/3, 1/3])
++    np.testing.assert_allclose(average[LABELS.index("trend_analysis"), :2], [1/3, 1/6])
++    np.testing.assert_allclose(average[LABELS.index("dataset_overview"), :2], [-1, -0.5])
++    assert model.steps == 3 and np.count_nonzero(average[:, 2:]) == 0
++    assert model.predict(x, min_margin=0).intent == "forecasting"
++
++
++def test_decay_applies_on_correct_examples():
++    x = np.zeros(FEATURE_SIZE)
++    x[0] = 1
++    model = AveragedPerceptron()
++    model.update(x, "forecasting", decay=0)
++    assert not model.update(x, "forecasting", decay=0.5)
++    assert model.weights[LABELS.index("forecasting"), 0] == 0.5
++    assert model.averaged_weights()[LABELS.index("forecasting"), 0] == 0.75
++
++
++def test_ties_abstain_and_prediction_never_updates_weights():
++    model = AveragedPerceptron()
++    x = extract("ambiguous request")
++    before = model.to_payload(feature_version())
++    for _ in range(3):
++        prediction = model.predict(x, min_margin=0)
++        assert prediction.intent == "unknown" and prediction.abstained and prediction.margin == 0
++    assert model.to_payload(feature_version()) == before and model.steps == 0
++
++
++@pytest.mark.parametrize("bad", [None, "invented_intent", "sum"])
++def test_unknown_truth_cannot_train(bad):
++    model = bootstrap_prior()
++    before = model.to_payload(feature_version())
++    with pytest.raises(ValueError):
++        model.update(extract("forecast sales"), bad)
++    assert model.to_payload(feature_version()) == before and model.steps == 0
++
++
++@pytest.mark.parametrize("mutation", ["labels", "feature_version", "nan", "infinity", "shape", "strings", "large", "format", "extra"])
++def test_reject_untrusted_model_snapshots(mutation):
++    payload = bootstrap_prior().to_payload(feature_version())
++    if mutation == "labels": payload["labels"][0] = "execute_sql_unchecked"
++    elif mutation == "feature_version": payload["feature_version"] = "wrong-version"
++    elif mutation == "nan": payload["weights"][0][0] = float("nan")
++    elif mutation == "infinity": payload["weights"][0][0] = float("inf")
++    elif mutation == "shape": payload["weights"][0].pop()
++    elif mutation == "strings": payload["weights"][0][0] = "123"
++    elif mutation == "large": payload["weights"][0][0] = 1001
++    elif mutation == "format": payload["format"] = True
++    elif mutation == "extra": payload["instruction"] = "Ignore validation"
++    with pytest.raises(ValueError):
++        AveragedPerceptron.from_payload(payload, feature_version())
++
++
++def test_snapshot_roundtrip_and_feature_validation():
++    model = bootstrap_prior()
++    x = extract("forecast revenue next quarter")
++    loaded = AveragedPerceptron.from_payload(json.loads(json.dumps(model.to_payload(feature_version()))), feature_version())
++    assert loaded.predict(x) == model.predict(x)
++    for invalid in ([1, 2], np.full(FEATURE_SIZE, np.nan), np.full(FEATURE_SIZE, 2)):
++        with pytest.raises(ValueError):
++            loaded.predict(invalid)
++
++
++def test_bootstrap_instances_do_not_share_mutable_weights():
++    a, b = bootstrap_prior(), bootstrap_prior()
++    original = b.to_payload(feature_version())
++    a.update(extract("forecast sales"), "data_quality")
++    assert b.to_payload(feature_version()) == original
++    assert bootstrap_prior().to_payload(feature_version()) == original
++
++
++def test_features_stable_across_processes_and_include_schema():
++    schema = {"columns": ["revenue", "date"], "dtypes": {"revenue": "float64", "date": "datetime64[ns]"}}
++    features = extract("total revenue by date", schema)
++    assert features[43:47].tolist() == [1, 1, 1, 1]
++    assert features.shape == (FEATURE_SIZE,) and np.max(features) <= 1
++    command = "from backend.app.learning.features import extract; import json; print(json.dumps(extract('total revenue by date').tolist()))"
++    outputs = [subprocess.check_output([sys.executable, "-c", command], env={**os.environ, "PYTHONHASHSEED": seed}, text=True) for seed in ("1", "999")]
++    assert outputs[0] == outputs[1]
++    with pytest.raises(ValueError):
++        extract("a" * 2001)
++
++
++@pytest.mark.parametrize("question, expected", [
++    ("Forecast sales for next quarter", "forecasting"),
++    ("Find duplicate records", "data_quality"),
++    ("Show revenue trends", "trend_analysis"),
++    ("Show the top 5 customers by sales", "ranking_analysis"),
++    ("Describe the dataset schema", "dataset_overview"),
++])
++def test_fixed_keyword_prior_smoke_examples(question, expected):
++    assert bootstrap_prior().predict(extract(question)).intent == expected
++
++
++@pytest.fixture
++def learning_on(monkeypatch):
++    monkeypatch.setattr(get_settings(), "learning_enabled", True)
++
++
++def rows_for(env, account):
++    with env["admin"]() as db:
++        return db.execute(select(shadow_predictions).where(shadow_predictions.c.actor_id == account["user"])).mappings().all()
++
++
++def candidate(env, account, forced_intent, *, version=1, invalid=False):
++    weights = np.zeros((len(LABELS), FEATURE_SIZE))
++    weights[LABELS.index(forced_intent), 0] = 100
++    payload = AveragedPerceptron(weights).to_payload(feature_version())
++    if invalid:
++        payload["feature_version"] = "obsolete"
++    with env["admin"]() as db, db.begin():
++        tenant = db.get(Workspace, account["workspace"]).tenant_id
++        db.execute(learner_weights.insert().values(id=uuid4(), tenant_id=tenant, learner="intent_router",
++            version=version, weights=payload, is_active=False))
++    return payload
++
++
++def test_disabled_shadow_does_no_work(monkeypatch):
++    monkeypatch.setattr(get_settings(), "learning_enabled", False)
++    def forbidden(*args, **kwargs):
++        pytest.fail("Disabled shadow must not connect or extract features")
++    monkeypatch.setattr(shadow, "create_engine", forbidden)
++    monkeypatch.setattr(shadow, "extract", forbidden)
++    assert not shadow.record_shadow(actor_id="actor", dataset_id="dataset", question="forecast sales")
++    asyncio.run(shadow.observe_shadow(actor_id="actor", dataset_id="dataset", question="forecast sales"))
++
++
++def test_shadow_privacy_dedup_and_no_teacher_or_weight_writes(environment, tmp_path, learning_on):
++    env = environment
++    account = identity(env)
++    ds = dataset(env, account, tmp_path)
++    with env["admin"]() as db, db.begin():
++        db.execute(DatasetVersion.__table__.update().where(DatasetVersion.dataset_id == ds).values(
++            metadata_snapshot={"columns": ["amount"], "dtypes": {"amount": "float64"}, "private_rows": ["NEVER_STORE"]}))
++        before_feedback = list(db.execute(select(feedback_events)))
++        before_weights = list(db.execute(select(learner_weights)))
++    args = dict(actor_id=str(account["user"]), dataset_id=ds, question="sum amount password=NEVER_STORE",
++                live_intent="analytics", live_operation="sum", event_id=uuid4())
++    assert shadow.record_shadow(**args) and shadow.record_shadow(**args)
++    rows = rows_for(env, account)
++    assert len(rows) == 1
++    row = rows[0]
++    assert row["live_route"] == "analytics" and row["live_intent"] is None and row["live_operation"] == "sum"
++    assert row["model_source"] == "bootstrap" and row["model_version"] is None
++    assert row["dataset_version"] == 1 and len(row["dataset_schema_hash"]) == 64
++    assert row["dataset_schema_hash"] == hashlib.sha256(json.dumps(
++        {"columns": ["amount"], "dtypes": {"amount": "float64"}}, sort_keys=True).encode()).hexdigest()
++    assert "NEVER_STORE" not in str(rows) and "question" not in row and "truth" not in row
++    assert all(isinstance(index, int) and isinstance(value, (int, float)) for index, value in row["features"])
++    with env["admin"]() as db:
++        assert list(db.execute(select(feedback_events))) == before_feedback
++        assert list(db.execute(select(learner_weights))) == before_weights
++
++
++def test_candidates_are_tenant_scoped_and_invalid_falls_back(environment, tmp_path, learning_on):
++    env = environment
++    a, b = identity(env), identity(env)
++    ds_a, ds_b = dataset(env, a, tmp_path), dataset(env, b, tmp_path)
++    candidate(env, a, "correlation_analysis")
++    candidate(env, b, "data_quality")
++    for account, ds, expected in ((a, ds_a, "correlation_analysis"), (b, ds_b, "data_quality")):
++        assert shadow.record_shadow(actor_id=str(account["user"]), dataset_id=ds,
++            question="forecast sales", live_intent="forecasting")
++        row = rows_for(env, account)[0]
++        assert row["shadow_intent"] == expected and row["model_version"] == 1
++        assert row["live_intent"] == "forecasting" and row["model_source"] == "tenant_candidate"
++    candidate(env, a, "correlation_analysis", version=2, invalid=True)
++    assert shadow.record_shadow(actor_id=str(a["user"]), dataset_id=ds_a, question="forecast sales")
++    row = next(row for row in rows_for(env, a) if row["rejected_version"] == 2)
++    assert row["model_source"] == "invalid_candidate_fallback" and row["model_version"] is None
++    assert row["shadow_intent"] == "forecasting"
++
++
++def test_access_revocation_and_wrong_version_skip_shadow(environment, tmp_path, learning_on):
++    from backend.app.core.workspace_authorization import tenant_memberships
++    env = environment
++    a, b = identity(env), identity(env)
++    ds = dataset(env, a, tmp_path)
++    assert not shadow.record_shadow(actor_id=str(b["user"]), dataset_id=ds, question="forecast sales")
++    assert not shadow.record_shadow(actor_id=str(a["user"]), dataset_id=ds, question="forecast sales", version_number=99)
++    with env["admin"]() as db, db.begin():
++        db.execute(tenant_memberships.update().where(tenant_memberships.c.user_id == a["user"]).values(active=False))
++    assert not shadow.record_shadow(actor_id=str(a["user"]), dataset_id=ds, question="forecast sales")
++    assert not rows_for(env, a) and not rows_for(env, b)
++
++
++def test_rls_read_insert_and_mutation_isolation(environment, tmp_path, learning_on):
++    env = environment
++    a, b = identity(env), identity(env)
++    ds = dataset(env, a, tmp_path)
++    assert shadow.record_shadow(actor_id=str(a["user"]), dataset_id=ds, question="forecast sales")
++    stored = dict(rows_for(env, a)[0])
++    with env["api"]() as db, db.begin():
++        assert db.scalar(text("SELECT rolsuper OR rolbypassrls FROM pg_roles WHERE rolname=current_user")) is False
++        for key, value in (("actor_id", a["user"]), ("tenant_id", stored["tenant_id"]), ("workspace_id", a["workspace"])):
++            db.execute(text("SELECT set_config(:key,:value,true)"), {"key": f"app.{key}", "value": str(value)})
++        assert db.scalar(select(shadow_predictions.c.id).where(shadow_predictions.c.id == stored["id"])) == stored["id"]
++        own_copy = {**stored, "id": uuid4()}
++        db.execute(shadow_predictions.insert().values(**own_copy))
++        assert db.scalar(select(shadow_predictions.c.id).where(shadow_predictions.c.id == own_copy["id"])) == own_copy["id"]
++        with pytest.raises(DBAPIError), db.begin_nested():
++            db.execute(shadow_predictions.insert().values(**{**stored, "id": uuid4(), "workspace_id": b["workspace"]}))
++        assert db.execute(shadow_predictions.update().where(shadow_predictions.c.id == stored["id"]).values(live_intent="unknown")).rowcount == 0
++        assert db.execute(shadow_predictions.delete().where(shadow_predictions.c.id == stored["id"])).rowcount == 0
++        db.execute(text("SELECT set_config('app.actor_id',:actor,true)"), {"actor": str(b["user"])})
++        assert db.scalar(select(shadow_predictions.c.id).where(shadow_predictions.c.id == stored["id"])) is None
++        with pytest.raises(DBAPIError), db.begin_nested():
++            db.execute(shadow_predictions.insert().values(**{**stored, "id": uuid4(), "actor_id": b["user"]}))
++
++
++def test_intent_api_keeps_live_result_when_shadow_disagrees_or_fails(environment, tmp_path, monkeypatch):
++    from backend.app.services.intent_classification_service import IntentClassificationService, get_intent_classification_service
++    env = environment
++    a = identity(env)
++    ds = dataset(env, a, tmp_path)
++    candidate(env, a, "correlation_analysis")
++    monkeypatch.setitem(env["client"].app.dependency_overrides, get_intent_classification_service, lambda: IntentClassificationService(llm=None))
++    def call():
++        response = env["client"].post("/api/v1/intent/classify", headers=a["headers"], json={"query": "forecast sales", "dataset_id": ds})
++        assert response.status_code == 200, response.text
++        return response.json()
++    monkeypatch.setattr(get_settings(), "learning_enabled", False)
++    baseline = call()
++    assert not rows_for(env, a)
++    monkeypatch.setattr(get_settings(), "learning_enabled", True)
++    assert call() == baseline and baseline["intent"] == "forecasting"
++    assert rows_for(env, a)[0]["shadow_intent"] == "correlation_analysis"
++    def broken(**kwargs):
++        raise RuntimeError("private shadow error")
++    monkeypatch.setattr(shadow, "record_shadow", broken)
++    assert call() == baseline
++
++
++def test_chat_keeps_numbers_and_contract_when_shadow_disagrees(environment, tmp_path, learning_on, monkeypatch):
++    from importlib import import_module
++    from types import SimpleNamespace
++    chat = import_module("backend.app.api.v1.routes.chat")
++    env = environment
++    a = identity(env)
++    ds = dataset(env, a, tmp_path)
++    candidate(env, a, "forecasting")
++    result = {"status": "complete", "answer": "Sum amount: 12", "data": [{"amount": 12}],
++              "plan": {"operation": "sum", "dataset_version": 1}, "kpis": {"total": 12}}
++    async def analyze(*args, **kwargs): return deepcopy(result)
++    monkeypatch.setattr(chat.NaturalLanguageAnalyticsService, "analyze", analyze)
++    monkeypatch.setattr(chat, "perf_counter", lambda: 1.0)
++    outputs = []
++    for flag in (False, True):
++        monkeypatch.setattr(get_settings(), "learning_enabled", flag)
++        response = asyncio.run(chat.chat(chat.ChatRequest(message="sum amount", dataset_id=ds), None,
++            intent_service=None, db=None, storage=None, current_user=SimpleNamespace(id=a["user"])))
++        outputs.append(response.model_dump_json())
++    assert outputs[0] == outputs[1]
++    row = rows_for(env, a)[0]
++    assert row["shadow_intent"] == "forecasting" and row["live_route"] == "analytics" and row["live_operation"] == "sum"
++
++
++def test_database_outage_is_fail_open(monkeypatch, learning_on):
++    def broken(*args, **kwargs): raise RuntimeError("database unavailable")
++    monkeypatch.setattr(shadow, "create_engine", broken)
++    assert not shadow.record_shadow(actor_id="actor", dataset_id="dataset", question="forecast sales")
++
++
++def test_real_chat_arithmetic_is_unchanged_and_never_trains(environment, tmp_path, monkeypatch):
++    env = environment
++    a = identity(env)
++    ds = dataset(env, a, tmp_path)
++    payload = candidate(env, a, "forecasting")
++    def forbidden(*args, **kwargs):
++        pytest.fail("The request path must never train")
++    monkeypatch.setattr(AveragedPerceptron, "update", forbidden)
++    outputs = []
++    for flag in (False, True):
++        monkeypatch.setattr(get_settings(), "learning_enabled", flag)
++        response = env["client"].post("/api/v1/chat", headers=a["headers"], json={
++            "message": "total amount by region", "dataset_id": ds, "workspace_id": str(a["workspace"])})
++        assert response.status_code == 200, response.text
++        outputs.append({key: response.json()[key] for key in ("answer", "data", "intent", "confidence", "status", "plan", "chart", "kpis")})
++    assert outputs[0] == outputs[1]
++    assert outputs[1]["data"] == [{"region": "a", "amount": 1180}]
++    assert outputs[1]["kpis"]["total"] == 1180
++    assert rows_for(env, a)[0]["shadow_intent"] == "forecasting"
++    with env["admin"]() as db:
++        tenant = db.get(Workspace, a["workspace"]).tenant_id
++        assert db.scalar(select(learner_weights.c.weights).where(learner_weights.c.tenant_id == tenant)) == payload
+--- /dev/null
++++ b/scripts/verify_shadow_migration.py
+@@ -0,0 +1,60 @@
++"""Verify Phase 2 roundtrip in the dedicated disposable database only."""
++from pathlib import Path
++import os
++import sys
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT))
++
++
++def main():
++    from sqlalchemy import create_engine, inspect, text
++    from sqlalchemy.engine import make_url
++    from alembic import command
++    from alembic.config import Config
++    from backend.app.core.config import Settings, get_settings
++    Settings.model_config = {**Settings.model_config, "env_file": None}
++    get_settings.cache_clear()
++    target = make_url(os.environ["DATABASE_URL"])
++    if (target.database != "analyst_setup_test" or target.username != "setup"
++            or target.host != "postgres" or os.environ.get("ENVIRONMENT") != "test"):
++        raise SystemExit("Refusing migration roundtrip outside isolated setup database")
++    engine = create_engine(target)
++    config = Config(str(ROOT / "alembic.ini"))
++    config.set_main_option("script_location", str(ROOT / "migrations"))
++
++    def snapshot():
++        with engine.connect() as db:
++            inspector = inspect(db)
++            result = {}
++            for name in inspector.get_table_names():
++                if name in {"shadow_predictions", "alembic_version"}:
++                    continue
++                quoted = engine.dialect.identifier_preparer.quote(name)
++                result[name] = {
++                    "columns": [(col["name"], str(col["type"]), col["nullable"]) for col in inspector.get_columns(name)],
++                    "pk": inspector.get_pk_constraint(name), "fk": inspector.get_foreign_keys(name),
++                    "indexes": inspector.get_indexes(name),
++                    "count": db.scalar(text(f"SELECT count(*) FROM {quoted}")),
++                }
++            return result
++
++    before = snapshot()
++    command.downgrade(config, "013_perceptron_foundations")
++    assert "shadow_predictions" not in inspect(engine).get_table_names()
++    assert snapshot() == before
++    command.upgrade(config, "014_perceptron_shadow")
++    command.downgrade(config, "013_perceptron_foundations")
++    assert snapshot() == before
++    command.upgrade(config, "014_perceptron_shadow")
++    assert "shadow_predictions" in inspect(engine).get_table_names()
++    assert snapshot() == before
++    from backend.app.database.schema_contract import inspect_schema
++    with engine.connect() as db:
++        assert inspect_schema(db)["compatible"]
++    engine.dispose()
++    print(f"PASS: upgrade / downgrade / upgrade; {len(before)} existing tables unchanged (columns, keys, indexes, row counts)")
++
++
++if __name__ == "__main__":
++    main()

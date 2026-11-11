@@ -57,7 +57,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         logger.error("Database startup compatibility check failed: %s", schema_message)
 
     worker_task = None
-    if app.state.schema_compatible and getattr(app.state.postgres, "_session_factory", None) is not None:
+    if settings.background_worker_enabled and app.state.schema_compatible and getattr(app.state.postgres, "_session_factory", None) is not None:
         import asyncio
         import socket
         import uuid
@@ -69,7 +69,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         job_mgr = BackgroundJobManager(session_factory=app.state.postgres._session_factory)
         job_mgr.register_durable('rag', DocumentIndexingService(app.state.postgres._session_factory).execute)
         job_mgr.register_durable('analysis_pipeline', execute_analysis_job)
-        job_worker = JobWorker(job_mgr, concurrency=2)
+        from backend.app.services.learning_supervisor import execute_extraction_job, execute_dataset_cleanup_job
+        from backend.app.services.learning_evaluation import execute_evaluation_job
+        job_mgr.register_durable('lesson_extract', execute_extraction_job)
+        job_mgr.register_durable('learning_eval', execute_evaluation_job)
+        job_mgr.register_durable('dataset_cleanup', execute_dataset_cleanup_job)
+        from backend.app.services.adaptive_jobs import execute_adaptive_job
+        for kind in ('replay','train','test','generate'):
+            job_mgr.register_durable(f'adaptive_{kind}',execute_adaptive_job)
+        job_worker = JobWorker(job_mgr, concurrency=settings.background_worker_concurrency)
         app.state.job_worker = job_worker
         worker_id = f"{socket.gethostname()}-{uuid.uuid4().hex[:8]}"
         worker_task = asyncio.create_task(job_worker.run_persistent(worker_id))
@@ -78,11 +86,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     yield
 
     if worker_task:
+        import asyncio
         await app.state.job_worker.shutdown()
         worker_task.cancel()
         try:
             await worker_task
-        except Exception:
+        except asyncio.CancelledError:
             pass
 
     await app.state.redis.close()
@@ -95,6 +104,8 @@ def create_app() -> FastAPI:
     """Construct the configured FastAPI application."""
     settings = get_settings()
     application = FastAPI(title=settings.app_name, version=settings.app_version, lifespan=lifespan)
+    from backend.app.dataplane.middleware import UploadBudgetMiddleware
+    application.add_middleware(UploadBudgetMiddleware)
     application.add_middleware(
         CORSMiddleware,
         allow_origins=settings.allowed_cors_origins,

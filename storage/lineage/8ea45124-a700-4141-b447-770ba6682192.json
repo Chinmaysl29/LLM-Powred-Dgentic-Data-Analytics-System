@@ -1,0 +1,15 @@
+{
+  "dataset_id": "8ea45124-a700-4141-b447-770ba6682192",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "25f9b17c-f484-4ab0-97d7-47195747b5f3",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-11-11 16:43:50.240784+00:00",
+      "author": "system",
+      "description": "Initial ingestion of quarterly_profit.xlsx"
+    }
+  ]
+}

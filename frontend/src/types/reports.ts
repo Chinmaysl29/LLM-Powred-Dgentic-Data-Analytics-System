@@ -6,27 +6,23 @@
  * and export payloads.
  */
 
-import type { 
-  Insight, 
-  Risk, 
-  Opportunity, 
-  Recommendation, 
-  BusinessHealthMetric, 
+import type {
+  Insight,
+  Risk,
+  Opportunity,
+  Recommendation,
+  BusinessHealthMetric,
   ScenarioProjection,
-  ScenarioInputVariables
+  ScenarioInputVariables,
 } from './insights';
 import type { ChartPoint } from '../lib/chartDataTransforms';
 
 export type ReportStatus = 'draft' | 'generating' | 'generated' | 'failed' | 'archived';
 
-export type ReportType = 
-  | 'business_performance' 
-  | 'sales_analysis' 
-  | 'customer_analysis' 
-  | 'marketing_analysis' 
-  | 'custom';
+export type ReportType =
+  'business_performance' | 'sales_analysis' | 'customer_analysis' | 'marketing_analysis' | 'custom';
 
-export type ReportSectionType = 
+export type ReportSectionType =
   | 'cover'
   | 'summary'
   | 'kpis'
@@ -87,7 +83,7 @@ export interface ReportSpecification {
   generatedAt: string;
   author: string;
   sections: ReportSectionConfig[];
-  
+
   // Section Payload Content
   cover: {
     title: string;

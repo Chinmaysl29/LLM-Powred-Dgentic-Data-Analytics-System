@@ -54,6 +54,7 @@ class AuthService:
             "exp": expire,
             "iat": datetime.now(timezone.utc),
             "token_type": "access",
+            "jti": str(uuid.uuid4()),
         })
         return jwt.encode(to_encode, secret, algorithm=algo)
 
@@ -102,6 +103,10 @@ class AuthService:
             "expires_in": expires_in_seconds,
         }
 
+    def is_revoked(self, token: str) -> bool:
+        """Share revocation decisions with the protected-route verifier."""
+        return token in self._revoked_tokens
+
     def verify_token(self, token: str) -> dict[str, Any]:
         """Decode and validate a JWT token, ensuring it hasn't been revoked."""
         if token in self._revoked_tokens:
@@ -119,7 +124,7 @@ class AuthService:
 
         return payload
 
-    def refresh_token(self, refresh_token_str: str) -> dict[str, Any]:
+    def refresh_token(self, refresh_token_str: str, db=None) -> dict[str, Any]:
         """Rotate a refresh token: validate, revoke old, and issue a fresh pair."""
         payload = self.verify_token(refresh_token_str)
         if payload.get("token_type") != "refresh":
@@ -129,6 +134,12 @@ class AuthService:
         user_id = payload.get("sub")
         if not user_id:
             raise ValueError("Refresh token missing subject claim")
+
+        if db is not None:
+            from backend.security.token_revocations import consume
+            if not consume(db, refresh_token_str, payload):
+                raise ValueError("Refresh token has already been consumed")
+            db.commit()
 
         # Invalidate the old refresh token (single-use rotation)
         if jti:

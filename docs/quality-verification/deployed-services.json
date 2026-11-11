@@ -1,0 +1,37 @@
+﻿[
+    {
+        "Name":  "dataanalyst-backend-1",
+        "Service":  "backend",
+        "State":  "running",
+        "Health":  "healthy",
+        "Image":  "dataanalyst-backend:latest"
+    },
+    {
+        "Name":  "dataanalyst-chromadb-1",
+        "Service":  "chromadb",
+        "State":  "running",
+        "Health":  "healthy",
+        "Image":  "chromadb/chroma:0.6.3"
+    },
+    {
+        "Name":  "dataanalyst-frontend-1",
+        "Service":  "frontend",
+        "State":  "running",
+        "Health":  "healthy",
+        "Image":  "dataanalyst-frontend:latest"
+    },
+    {
+        "Name":  "dataanalyst-postgres-1",
+        "Service":  "postgres",
+        "State":  "running",
+        "Health":  "healthy",
+        "Image":  "postgres:16"
+    },
+    {
+        "Name":  "dataanalyst-redis-1",
+        "Service":  "redis",
+        "State":  "running",
+        "Health":  "healthy",
+        "Image":  "redis:7"
+    }
+]

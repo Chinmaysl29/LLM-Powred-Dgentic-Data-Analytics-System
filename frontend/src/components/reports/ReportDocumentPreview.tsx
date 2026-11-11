@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import { 
-  Building2, 
-  Database, 
-  Calendar, 
-  ShieldCheck, 
-  Sliders, 
-  CheckCircle2, 
-  ArrowUpRight, 
-  ArrowDownRight, 
+import {
+  Building2,
+  Database,
+  Calendar,
+  ShieldCheck,
+  Sliders,
+  CheckCircle2,
+  ArrowUpRight,
+  ArrowDownRight,
   Minus,
   Sparkles,
-  Info
+  Info,
 } from 'lucide-react';
 import type { ReportSpecification, ReportSectionType } from '../../types/reports';
 import type { Insight } from '../../types/insights';
@@ -60,7 +60,11 @@ export const ReportDocumentPreview: React.FC<ReportDocumentPreviewProps> = ({
     switch (type) {
       case 'cover':
         return (
-          <div key={secId} id={secId} className={`report-doc-cover ${isHighlighted ? 'doc-highlight' : ''}`}>
+          <div
+            key={secId}
+            id={secId}
+            className={`report-doc-cover ${isHighlighted ? 'doc-highlight' : ''}`}
+          >
             <div className="report-cover-brand">
               <div className="report-cover-badge">
                 <Sparkles size={13} />
@@ -114,12 +118,18 @@ export const ReportDocumentPreview: React.FC<ReportDocumentPreviewProps> = ({
 
       case 'summary':
         return (
-          <div key={secId} id={secId} className={`report-doc-section ${isHighlighted ? 'doc-highlight' : ''}`}>
+          <div
+            key={secId}
+            id={secId}
+            className={`report-doc-section ${isHighlighted ? 'doc-highlight' : ''}`}
+          >
             <div className="report-doc-section-header">
               <span className="report-section-num">01</span>
               <div>
                 <h2 className="report-doc-section-title">Executive Summary</h2>
-                <p className="report-doc-section-desc">Synthesized narrative overview of observed business trends and market drivers.</p>
+                <p className="report-doc-section-desc">
+                  Synthesized narrative overview of observed business trends and market drivers.
+                </p>
               </div>
             </div>
 
@@ -141,12 +151,18 @@ export const ReportDocumentPreview: React.FC<ReportDocumentPreviewProps> = ({
 
       case 'kpis':
         return (
-          <div key={secId} id={secId} className={`report-doc-section ${isHighlighted ? 'doc-highlight' : ''}`}>
+          <div
+            key={secId}
+            id={secId}
+            className={`report-doc-section ${isHighlighted ? 'doc-highlight' : ''}`}
+          >
             <div className="report-doc-section-header">
               <span className="report-section-num">02</span>
               <div>
                 <h2 className="report-doc-section-title">Business Health Summary</h2>
-                <p className="report-doc-section-desc">Audited quantitative performance indicators across the evaluation window.</p>
+                <p className="report-doc-section-desc">
+                  Audited quantitative performance indicators across the evaluation window.
+                </p>
               </div>
             </div>
 
@@ -165,9 +181,7 @@ export const ReportDocumentPreview: React.FC<ReportDocumentPreviewProps> = ({
                     )}
                   </div>
                   <div className="report-doc-kpi-val">{kpi.value}</div>
-                  {kpi.subValue && (
-                    <div className="report-doc-kpi-sub">{kpi.subValue}</div>
-                  )}
+                  {kpi.subValue && <div className="report-doc-kpi-sub">{kpi.subValue}</div>}
                 </div>
               ))}
             </div>
@@ -176,12 +190,18 @@ export const ReportDocumentPreview: React.FC<ReportDocumentPreviewProps> = ({
 
       case 'visualizations':
         return (
-          <div key={secId} id={secId} className={`report-doc-section ${isHighlighted ? 'doc-highlight' : ''}`}>
+          <div
+            key={secId}
+            id={secId}
+            className={`report-doc-section ${isHighlighted ? 'doc-highlight' : ''}`}
+          >
             <div className="report-doc-section-header">
               <span className="report-section-num">03</span>
               <div>
                 <h2 className="report-doc-section-title">High-Signal Visualizations</h2>
-                <p className="report-doc-section-desc">Empirical trajectory trends and geographic distribution curves.</p>
+                <p className="report-doc-section-desc">
+                  Empirical trajectory trends and geographic distribution curves.
+                </p>
               </div>
             </div>
 
@@ -191,9 +211,7 @@ export const ReportDocumentPreview: React.FC<ReportDocumentPreviewProps> = ({
                   <div className="report-doc-viz-header">
                     <div>
                       <h3 className="report-doc-viz-title">{viz.title}</h3>
-                      {viz.description && (
-                        <p className="report-doc-viz-desc">{viz.description}</p>
-                      )}
+                      {viz.description && <p className="report-doc-viz-desc">{viz.description}</p>}
                     </div>
                     <span className="report-viz-type-badge">{viz.chartType} Chart</span>
                   </div>
@@ -207,10 +225,7 @@ export const ReportDocumentPreview: React.FC<ReportDocumentPreviewProps> = ({
                       />
                     )}
                     {viz.chartType === 'Bar' && (
-                      <SelfFormingBarChart
-                        data={viz.dataPoints}
-                        ariaLabel={viz.title}
-                      />
+                      <SelfFormingBarChart data={viz.dataPoints} ariaLabel={viz.title} />
                     )}
                   </div>
                 </div>
@@ -221,12 +236,18 @@ export const ReportDocumentPreview: React.FC<ReportDocumentPreviewProps> = ({
 
       case 'insights':
         return (
-          <div key={secId} id={secId} className={`report-doc-section ${isHighlighted ? 'doc-highlight' : ''}`}>
+          <div
+            key={secId}
+            id={secId}
+            className={`report-doc-section ${isHighlighted ? 'doc-highlight' : ''}`}
+          >
             <div className="report-doc-section-header">
               <span className="report-section-num">04</span>
               <div>
                 <h2 className="report-doc-section-title">Key Business Insights</h2>
-                <p className="report-doc-section-desc">Empirical records paired with explainable model interpretations.</p>
+                <p className="report-doc-section-desc">
+                  Empirical records paired with explainable model interpretations.
+                </p>
               </div>
             </div>
 
@@ -246,12 +267,19 @@ export const ReportDocumentPreview: React.FC<ReportDocumentPreviewProps> = ({
 
       case 'risks':
         return (
-          <div key={secId} id={secId} className={`report-doc-section ${isHighlighted ? 'doc-highlight' : ''}`}>
+          <div
+            key={secId}
+            id={secId}
+            className={`report-doc-section ${isHighlighted ? 'doc-highlight' : ''}`}
+          >
             <div className="report-doc-section-header">
               <span className="report-section-num">05</span>
               <div>
                 <h2 className="report-doc-section-title">Detected Risks & Vulnerabilities</h2>
-                <p className="report-doc-section-desc">Structural revenue leakage and retention vulnerabilities identified by anomaly models.</p>
+                <p className="report-doc-section-desc">
+                  Structural revenue leakage and retention vulnerabilities identified by anomaly
+                  models.
+                </p>
               </div>
             </div>
 
@@ -270,12 +298,18 @@ export const ReportDocumentPreview: React.FC<ReportDocumentPreviewProps> = ({
 
       case 'opportunities':
         return (
-          <div key={secId} id={secId} className={`report-doc-section ${isHighlighted ? 'doc-highlight' : ''}`}>
+          <div
+            key={secId}
+            id={secId}
+            className={`report-doc-section ${isHighlighted ? 'doc-highlight' : ''}`}
+          >
             <div className="report-doc-section-header">
               <span className="report-section-num">06</span>
               <div>
                 <h2 className="report-doc-section-title">Strategic Growth Opportunities</h2>
-                <p className="report-doc-section-desc">High-leverage expansion vectors and addressable enterprise market pockets.</p>
+                <p className="report-doc-section-desc">
+                  High-leverage expansion vectors and addressable enterprise market pockets.
+                </p>
               </div>
             </div>
 
@@ -294,12 +328,18 @@ export const ReportDocumentPreview: React.FC<ReportDocumentPreviewProps> = ({
 
       case 'recommendations':
         return (
-          <div key={secId} id={secId} className={`report-doc-section ${isHighlighted ? 'doc-highlight' : ''}`}>
+          <div
+            key={secId}
+            id={secId}
+            className={`report-doc-section ${isHighlighted ? 'doc-highlight' : ''}`}
+          >
             <div className="report-doc-section-header">
               <span className="report-section-num">07</span>
               <div>
                 <h2 className="report-doc-section-title">Action Recommendations</h2>
-                <p className="report-doc-section-desc">Evidence-backed execution steps with transparent boundary assumptions.</p>
+                <p className="report-doc-section-desc">
+                  Evidence-backed execution steps with transparent boundary assumptions.
+                </p>
               </div>
             </div>
 
@@ -319,12 +359,18 @@ export const ReportDocumentPreview: React.FC<ReportDocumentPreviewProps> = ({
       case 'what_if':
         if (!spec.scenario) return null;
         return (
-          <div key={secId} id={secId} className={`report-doc-section ${isHighlighted ? 'doc-highlight' : ''}`}>
+          <div
+            key={secId}
+            id={secId}
+            className={`report-doc-section ${isHighlighted ? 'doc-highlight' : ''}`}
+          >
             <div className="report-doc-section-header">
               <span className="report-section-num">08</span>
               <div>
                 <h2 className="report-doc-section-title">What-If Scenario Simulation</h2>
-                <p className="report-doc-section-desc">Forward-looking decision modeling based on price elasticity & CAC curves.</p>
+                <p className="report-doc-section-desc">
+                  Forward-looking decision modeling based on price elasticity & CAC curves.
+                </p>
               </div>
             </div>
 
@@ -343,16 +389,22 @@ export const ReportDocumentPreview: React.FC<ReportDocumentPreviewProps> = ({
               <div className="report-scenario-kpis">
                 <div className="report-scenario-kpi-item highlight">
                   <span className="report-scenario-kpi-lbl">Projected Revenue</span>
-                  <span className="report-scenario-kpi-val">{spec.scenario.projection.projectedRevenue.projected}</span>
+                  <span className="report-scenario-kpi-val">
+                    {spec.scenario.projection.projectedRevenue.projected}
+                  </span>
                   <div className="report-scenario-kpi-sub">
                     <span>Baseline: {spec.scenario.projection.projectedRevenue.baseline}</span>
-                    <span className="report-scenario-kpi-delta up">{spec.scenario.projection.projectedRevenue.delta}</span>
+                    <span className="report-scenario-kpi-delta up">
+                      {spec.scenario.projection.projectedRevenue.delta}
+                    </span>
                   </div>
                 </div>
 
                 <div className="report-scenario-kpi-item">
                   <span className="report-scenario-kpi-lbl">Estimated Net Financial Impact</span>
-                  <span className="report-scenario-kpi-val text-green">{spec.scenario.projection.netImpact}</span>
+                  <span className="report-scenario-kpi-val text-green">
+                    {spec.scenario.projection.netImpact}
+                  </span>
                   <div className="report-scenario-kpi-sub">
                     <span>Confidence: {spec.scenario.projection.confidenceInterval}</span>
                   </div>
@@ -360,10 +412,14 @@ export const ReportDocumentPreview: React.FC<ReportDocumentPreviewProps> = ({
 
                 <div className="report-scenario-kpi-item">
                   <span className="report-scenario-kpi-lbl">Projected Customer Volume</span>
-                  <span className="report-scenario-kpi-val">{spec.scenario.projection.projectedCustomers.projected}</span>
+                  <span className="report-scenario-kpi-val">
+                    {spec.scenario.projection.projectedCustomers.projected}
+                  </span>
                   <div className="report-scenario-kpi-sub">
                     <span>Baseline: {spec.scenario.projection.projectedCustomers.baseline}</span>
-                    <span className="report-scenario-kpi-delta up">{spec.scenario.projection.projectedCustomers.delta}</span>
+                    <span className="report-scenario-kpi-delta up">
+                      {spec.scenario.projection.projectedCustomers.delta}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -372,7 +428,10 @@ export const ReportDocumentPreview: React.FC<ReportDocumentPreviewProps> = ({
               <div className="report-scenario-disclaimer">
                 <Info size={13} className="report-scenario-disc-icon" />
                 <span>
-                  <strong>Scenario Notice:</strong> Figures reflect simulated model projections generated by calibrated elasticity coefficients. They represent estimated directional outcomes under stable macroeconomic assumptions, not guaranteed business results.
+                  <strong>Scenario Notice:</strong> Figures reflect simulated model projections
+                  generated by calibrated elasticity coefficients. They represent estimated
+                  directional outcomes under stable macroeconomic assumptions, not guaranteed
+                  business results.
                 </span>
               </div>
             </div>

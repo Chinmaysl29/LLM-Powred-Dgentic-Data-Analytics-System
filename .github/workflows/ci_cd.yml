@@ -49,6 +49,7 @@ jobs:
       # ── Isolated test database — never touches customer storage ──────────
       DATABASE_URL: postgresql+psycopg://postgres:isolated-ci-only@127.0.0.1:5432/analyst_test
       ENVIRONMENT: test
+      BACKGROUND_WORKER_ENABLED: "false" # Tests drive durable workers explicitly.
       DEBUG: "false"
       # ── Minimal required secrets (safe placeholder values for CI) ────────
       JWT_SECRET_KEY: ci-test-secret-do-not-use-in-production
@@ -156,6 +157,9 @@ jobs:
 
       - name: Verify idempotent re-upgrade (must be a no-op)
         run: python -m alembic upgrade head
+
+      - name: Verify company review migration and guarded rollback
+        run: python scripts/verify_company_migration.py
 
       - name: Run schema preflight
         run: python scripts/schema_preflight.py

@@ -1,0 +1,14 @@
+{
+  "dataset_id": "2e4f6fe1-dfc2-43a2-8adc-e3613e171766",
+  "dataset_name": "tenant_a_data",
+  "columns": [
+    "user",
+    "secret_metric"
+  ],
+  "records": [
+    {
+      "user": "Alice",
+      "secret_metric": 9999
+    }
+  ]
+}

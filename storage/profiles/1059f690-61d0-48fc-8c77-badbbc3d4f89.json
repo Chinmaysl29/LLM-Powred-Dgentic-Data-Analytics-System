@@ -1,0 +1,49 @@
+{
+  "dataset_id": "1059f690-61d0-48fc-8c77-badbbc3d4f89",
+  "duplicate_rows": 0,
+  "duplicate_percentage": 0.0,
+  "missing_data_profile": {
+    "null_count": 2,
+    "null_percentage": 0.0008424599831508003,
+    "columns_with_missing": [
+      "net_cash_flow"
+    ]
+  },
+  "cardinality_profile": {
+    "high_cardinality_columns": [
+      "record",
+      "net_cash_flow"
+    ],
+    "low_cardinality_columns": []
+  },
+  "numeric_columns_profile": {
+    "record": {
+      "mean": 593.0,
+      "median": 593.0,
+      "mode": 0.0,
+      "min": 0.0,
+      "max": 1186.0,
+      "std": 342.8016919444827,
+      "variance": 117513.0,
+      "p25": 296.5,
+      "p50": 593.0,
+      "p75": 889.5,
+      "skewness": 0.0,
+      "kurtosis": -1.2
+    },
+    "net_cash_flow": {
+      "mean": 592.0,
+      "median": 592.0,
+      "mode": 0.0,
+      "min": 0.0,
+      "max": 1184.0,
+      "std": 342.22434162402885,
+      "variance": 117117.5,
+      "p25": 296.0,
+      "p50": 592.0,
+      "p75": 888.0,
+      "skewness": 0.0,
+      "kurtosis": -1.2
+    }
+  }
+}

@@ -1,0 +1,5 @@
+26.0.1
+ Schema, default None
+    If not passed, will be inferred from the first row of the
+    mapping values.
+

@@ -1,0 +1,19 @@
+{
+  "checks": [
+    "unauthenticated verified-learning navigation redirects to login",
+    "real synthetic backend password login succeeds",
+    "authorized collection control saved through UI",
+    "real seven-stage worker completes; independently known group totals 180 and 1000 appear",
+    "URL-pinned run and evidence restore after refresh",
+    "authorized UI report download contains the exact validated result",
+    "structured feedback persists without claiming a verified numeric label",
+    "real independent verification, authorized activation and immutable revisions visible",
+    "candidate freeze succeeds; absent held-out cases prevent evaluation submission",
+    "authorized rollback stops application and exposes baseline state",
+    "390px viewport has no horizontal document overflow",
+    "no uncaught browser runtime errors"
+  ],
+  "errors": [],
+  "authentication": "Real local backend password identity; hosted Supabase not exercised",
+  "responsesMocked": false
+}

@@ -1,13 +1,13 @@
 import React from 'react';
-import { 
-  CheckCircle2, 
-  Clock, 
-  Zap, 
-  Sliders, 
-  Eye, 
+import {
+  CheckCircle2,
+  Clock,
+  Zap,
+  Sliders,
+  Eye,
   MessageSquare,
   HelpCircle,
-  FileCheck
+  FileCheck,
 } from 'lucide-react';
 import type { Recommendation } from '../../types/insights';
 
@@ -28,8 +28,8 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
     recommendation.effort === 'Low'
       ? 'insights-effort-low'
       : recommendation.effort === 'Medium'
-      ? 'insights-effort-med'
-      : 'insights-effort-high';
+        ? 'insights-effort-med'
+        : 'insights-effort-high';
 
   return (
     <div className="insights-recommendation-card">
@@ -63,7 +63,9 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
         </div>
         <ul className="insights-evidence-list">
           {recommendation.supportingEvidence.map((point, idx) => (
-            <li key={idx} className="insights-evidence-item">{point}</li>
+            <li key={idx} className="insights-evidence-item">
+              {point}
+            </li>
           ))}
         </ul>
       </div>

@@ -1,0 +1,1538 @@
+{
+  "id": "a86d8082-2fea-4488-b179-60190837e3e5",
+  "kind": "train",
+  "state": "succeeded",
+  "manifest": {
+    "request": {
+      "train_case_ids": [
+        "66136bbf-d4e1-480c-8944-6a4c2e18f4eb",
+        "e73d3209-f936-4d70-be9d-d929b257e4aa",
+        "01823ad0-0d50-4fb9-bb81-8532f19afb25",
+        "6b2771b7-1e41-41c6-9187-8f2417408c0e",
+        "d9b44514-dc00-4e1e-a3a0-21a587c2ba21",
+        "a8f42ff4-5585-4d9d-96c7-f679caeffc13",
+        "f8bb4e12-3816-4dbe-bd42-df43c630d203",
+        "fc88c5a4-4e3e-4a53-967f-e9e9311c02e2",
+        "a7908608-163c-4955-a073-90300b1e4b52",
+        "070fdc6e-3131-4ef3-95de-6ef1e694fa90",
+        "3c474031-9d50-4c05-9f11-038ff5b9cd4c",
+        "20744142-ca73-4d4b-a39b-1d872cfa0640",
+        "0ea70c80-0dcb-4ec8-bad0-cc460eab705c",
+        "730c60f2-0e97-493d-a992-c9822f0a3cbc",
+        "efad6216-959e-40e0-82a1-84fd1e0ef668",
+        "7389eab5-82c0-4de5-ace3-1adb3ffd42a4",
+        "1efe52b2-d92b-409e-b559-d4cba19b6706",
+        "69acc001-97f7-425e-925e-e84b20a6a29c",
+        "f4b40961-cabf-4ab3-b4c9-b81f19abbaf6",
+        "e101b139-7983-4852-899c-526d894842ba",
+        "c1d230e9-b5cc-4f75-84b4-85f44d90946c",
+        "d571c461-4971-4071-9a46-d2f9d076b599",
+        "6be44dba-943d-4d2d-894e-6f8ed1c6b52a",
+        "05a23732-6995-4719-a198-cb845c2ad0bd"
+      ],
+      "development_case_ids": [
+        "1e77e1ee-9fc2-4698-ac5a-1ecbc5ee42f6",
+        "db10e03b-a7cf-4e7d-8e2b-9df9403af4fc",
+        "8e0bb7a8-d2fb-4039-b750-efe02310595b",
+        "d02dc77e-daf9-4129-97f5-07102024054a",
+        "64c8f7b3-9523-415b-85af-59e312adeba2",
+        "db7c2674-c9f3-4e58-9d8a-f15b4a59da89",
+        "0067c0ee-5647-46bb-a090-7595a25a522d",
+        "44e94480-58bf-4cce-ba79-ae3ea4e5ed26"
+      ],
+      "final_case_ids": [
+        "579e4d5a-69c0-4aad-bb60-6eb7502002c0",
+        "cb2e697b-eef4-4961-a95f-c63c036315f7",
+        "1c5fa0d9-a137-48f3-92da-ad47907c1b28",
+        "b11b29c0-6e21-460b-b245-33f7ad6d28df",
+        "3f62765d-f66d-400c-9216-5ef1b7b9b7a9",
+        "2e8da61b-be81-4113-9011-7dea2785f6b8",
+        "0d432ada-0ff0-4c86-84eb-d50c4d7f894d",
+        "aa9f52f2-4ffb-4099-abc2-d2fb33cd3897"
+      ],
+      "min_examples": 40,
+      "min_groups": 6,
+      "min_per_class": 8,
+      "seed": 17,
+      "max_epochs": 60,
+      "deadline_seconds": 120,
+      "gates": {
+        "min_trusted_final_groups": 30,
+        "max_final_regressions": 0,
+        "max_first_attempt_regressions": 0,
+        "max_harmful_repairs": 0,
+        "max_p95_ratio": 1.5,
+        "require_policy_benefit": true
+      }
+    },
+    "case_snapshot": [
+      {
+        "id": "66136bbf-d4e1-480c-8944-6a4c2e18f4eb",
+        "hash": "9b51999c2b0695a77c58c163ea6d034a67e51a34edbe6385273e5e99245103b1"
+      },
+      {
+        "id": "e73d3209-f936-4d70-be9d-d929b257e4aa",
+        "hash": "e4089600121ed19ca2f96d8647d248aca36d7aef0368012e42c3ac1bdea7e9a7"
+      },
+      {
+        "id": "01823ad0-0d50-4fb9-bb81-8532f19afb25",
+        "hash": "689129dc2a8ac9a319ca817d0781d1e3b2d8690a9b51c067eb269b47a1bc8316"
+      },
+      {
+        "id": "6b2771b7-1e41-41c6-9187-8f2417408c0e",
+        "hash": "d72c0caa6ce04ee3839789b12350c0581183c363c12ea398f7f8ed8e3a819a03"
+      },
+      {
+        "id": "d9b44514-dc00-4e1e-a3a0-21a587c2ba21",
+        "hash": "ca95d727b7bf4eb0664972c269bff8de7b2f5425bba2ba7d48936e780260f209"
+      },
+      {
+        "id": "a8f42ff4-5585-4d9d-96c7-f679caeffc13",
+        "hash": "f9c7424e4ab1d430cbb02b004fa234c8af17beb974a9fee38e50dde87f9061b6"
+      },
+      {
+        "id": "f8bb4e12-3816-4dbe-bd42-df43c630d203",
+        "hash": "c0243dc3898e096b0b21d5f1f61d72f2bcc9d5e83a3127cbbce7e6e723e87bd4"
+      },
+      {
+        "id": "fc88c5a4-4e3e-4a53-967f-e9e9311c02e2",
+        "hash": "4d9c3bcd93123afcd013b52ddba5c48bdb30068628bf71f9deb6a203e96ac508"
+      },
+      {
+        "id": "a7908608-163c-4955-a073-90300b1e4b52",
+        "hash": "26f5e410c99adf7b32a065d0a665ede2529eb00749d49eb967aad36f056eeeb5"
+      },
+      {
+        "id": "070fdc6e-3131-4ef3-95de-6ef1e694fa90",
+        "hash": "08f3b29983fa6876c2d4e768a7d1f828a7ebc2e54326c1c9263894a48183818c"
+      },
+      {
+        "id": "3c474031-9d50-4c05-9f11-038ff5b9cd4c",
+        "hash": "795f7b8c38cafc62785f5b7be7e14759ab8d4d1c9f51f472f08b1b389e96e918"
+      },
+      {
+        "id": "20744142-ca73-4d4b-a39b-1d872cfa0640",
+        "hash": "a9a21c655841f91bf056c6c8de80fb8fdafbf3b457180918487538067604f41d"
+      },
+      {
+        "id": "0ea70c80-0dcb-4ec8-bad0-cc460eab705c",
+        "hash": "41968a3c3847b6398102137dc8fd0b7dfde34cdbd0209a21f2a91bec37f1a295"
+      },
+      {
+        "id": "730c60f2-0e97-493d-a992-c9822f0a3cbc",
+        "hash": "64e4f7a3d83843c7275e97d421f4872e8b860f4b05661a1366203e3159acf75f"
+      },
+      {
+        "id": "efad6216-959e-40e0-82a1-84fd1e0ef668",
+        "hash": "74f7ca73e7355fe8b420e458435c67163de5f2de6b626073f70acf8b70eca972"
+      },
+      {
+        "id": "7389eab5-82c0-4de5-ace3-1adb3ffd42a4",
+        "hash": "1bd0c3a318c32863ea1c4f533bdf6302935bb01b196cb5556dd336ac7e7fcb34"
+      },
+      {
+        "id": "1efe52b2-d92b-409e-b559-d4cba19b6706",
+        "hash": "942ce695baeceb9912784a92ca00e6608e679b5a7e09f36d1a0f5d4a8cc8b242"
+      },
+      {
+        "id": "69acc001-97f7-425e-925e-e84b20a6a29c",
+        "hash": "ae05531b8c3aedf6d3a8caec4d44bef9e8db486501063f4aa2ddf5a9e8818ad1"
+      },
+      {
+        "id": "f4b40961-cabf-4ab3-b4c9-b81f19abbaf6",
+        "hash": "b61fbecce524e061f03bf86438c576fbc5e738e6a9af446f36b99aab77dbce25"
+      },
+      {
+        "id": "e101b139-7983-4852-899c-526d894842ba",
+        "hash": "f3c1d0d57e86fe59342a1f2f277f381bf4b25c9e6f0ebe6bf18e9777293aa6e0"
+      },
+      {
+        "id": "c1d230e9-b5cc-4f75-84b4-85f44d90946c",
+        "hash": "17d1a748d5b293164b1ac54c6e1561d7e9f8f4f52ffd16158e2e5b0b5eed6325"
+      },
+      {
+        "id": "d571c461-4971-4071-9a46-d2f9d076b599",
+        "hash": "1df353c0c3812178df446e057138b3d23ff43bd5f61ecd7e784f3ed4c3c3ae15"
+      },
+      {
+        "id": "6be44dba-943d-4d2d-894e-6f8ed1c6b52a",
+        "hash": "cc07efc8965174e5d782774e8d6ba94e3525e6db2cb24292eea16f54fa398f25"
+      },
+      {
+        "id": "05a23732-6995-4719-a198-cb845c2ad0bd",
+        "hash": "1aa32fdd5dedce48e5a97dc1967460f50228adf2b5f04ed999d80e0d51dd42f7"
+      },
+      {
+        "id": "1e77e1ee-9fc2-4698-ac5a-1ecbc5ee42f6",
+        "hash": "9c5313ccde5861bfd316db6777436e5d021a0995fe37b4bb83c3db239750a036"
+      },
+      {
+        "id": "db10e03b-a7cf-4e7d-8e2b-9df9403af4fc",
+        "hash": "72d191ad5d347a4c56f33abf9d519e66bf6fdb5586df049c0be619b40174f4f5"
+      },
+      {
+        "id": "8e0bb7a8-d2fb-4039-b750-efe02310595b",
+        "hash": "e246290fb118a78931af12f5994f1a2200af0756835e7b6c9b56c80872bc4974"
+      },
+      {
+        "id": "d02dc77e-daf9-4129-97f5-07102024054a",
+        "hash": "29eebae7a402368b469125982eb03a226c403f553956477f0733bb7a7d87ade8"
+      },
+      {
+        "id": "64c8f7b3-9523-415b-85af-59e312adeba2",
+        "hash": "b730a0aeb96506ce58b737c2e47c39b271d07054b07d67c0938e21f7a24237a4"
+      },
+      {
+        "id": "db7c2674-c9f3-4e58-9d8a-f15b4a59da89",
+        "hash": "e74be076cb69e667ee66226e2bc8622b5312714a61ec134b340a09046d083253"
+      },
+      {
+        "id": "0067c0ee-5647-46bb-a090-7595a25a522d",
+        "hash": "d2a88511e9a8f8a195dc42c7209e1a2066c118730f587b3e1cae8a958be9091b"
+      },
+      {
+        "id": "44e94480-58bf-4cce-ba79-ae3ea4e5ed26",
+        "hash": "d6b937d6b44442d31eab41dde612f18ee077f10457dba88acfa15c06c1480512"
+      },
+      {
+        "id": "579e4d5a-69c0-4aad-bb60-6eb7502002c0",
+        "hash": "310c569d40d6f2ca3ce7e5b2182800ca70b80ba70b0a683d3f02676b3d6783fb"
+      },
+      {
+        "id": "cb2e697b-eef4-4961-a95f-c63c036315f7",
+        "hash": "0e31c162163143dbfd85af8dc584faaa8d32e153493f349f82c44389dbc46be3"
+      },
+      {
+        "id": "1c5fa0d9-a137-48f3-92da-ad47907c1b28",
+        "hash": "80c9ebb9b44c1c0194d05ca3a7de3b2b8f78b0f95e72c81f436fc6479c2e59f5"
+      },
+      {
+        "id": "b11b29c0-6e21-460b-b245-33f7ad6d28df",
+        "hash": "99a2ff3795e9b7f4cb450f9bc3b198d40a46f52b10eb5507e3950c0d4f9cbe9a"
+      },
+      {
+        "id": "3f62765d-f66d-400c-9216-5ef1b7b9b7a9",
+        "hash": "1f7057948c7687f699a97a948f7f71bb2fd20a50565ec0031b390a7cce019576"
+      },
+      {
+        "id": "2e8da61b-be81-4113-9011-7dea2785f6b8",
+        "hash": "d7a2244ff5c4aca0f22e8fa1158583c2ecc1b4f2d99cb8b8d9111cd1d411d223"
+      },
+      {
+        "id": "0d432ada-0ff0-4c86-84eb-d50c4d7f894d",
+        "hash": "ea9a90bbe18fa256ff30efb73e4da2cb700485d26e2f8b53d430a18da8f0f99d"
+      },
+      {
+        "id": "aa9f52f2-4ffb-4099-abc2-d2fb33cd3897",
+        "hash": "aadd11c2ea08e9b75251c3b00e092ef0ccafec7e9ac4f1eef2528db6242c7255"
+      }
+    ],
+    "catalog": [
+      {
+        "skill_id": "decimal_exact",
+        "version": 1,
+        "implementation": "decimal_exact",
+        "implementation_hash": "7a0ff8fefae5c4a592a7c11ff32df9eb65031b32e4e348c7e742dcb726d62ad5",
+        "inputs": "ProblemContext+authorized-dataframes@1",
+        "outputs": "SkillResult+ValidationResult@1",
+        "preconditions": [
+          "Active authenticated workspace",
+          "Pinned compatible schema and explicit task semantics",
+          "Approved implementation hash and sufficient remaining resources"
+        ],
+        "permitted_tools": [
+          "decimal_exact"
+        ],
+        "resource_limits": {
+          "max_rows": 500000,
+          "max_input_bytes": 50000000,
+          "max_seconds": 30,
+          "max_repairs": 2
+        },
+        "stages": [
+          5
+        ],
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "definition_refs": [],
+        "task_types": [
+          "descriptive"
+        ],
+        "tests": [
+          "isolated:decimal_exact:v1"
+        ],
+        "lifecycle": "active",
+        "recipe": [],
+        "source": "repository_reviewed"
+      },
+      {
+        "skill_id": "decimal_vector_checked",
+        "version": 1,
+        "implementation": "decimal_vector_checked",
+        "implementation_hash": "c3885f69fa6c0dff72e778d748f75e391695e1ecd8a89bcd47a2bae5019655d3",
+        "inputs": "ProblemContext+authorized-dataframes@1",
+        "outputs": "SkillResult+ValidationResult@1",
+        "preconditions": [
+          "Active authenticated workspace",
+          "Pinned compatible schema and explicit task semantics",
+          "Approved implementation hash and sufficient remaining resources"
+        ],
+        "permitted_tools": [
+          "decimal_vector_checked"
+        ],
+        "resource_limits": {
+          "max_rows": 500000,
+          "max_input_bytes": 50000000,
+          "max_seconds": 30,
+          "max_repairs": 2
+        },
+        "stages": [
+          5
+        ],
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "definition_refs": [],
+        "task_types": [
+          "descriptive"
+        ],
+        "tests": [
+          "isolated:decimal_vector_checked:v1"
+        ],
+        "lifecycle": "active",
+        "recipe": [],
+        "source": "repository_reviewed"
+      },
+      {
+        "skill_id": "refunds_per_order",
+        "version": 1,
+        "implementation": "refunds_per_order",
+        "implementation_hash": "75c846d1fd67c381ac5b611442b0876858bc541d76bd6636078ae46239a091d4",
+        "inputs": "ProblemContext+authorized-dataframes@1",
+        "outputs": "SkillResult+ValidationResult@1",
+        "preconditions": [
+          "Active authenticated workspace",
+          "Pinned compatible schema and explicit task semantics",
+          "Approved implementation hash and sufficient remaining resources"
+        ],
+        "permitted_tools": [
+          "sum_refunds_by_order",
+          "validated_order_join",
+          "signed_subtract",
+          "aggregate_result",
+          "validate_result"
+        ],
+        "resource_limits": {
+          "max_rows": 500000,
+          "max_input_bytes": 50000000,
+          "max_seconds": 30,
+          "max_repairs": 2
+        },
+        "stages": [
+          5
+        ],
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "definition_refs": [],
+        "task_types": [
+          "descriptive"
+        ],
+        "tests": [
+          "isolated:refunds_per_order:v1"
+        ],
+        "lifecycle": "active",
+        "recipe": [],
+        "source": "repository_reviewed"
+      },
+      {
+        "skill_id": "unique_refund_join",
+        "version": 1,
+        "implementation": "unique_refund_join",
+        "implementation_hash": "8f3d370c5dfdf71b5932991974d6711d7f9efb650ac742470ffcb8b15fba1b3a",
+        "inputs": "ProblemContext+authorized-dataframes@1",
+        "outputs": "SkillResult+ValidationResult@1",
+        "preconditions": [
+          "Active authenticated workspace",
+          "Pinned compatible schema and explicit task semantics",
+          "Approved implementation hash and sufficient remaining resources"
+        ],
+        "permitted_tools": [
+          "sum_refunds_by_order",
+          "validated_order_join",
+          "signed_subtract",
+          "aggregate_result",
+          "validate_result"
+        ],
+        "resource_limits": {
+          "max_rows": 500000,
+          "max_input_bytes": 50000000,
+          "max_seconds": 30,
+          "max_repairs": 2
+        },
+        "stages": [
+          5
+        ],
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "definition_refs": [],
+        "task_types": [
+          "descriptive"
+        ],
+        "tests": [
+          "isolated:unique_refund_join:v1"
+        ],
+        "lifecycle": "active",
+        "recipe": [],
+        "source": "repository_reviewed"
+      },
+      {
+        "skill_id": "refund_event_count",
+        "version": 1,
+        "implementation": "refund_event_count",
+        "implementation_hash": "e914fb5408bbbb6f708578e38390021e64ccfbde091b2bf4d45037ed703f4900",
+        "inputs": "ProblemContext+authorized-dataframes@1",
+        "outputs": "SkillResult+ValidationResult@1",
+        "preconditions": [
+          "Active authenticated workspace",
+          "Pinned compatible schema and explicit task semantics",
+          "Approved implementation hash and sufficient remaining resources"
+        ],
+        "permitted_tools": [
+          "refund_event_count"
+        ],
+        "resource_limits": {
+          "max_rows": 500000,
+          "max_input_bytes": 50000000,
+          "max_seconds": 30,
+          "max_repairs": 2
+        },
+        "stages": [
+          5
+        ],
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "definition_refs": [],
+        "task_types": [
+          "descriptive"
+        ],
+        "tests": [
+          "isolated:refund_event_count:v1"
+        ],
+        "lifecycle": "active",
+        "recipe": [],
+        "source": "repository_reviewed"
+      },
+      {
+        "skill_id": "join_cardinality_check",
+        "version": 1,
+        "implementation": "join_cardinality_check",
+        "implementation_hash": "680257bfebcdc704dba73b448ea55db7bc3d8a5b98128dc36dd5e457fbc8cae4",
+        "inputs": "ProblemContext+authorized-dataframes@1",
+        "outputs": "SkillResult+ValidationResult@1",
+        "preconditions": [
+          "Active authenticated workspace",
+          "Pinned compatible schema and explicit task semantics",
+          "Approved implementation hash and sufficient remaining resources"
+        ],
+        "permitted_tools": [
+          "join_cardinality_check"
+        ],
+        "resource_limits": {
+          "max_rows": 500000,
+          "max_input_bytes": 50000000,
+          "max_seconds": 30,
+          "max_repairs": 2
+        },
+        "stages": [
+          5
+        ],
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "definition_refs": [],
+        "task_types": [
+          "descriptive"
+        ],
+        "tests": [
+          "isolated:join_cardinality_check:v1"
+        ],
+        "lifecycle": "active",
+        "recipe": [],
+        "source": "repository_reviewed"
+      },
+      {
+        "skill_id": "date_format_check",
+        "version": 1,
+        "implementation": "date_format_check",
+        "implementation_hash": "e3770da093917fa95b994b8bf570645bd12d94b7b11df829c7d94e2191fd5c5e",
+        "inputs": "ProblemContext+authorized-dataframes@1",
+        "outputs": "SkillResult+ValidationResult@1",
+        "preconditions": [
+          "Active authenticated workspace",
+          "Pinned compatible schema and explicit task semantics",
+          "Approved implementation hash and sufficient remaining resources"
+        ],
+        "permitted_tools": [
+          "date_format_check"
+        ],
+        "resource_limits": {
+          "max_rows": 500000,
+          "max_input_bytes": 50000000,
+          "max_seconds": 30,
+          "max_repairs": 2
+        },
+        "stages": [
+          5
+        ],
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "definition_refs": [],
+        "task_types": [
+          "descriptive"
+        ],
+        "tests": [
+          "isolated:date_format_check:v1"
+        ],
+        "lifecycle": "active",
+        "recipe": [],
+        "source": "repository_reviewed"
+      },
+      {
+        "skill_id": "chart_result_check",
+        "version": 1,
+        "implementation": "chart_result_check",
+        "implementation_hash": "b16cacf0e499cba53f1afd5655b7292c7e7104d43545a83e3a205fe997eaacd9",
+        "inputs": "ProblemContext+authorized-dataframes@1",
+        "outputs": "SkillResult+ValidationResult@1",
+        "preconditions": [
+          "Active authenticated workspace",
+          "Pinned compatible schema and explicit task semantics",
+          "Approved implementation hash and sufficient remaining resources"
+        ],
+        "permitted_tools": [
+          "chart_result_check"
+        ],
+        "resource_limits": {
+          "max_rows": 500000,
+          "max_input_bytes": 50000000,
+          "max_seconds": 30,
+          "max_repairs": 2
+        },
+        "stages": [
+          5
+        ],
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "definition_refs": [],
+        "task_types": [
+          "descriptive"
+        ],
+        "tests": [
+          "isolated:chart_result_check:v1"
+        ],
+        "lifecycle": "active",
+        "recipe": [],
+        "source": "repository_reviewed"
+      }
+    ],
+    "runtime": {
+      "policy_hash": "75ce19e16189629ec927e142ff0f087d8e4479fad436b2a554f04dc103f72a0c",
+      "dependencies": {
+        "pandas": "2.3.3",
+        "pydantic": "2.14.2",
+        "SQLAlchemy": "2.1.6"
+      }
+    },
+    "label_snapshot": [
+      {
+        "id": "333c1e23-ea28-4a75-9378-baada22c8279",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "5424570a-add9-4688-97b7-e315b9a9ea9c",
+        "case_id": "66136bbf-d4e1-480c-8944-6a4c2e18f4eb"
+      },
+      {
+        "id": "e9e31533-1660-4d19-8386-9f88765da062",
+        "revision": 1,
+        "label_status": "negative",
+        "decision_id": "bb71c8f8-0ff3-4646-963c-a7c30a830e44",
+        "case_id": "66136bbf-d4e1-480c-8944-6a4c2e18f4eb"
+      },
+      {
+        "id": "83b1d3fb-261b-4328-8a95-b51b417da864",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "bc52326e-a1bd-49ee-9986-a8655e8a3a5b",
+        "case_id": "e73d3209-f936-4d70-be9d-d929b257e4aa"
+      },
+      {
+        "id": "de7323fb-55bf-43e2-bbf9-5ab475fb1275",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "ce25172d-e5ba-4a14-963c-a49d52f85733",
+        "case_id": "e73d3209-f936-4d70-be9d-d929b257e4aa"
+      },
+      {
+        "id": "e5d4feee-8481-46ce-af33-517d733fea6f",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "93b8e72e-26a7-4d30-8a4c-b38fed6666e5",
+        "case_id": "01823ad0-0d50-4fb9-bb81-8532f19afb25"
+      },
+      {
+        "id": "aba45e01-338a-4826-a3c0-09d91e5fd12a",
+        "revision": 1,
+        "label_status": "negative",
+        "decision_id": "2946fa17-1fbe-45d9-afd4-a6b979a05a8e",
+        "case_id": "01823ad0-0d50-4fb9-bb81-8532f19afb25"
+      },
+      {
+        "id": "d78cea5a-2743-4e33-96ba-047129ea6783",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "1badd7aa-15b9-4980-82d6-1b09984d4fde",
+        "case_id": "6b2771b7-1e41-41c6-9187-8f2417408c0e"
+      },
+      {
+        "id": "1f9e3071-cdd6-4785-9fda-592af3759a7e",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "76e044a7-90e3-4493-8099-d7311fb8ef0f",
+        "case_id": "6b2771b7-1e41-41c6-9187-8f2417408c0e"
+      },
+      {
+        "id": "256f06a1-ce89-4d3a-aabd-facd7c5473e2",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "328ff53f-fc55-4b9d-bb5f-71b4e7b4dfa2",
+        "case_id": "d9b44514-dc00-4e1e-a3a0-21a587c2ba21"
+      },
+      {
+        "id": "05cd4239-67ff-4a65-96bd-c0b821155792",
+        "revision": 1,
+        "label_status": "negative",
+        "decision_id": "e40cd684-ba3a-4cd7-a5ab-3e0271f6f398",
+        "case_id": "d9b44514-dc00-4e1e-a3a0-21a587c2ba21"
+      },
+      {
+        "id": "5a880ca7-1d10-4211-a77f-8fbc8460d997",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "4ce3b7bb-a278-4d78-be9b-0836cf8006ff",
+        "case_id": "a8f42ff4-5585-4d9d-96c7-f679caeffc13"
+      },
+      {
+        "id": "56eeeda5-bbbd-45e6-8391-61326a5ef35e",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "57fcfdbb-0c3f-4337-b1da-059b7a28ba3b",
+        "case_id": "a8f42ff4-5585-4d9d-96c7-f679caeffc13"
+      },
+      {
+        "id": "6ec44cba-0f92-4f3a-817b-d2837a9bae4e",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "654ede33-d880-47e7-a563-db5973c19eae",
+        "case_id": "f8bb4e12-3816-4dbe-bd42-df43c630d203"
+      },
+      {
+        "id": "9ad57775-03c1-42b2-8ba2-22302a20169a",
+        "revision": 1,
+        "label_status": "negative",
+        "decision_id": "e347c881-0eb6-4973-9e4d-edee2cb392c8",
+        "case_id": "f8bb4e12-3816-4dbe-bd42-df43c630d203"
+      },
+      {
+        "id": "672fe625-2550-4475-a933-4d82af976186",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "0e7031be-c7d9-4701-ab68-4bf5feeb7d8b",
+        "case_id": "fc88c5a4-4e3e-4a53-967f-e9e9311c02e2"
+      },
+      {
+        "id": "4535ea5e-0d30-4d17-8fad-488af74a6cd4",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "30b7018e-a787-485e-9bc3-aee3f5e49714",
+        "case_id": "fc88c5a4-4e3e-4a53-967f-e9e9311c02e2"
+      },
+      {
+        "id": "fe94d120-d449-407f-98eb-c1475791e27f",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "71caaf86-8022-4c6f-b494-78f78a7de727",
+        "case_id": "a7908608-163c-4955-a073-90300b1e4b52"
+      },
+      {
+        "id": "81cfe199-a894-4403-8499-cc621f295f68",
+        "revision": 1,
+        "label_status": "negative",
+        "decision_id": "f30828fd-629a-4670-b9c3-700fb6b14a2b",
+        "case_id": "a7908608-163c-4955-a073-90300b1e4b52"
+      },
+      {
+        "id": "66e65816-c4a8-4e43-9aa2-0e294d9a1947",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "6c5e2b9e-dde4-48c9-b92f-8acd1deb4e12",
+        "case_id": "070fdc6e-3131-4ef3-95de-6ef1e694fa90"
+      },
+      {
+        "id": "61723b8f-3197-4133-994a-e42864112c13",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "7c83c00d-73dd-4164-97e5-70ebd170b4ff",
+        "case_id": "070fdc6e-3131-4ef3-95de-6ef1e694fa90"
+      },
+      {
+        "id": "67bb3cd4-189b-444c-90fb-a62efeeec7f1",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "2e011615-94dc-4908-a3f7-36510af12a34",
+        "case_id": "3c474031-9d50-4c05-9f11-038ff5b9cd4c"
+      },
+      {
+        "id": "c4b41194-b74b-4045-a40f-3bfdc0a53220",
+        "revision": 1,
+        "label_status": "negative",
+        "decision_id": "bdb11281-a5db-42b7-b017-59f7bad33112",
+        "case_id": "3c474031-9d50-4c05-9f11-038ff5b9cd4c"
+      },
+      {
+        "id": "1890fb7d-f048-45b2-89ae-defcd4aa3a43",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "fef63278-92e0-4a54-9423-10dada0a707e",
+        "case_id": "20744142-ca73-4d4b-a39b-1d872cfa0640"
+      },
+      {
+        "id": "b56a9b09-a51b-45f8-a5fa-4e1b5165e899",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "ec527461-02c8-4d9f-9ca4-9e54a1f85226",
+        "case_id": "20744142-ca73-4d4b-a39b-1d872cfa0640"
+      },
+      {
+        "id": "f3d22c60-94a7-41a1-a5b2-0cbcdaa978e7",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "4652dbf0-5ce0-4a1e-8461-51243a4aac4f",
+        "case_id": "0ea70c80-0dcb-4ec8-bad0-cc460eab705c"
+      },
+      {
+        "id": "9c2a6fac-8a15-4845-bccd-31723a306437",
+        "revision": 1,
+        "label_status": "negative",
+        "decision_id": "e885a814-27bc-4d3e-993d-0bc8543e973a",
+        "case_id": "0ea70c80-0dcb-4ec8-bad0-cc460eab705c"
+      },
+      {
+        "id": "8563f9ad-8ba3-4d85-a4fb-8f0b25b9c1d5",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "ee40675c-1b82-400f-add2-1e6c4cc897df",
+        "case_id": "730c60f2-0e97-493d-a992-c9822f0a3cbc"
+      },
+      {
+        "id": "7b6c35d6-aacc-440c-b772-af91bf1760fe",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "c9a7d4d1-3378-4852-a9eb-07bd06382aa5",
+        "case_id": "730c60f2-0e97-493d-a992-c9822f0a3cbc"
+      },
+      {
+        "id": "dae08dc6-e57c-498b-9809-5de9744ff01c",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "833b4ce7-c816-4129-8af8-4af64bab6dba",
+        "case_id": "efad6216-959e-40e0-82a1-84fd1e0ef668"
+      },
+      {
+        "id": "185fee8b-c8d6-4308-91f6-afe01cc1c3c6",
+        "revision": 1,
+        "label_status": "negative",
+        "decision_id": "02c24b4b-9468-4cf9-9e34-5ac56a1db2a1",
+        "case_id": "efad6216-959e-40e0-82a1-84fd1e0ef668"
+      },
+      {
+        "id": "11e8f917-d19f-46bd-9006-3830e58cdee2",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "c6282c54-fc7a-423b-a165-4067fc0fec73",
+        "case_id": "7389eab5-82c0-4de5-ace3-1adb3ffd42a4"
+      },
+      {
+        "id": "32112e40-493c-46c7-9b3e-572fcbc9000e",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "84011611-f9f0-4681-9043-53ed943140dc",
+        "case_id": "7389eab5-82c0-4de5-ace3-1adb3ffd42a4"
+      },
+      {
+        "id": "140ad91b-f3bd-4aa4-bac2-be40972dc6f1",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "ec580278-cc16-4404-84f2-121438b6e4c6",
+        "case_id": "1efe52b2-d92b-409e-b559-d4cba19b6706"
+      },
+      {
+        "id": "fcfe29a4-ace9-4486-812d-3f9b69d90d2a",
+        "revision": 1,
+        "label_status": "negative",
+        "decision_id": "d5c0520b-68b5-4b2d-bafc-eccf553ac272",
+        "case_id": "1efe52b2-d92b-409e-b559-d4cba19b6706"
+      },
+      {
+        "id": "e791177f-b7c4-4d45-ad89-78dfa297bcee",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "be9b0e11-9546-4162-897a-590455c8c063",
+        "case_id": "69acc001-97f7-425e-925e-e84b20a6a29c"
+      },
+      {
+        "id": "e638e9bb-b789-41f4-a9e7-9505676231da",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "3889c3d4-adf1-413e-9aca-34053052f603",
+        "case_id": "69acc001-97f7-425e-925e-e84b20a6a29c"
+      },
+      {
+        "id": "5a0aafbb-b0a8-44b5-8ee6-8c2620b14b00",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "def01931-9ba3-43a1-a918-b314f1c498ad",
+        "case_id": "f4b40961-cabf-4ab3-b4c9-b81f19abbaf6"
+      },
+      {
+        "id": "b4728b08-2115-4fb4-8f2a-7e45d6fb9f01",
+        "revision": 1,
+        "label_status": "negative",
+        "decision_id": "8a03d9ae-8761-4c3a-9bf7-bb968235b88c",
+        "case_id": "f4b40961-cabf-4ab3-b4c9-b81f19abbaf6"
+      },
+      {
+        "id": "74a041aa-2b2e-4c58-84b8-7f5dd2280e1c",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "60bdba87-6a63-4abb-b932-cdfa2a73f326",
+        "case_id": "e101b139-7983-4852-899c-526d894842ba"
+      },
+      {
+        "id": "d54578ef-75b2-4bc8-88b3-e2208414493f",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "d5ce279b-3286-4aa1-98e0-77efe9728197",
+        "case_id": "e101b139-7983-4852-899c-526d894842ba"
+      },
+      {
+        "id": "460a711b-9877-44b4-905a-b327ace849bd",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "321c3d63-cf5e-47d2-8e6a-cbd9dec80419",
+        "case_id": "c1d230e9-b5cc-4f75-84b4-85f44d90946c"
+      },
+      {
+        "id": "0a426089-5f87-462f-bace-561bc1b724ee",
+        "revision": 1,
+        "label_status": "negative",
+        "decision_id": "8925ad4c-d2d6-4320-89a8-b701017567c2",
+        "case_id": "c1d230e9-b5cc-4f75-84b4-85f44d90946c"
+      },
+      {
+        "id": "f91c9818-3cd6-45da-ad4c-b33899c1eb1e",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "1f48f0e9-994b-4f3f-b383-71d1b222ce94",
+        "case_id": "d571c461-4971-4071-9a46-d2f9d076b599"
+      },
+      {
+        "id": "af925e23-7160-4a5e-bee2-af0d2d818ccd",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "544f4f2c-341b-4c83-8105-a9b2c831e2f3",
+        "case_id": "d571c461-4971-4071-9a46-d2f9d076b599"
+      },
+      {
+        "id": "bf4745b7-28c0-4cf7-8b70-95299c84d375",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "427af537-b36c-443d-8dca-789d5d1beb0f",
+        "case_id": "6be44dba-943d-4d2d-894e-6f8ed1c6b52a"
+      },
+      {
+        "id": "ed4de650-356c-4b0e-b2ab-6ef00d2fc133",
+        "revision": 1,
+        "label_status": "negative",
+        "decision_id": "6bbcedcb-03fd-4264-8dbc-369ca73c0c28",
+        "case_id": "6be44dba-943d-4d2d-894e-6f8ed1c6b52a"
+      },
+      {
+        "id": "de8415f7-e47f-49b8-abc4-12dcb5421e9e",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "2505c54a-aad9-4935-a079-281a5194890e",
+        "case_id": "05a23732-6995-4719-a198-cb845c2ad0bd"
+      },
+      {
+        "id": "6d4728a2-9a47-49ab-8155-f164e475951e",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "9f9e6862-9be9-486f-be1e-90af8abd91a8",
+        "case_id": "05a23732-6995-4719-a198-cb845c2ad0bd"
+      },
+      {
+        "id": "7266d96c-0db1-4865-8e92-56f0af19ffe8",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "4edef278-d890-490e-b500-b5a9f6f28e42",
+        "case_id": "1e77e1ee-9fc2-4698-ac5a-1ecbc5ee42f6"
+      },
+      {
+        "id": "6294e204-903c-413a-b57a-9a2ddd6e4ca2",
+        "revision": 1,
+        "label_status": "negative",
+        "decision_id": "7161c9bf-4270-44c7-a88e-8f66e4338995",
+        "case_id": "1e77e1ee-9fc2-4698-ac5a-1ecbc5ee42f6"
+      },
+      {
+        "id": "f5579444-0ded-496f-a16e-d1a92710415c",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "133b0f5b-5af0-4bb9-a3d6-ab5cf6156af2",
+        "case_id": "db10e03b-a7cf-4e7d-8e2b-9df9403af4fc"
+      },
+      {
+        "id": "0d545916-24be-47e0-ba18-e456fecb5afa",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "5d8017d1-42a5-4f8e-b0cf-e27eece3e278",
+        "case_id": "db10e03b-a7cf-4e7d-8e2b-9df9403af4fc"
+      },
+      {
+        "id": "eb468889-b7bd-415a-a1eb-6249e5bd8457",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "89888575-f866-4750-8e60-3714cedfc7a1",
+        "case_id": "8e0bb7a8-d2fb-4039-b750-efe02310595b"
+      },
+      {
+        "id": "daf3e5fe-7029-46e6-9096-9e3fab2f087b",
+        "revision": 1,
+        "label_status": "negative",
+        "decision_id": "ba031a13-07a7-4b98-9fa1-ad38f34d6373",
+        "case_id": "8e0bb7a8-d2fb-4039-b750-efe02310595b"
+      },
+      {
+        "id": "9e93bb49-036d-4ac9-bfeb-27c5571029a4",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "7948d55a-ae2d-45ae-814f-1fea3656d9c4",
+        "case_id": "d02dc77e-daf9-4129-97f5-07102024054a"
+      },
+      {
+        "id": "f1bbf9d5-2d0a-479c-91b6-5326aa3217eb",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "37f0d133-a4a0-4cb8-be58-321bbf7cc6d7",
+        "case_id": "d02dc77e-daf9-4129-97f5-07102024054a"
+      },
+      {
+        "id": "c9ea1d6c-e561-46d2-8207-1d97a8c1364d",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "88c0e005-49c1-4c5e-aabe-63dad77a05c0",
+        "case_id": "64c8f7b3-9523-415b-85af-59e312adeba2"
+      },
+      {
+        "id": "cb760c52-4132-4497-bf57-7958fa5aae3f",
+        "revision": 1,
+        "label_status": "negative",
+        "decision_id": "df08dd11-2407-4534-86fc-e6e9053f58a3",
+        "case_id": "64c8f7b3-9523-415b-85af-59e312adeba2"
+      },
+      {
+        "id": "ba42242a-6158-4c5a-bd58-8d7fbb32cd35",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "90813cd1-2c5b-408d-b9d6-2de183de0649",
+        "case_id": "db7c2674-c9f3-4e58-9d8a-f15b4a59da89"
+      },
+      {
+        "id": "6a51e4c5-814c-4ded-a55a-9b67ed6884bf",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "32897029-54e2-439d-bbcb-bf7a0ae62ac6",
+        "case_id": "db7c2674-c9f3-4e58-9d8a-f15b4a59da89"
+      },
+      {
+        "id": "53c403ec-e193-47e8-91b6-d28cdc703045",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "72e0a1b5-f6ba-40eb-bf75-be0cd545d218",
+        "case_id": "0067c0ee-5647-46bb-a090-7595a25a522d"
+      },
+      {
+        "id": "9224bfbb-ba1e-4bde-874f-b714583db089",
+        "revision": 1,
+        "label_status": "negative",
+        "decision_id": "b80900cc-30bf-4114-b0e4-a2de933de2ec",
+        "case_id": "0067c0ee-5647-46bb-a090-7595a25a522d"
+      },
+      {
+        "id": "992dde15-5366-4c8d-a82f-44e702e16216",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "ba59d920-7e37-457b-91e5-cfbfbbc055f7",
+        "case_id": "44e94480-58bf-4cce-ba79-ae3ea4e5ed26"
+      },
+      {
+        "id": "64f61394-195a-4a8f-aa07-58b81b0bffe8",
+        "revision": 1,
+        "label_status": "positive",
+        "decision_id": "f2d32c02-95aa-4ceb-89f4-f31e1b052166",
+        "case_id": "44e94480-58bf-4cce-ba79-ae3ea4e5ed26"
+      }
+    ],
+    "frozen_at": "2026-11-04T19:50:45.197776+00:00"
+  },
+  "result": {
+    "state": "succeeded",
+    "trained": true,
+    "models": {
+      "linear": "707dd3cc-afe1-46d4-8085-828b7eff04fe",
+      "mlp": "ee28b478-d955-4d24-9ee7-63186f70e568"
+    },
+    "measurements": {
+      "training_seconds": 0.6404091000003973,
+      "rss_start_bytes": 775241728,
+      "rss_peak_observed_bytes": 776048640,
+      "rss_increase_bytes": 806912,
+      "cpu_threads": 1,
+      "zero_logit_action_loss": 0.6931471805599453,
+      "trials": [
+        {
+          "kind": "linear",
+          "C": 0.1,
+          "development_action_log_loss": 0.34098791109579263
+        },
+        {
+          "kind": "linear",
+          "C": 1.0,
+          "development_action_log_loss": 0.10420417103707852
+        },
+        {
+          "kind": "mlp",
+          "hidden_layers": [
+            32,
+            16
+          ],
+          "epochs": 60,
+          "development_action_log_loss": 0.030851849766991738
+        },
+        {
+          "kind": "mlp",
+          "hidden_layers": [
+            128,
+            64
+          ],
+          "epochs": 60,
+          "development_action_log_loss": 0.00041628418018147884
+        }
+      ],
+      "calibration": "unavailable; sigmoid outputs were used for fitting loss only, not exposed as confidence"
+    },
+    "comparison": {
+      "pairs": [
+        {
+          "case_id": "579e4d5a-69c0-4aad-bb60-6eb7502002c0",
+          "scenario_group": "final-synthetic-schema-scenario-0",
+          "source_kind": "synthetic",
+          "baseline": {
+            "correct": true,
+            "first_attempt_correct": true,
+            "status": "verified",
+            "verified_repairs": 1,
+            "failed_repairs": 0,
+            "repair_attempts": 1,
+            "harmful_repair": false,
+            "error_code": null,
+            "latency_ms": 12.874300000476069,
+            "provider_cost_usd": 0,
+            "selected_skills": [
+              "decimal_exact"
+            ],
+            "fallbacks": []
+          },
+          "linear": {
+            "correct": true,
+            "first_attempt_correct": true,
+            "status": "verified",
+            "verified_repairs": 1,
+            "failed_repairs": 0,
+            "repair_attempts": 1,
+            "harmful_repair": false,
+            "error_code": null,
+            "latency_ms": 12.942299999849638,
+            "provider_cost_usd": 0,
+            "selected_skills": [
+              "decimal_exact"
+            ],
+            "fallbacks": []
+          },
+          "mlp": {
+            "correct": true,
+            "first_attempt_correct": true,
+            "status": "verified",
+            "verified_repairs": 1,
+            "failed_repairs": 0,
+            "repair_attempts": 1,
+            "harmful_repair": false,
+            "error_code": null,
+            "latency_ms": 22.032900000340305,
+            "provider_cost_usd": 0,
+            "selected_skills": [
+              "decimal_exact"
+            ],
+            "fallbacks": []
+          }
+        },
+        {
+          "case_id": "cb2e697b-eef4-4961-a95f-c63c036315f7",
+          "scenario_group": "final-synthetic-schema-scenario-1",
+          "source_kind": "synthetic",
+          "baseline": {
+            "correct": true,
+            "first_attempt_correct": true,
+            "status": "verified",
+            "verified_repairs": 1,
+            "failed_repairs": 0,
+            "repair_attempts": 1,
+            "harmful_repair": false,
+            "error_code": null,
+            "latency_ms": 14.763099999981932,
+            "provider_cost_usd": 0,
+            "selected_skills": [
+              "decimal_exact"
+            ],
+            "fallbacks": []
+          },
+          "linear": {
+            "correct": true,
+            "first_attempt_correct": true,
+            "status": "verified",
+            "verified_repairs": 1,
+            "failed_repairs": 0,
+            "repair_attempts": 1,
+            "harmful_repair": false,
+            "error_code": null,
+            "latency_ms": 13.446099999782746,
+            "provider_cost_usd": 0,
+            "selected_skills": [
+              "decimal_exact"
+            ],
+            "fallbacks": []
+          },
+          "mlp": {
+            "correct": true,
+            "first_attempt_correct": true,
+            "status": "verified",
+            "verified_repairs": 1,
+            "failed_repairs": 0,
+            "repair_attempts": 1,
+            "harmful_repair": false,
+            "error_code": null,
+            "latency_ms": 18.940600000860286,
+            "provider_cost_usd": 0,
+            "selected_skills": [
+              "decimal_exact"
+            ],
+            "fallbacks": []
+          }
+        },
+        {
+          "case_id": "1c5fa0d9-a137-48f3-92da-ad47907c1b28",
+          "scenario_group": "final-synthetic-schema-scenario-2",
+          "source_kind": "synthetic",
+          "baseline": {
+            "correct": true,
+            "first_attempt_correct": true,
+            "status": "verified",
+            "verified_repairs": 1,
+            "failed_repairs": 0,
+            "repair_attempts": 1,
+            "harmful_repair": false,
+            "error_code": null,
+            "latency_ms": 12.633499998628395,
+            "provider_cost_usd": 0,
+            "selected_skills": [
+              "decimal_exact"
+            ],
+            "fallbacks": []
+          },
+          "linear": {
+            "correct": true,
+            "first_attempt_correct": true,
+            "status": "verified",
+            "verified_repairs": 1,
+            "failed_repairs": 0,
+            "repair_attempts": 1,
+            "harmful_repair": false,
+            "error_code": null,
+            "latency_ms": 14.249400001062895,
+            "provider_cost_usd": 0,
+            "selected_skills": [
+              "decimal_exact"
+            ],
+            "fallbacks": []
+          },
+          "mlp": {
+            "correct": true,
+            "first_attempt_correct": true,
+            "status": "verified",
+            "verified_repairs": 1,
+            "failed_repairs": 0,
+            "repair_attempts": 1,
+            "harmful_repair": false,
+            "error_code": null,
+            "latency_ms": 20.06930000061402,
+            "provider_cost_usd": 0,
+            "selected_skills": [
+              "decimal_exact"
+            ],
+            "fallbacks": []
+          }
+        },
+        {
+          "case_id": "b11b29c0-6e21-460b-b245-33f7ad6d28df",
+          "scenario_group": "final-synthetic-schema-scenario-3",
+          "source_kind": "synthetic",
+          "baseline": {
+            "correct": true,
+            "first_attempt_correct": true,
+            "status": "verified",
+            "verified_repairs": 1,
+            "failed_repairs": 0,
+            "repair_attempts": 1,
+            "harmful_repair": false,
+            "error_code": null,
+            "latency_ms": 10.744200000772253,
+            "provider_cost_usd": 0,
+            "selected_skills": [
+              "decimal_exact"
+            ],
+            "fallbacks": []
+          },
+          "linear": {
+            "correct": true,
+            "first_attempt_correct": true,
+            "status": "verified",
+            "verified_repairs": 1,
+            "failed_repairs": 0,
+            "repair_attempts": 1,
+            "harmful_repair": false,
+            "error_code": null,
+            "latency_ms": 13.346699999601697,
+            "provider_cost_usd": 0,
+            "selected_skills": [
+              "decimal_exact"
+            ],
+            "fallbacks": []
+          },
+          "mlp": {
+            "correct": true,
+            "first_attempt_correct": true,
+            "status": "verified",
+            "verified_repairs": 1,
+            "failed_repairs": 0,
+            "repair_attempts": 1,
+            "harmful_repair": false,
+            "error_code": null,
+            "latency_ms": 22.405499999877065,
+            "provider_cost_usd": 0,
+            "selected_skills": [
+              "decimal_exact"
+            ],
+            "fallbacks": []
+          }
+        },
+        {
+          "case_id": "3f62765d-f66d-400c-9216-5ef1b7b9b7a9",
+          "scenario_group": "final-synthetic-schema-scenario-4",
+          "source_kind": "synthetic",
+          "baseline": {
+            "correct": true,
+            "first_attempt_correct": true,
+            "status": "verified",
+            "verified_repairs": 1,
+            "failed_repairs": 0,
+            "repair_attempts": 1,
+            "harmful_repair": false,
+            "error_code": null,
+            "latency_ms": 11.540000001332373,
+            "provider_cost_usd": 0,
+            "selected_skills": [
+              "decimal_exact"
+            ],
+            "fallbacks": []
+          },
+          "linear": {
+            "correct": true,
+            "first_attempt_correct": true,
+            "status": "verified",
+            "verified_repairs": 1,
+            "failed_repairs": 0,
+            "repair_attempts": 1,
+            "harmful_repair": false,
+            "error_code": null,
+            "latency_ms": 12.18449999942095,
+            "provider_cost_usd": 0,
+            "selected_skills": [
+              "decimal_exact"
+            ],
+            "fallbacks": []
+          },
+          "mlp": {
+            "correct": true,
+            "first_attempt_correct": true,
+            "status": "verified",
+            "verified_repairs": 1,
+            "failed_repairs": 0,
+            "repair_attempts": 1,
+            "harmful_repair": false,
+            "error_code": null,
+            "latency_ms": 21.021000000473578,
+            "provider_cost_usd": 0,
+            "selected_skills": [
+              "decimal_exact"
+            ],
+            "fallbacks": []
+          }
+        },
+        {
+          "case_id": "2e8da61b-be81-4113-9011-7dea2785f6b8",
+          "scenario_group": "final-synthetic-schema-scenario-5",
+          "source_kind": "synthetic",
+          "baseline": {
+            "correct": true,
+            "first_attempt_correct": true,
+            "status": "verified",
+            "verified_repairs": 1,
+            "failed_repairs": 0,
+            "repair_attempts": 1,
+            "harmful_repair": false,
+            "error_code": null,
+            "latency_ms": 12.363800000457559,
+            "provider_cost_usd": 0,
+            "selected_skills": [
+              "decimal_exact"
+            ],
+            "fallbacks": []
+          },
+          "linear": {
+            "correct": true,
+            "first_attempt_correct": true,
+            "status": "verified",
+            "verified_repairs": 1,
+            "failed_repairs": 0,
+            "repair_attempts": 1,
+            "harmful_repair": false,
+            "error_code": null,
+            "latency_ms": 16.43070000136504,
+            "provider_cost_usd": 0,
+            "selected_skills": [
+              "decimal_exact"
+            ],
+            "fallbacks": []
+          },
+          "mlp": {
+            "correct": true,
+            "first_attempt_correct": true,
+            "status": "verified",
+            "verified_repairs": 1,
+            "failed_repairs": 0,
+            "repair_attempts": 1,
+            "harmful_repair": false,
+            "error_code": null,
+            "latency_ms": 20.910900000671973,
+            "provider_cost_usd": 0,
+            "selected_skills": [
+              "decimal_exact"
+            ],
+            "fallbacks": []
+          }
+        },
+        {
+          "case_id": "0d432ada-0ff0-4c86-84eb-d50c4d7f894d",
+          "scenario_group": "final-synthetic-schema-scenario-6",
+          "source_kind": "synthetic",
+          "baseline": {
+            "correct": true,
+            "first_attempt_correct": true,
+            "status": "verified",
+            "verified_repairs": 1,
+            "failed_repairs": 0,
+            "repair_attempts": 1,
+            "harmful_repair": false,
+            "error_code": null,
+            "latency_ms": 11.5869000001112,
+            "provider_cost_usd": 0,
+            "selected_skills": [
+              "decimal_exact"
+            ],
+            "fallbacks": []
+          },
+          "linear": {
+            "correct": true,
+            "first_attempt_correct": true,
+            "status": "verified",
+            "verified_repairs": 1,
+            "failed_repairs": 0,
+            "repair_attempts": 1,
+            "harmful_repair": false,
+            "error_code": null,
+            "latency_ms": 16.414800000347896,
+            "provider_cost_usd": 0,
+            "selected_skills": [
+              "decimal_exact"
+            ],
+            "fallbacks": []
+          },
+          "mlp": {
+            "correct": true,
+            "first_attempt_correct": true,
+            "status": "verified",
+            "verified_repairs": 1,
+            "failed_repairs": 0,
+            "repair_attempts": 1,
+            "harmful_repair": false,
+            "error_code": null,
+            "latency_ms": 22.935200000574696,
+            "provider_cost_usd": 0,
+            "selected_skills": [
+              "decimal_exact"
+            ],
+            "fallbacks": []
+          }
+        },
+        {
+          "case_id": "aa9f52f2-4ffb-4099-abc2-d2fb33cd3897",
+          "scenario_group": "final-synthetic-schema-scenario-7",
+          "source_kind": "synthetic",
+          "baseline": {
+            "correct": true,
+            "first_attempt_correct": true,
+            "status": "verified",
+            "verified_repairs": 1,
+            "failed_repairs": 0,
+            "repair_attempts": 1,
+            "harmful_repair": false,
+            "error_code": null,
+            "latency_ms": 12.12390000000596,
+            "provider_cost_usd": 0,
+            "selected_skills": [
+              "decimal_exact"
+            ],
+            "fallbacks": []
+          },
+          "linear": {
+            "correct": true,
+            "first_attempt_correct": true,
+            "status": "verified",
+            "verified_repairs": 1,
+            "failed_repairs": 0,
+            "repair_attempts": 1,
+            "harmful_repair": false,
+            "error_code": null,
+            "latency_ms": 13.289799999256502,
+            "provider_cost_usd": 0,
+            "selected_skills": [
+              "decimal_exact"
+            ],
+            "fallbacks": []
+          },
+          "mlp": {
+            "correct": true,
+            "first_attempt_correct": true,
+            "status": "verified",
+            "verified_repairs": 1,
+            "failed_repairs": 0,
+            "repair_attempts": 1,
+            "harmful_repair": false,
+            "error_code": null,
+            "latency_ms": 19.69680000001972,
+            "provider_cost_usd": 0,
+            "selected_skills": [
+              "decimal_exact"
+            ],
+            "fallbacks": []
+          }
+        }
+      ],
+      "metrics": {
+        "baseline": {
+          "cases": 8,
+          "first_attempt_correct": 8,
+          "final_correct": 8,
+          "verified_repair_success": 8,
+          "attempted_repairs": 8,
+          "verified_repair_rate": 1.0,
+          "failed_repair_attempts": 0,
+          "repeated_errors": 0,
+          "harmful_repairs": 0,
+          "abstained": 0,
+          "unknown": 0,
+          "p50_latency_ms": 12.12390000000596,
+          "p95_latency_ms": 14.763099999981932,
+          "provider_cost_usd": 0
+        },
+        "linear": {
+          "cases": 8,
+          "first_attempt_correct": 8,
+          "final_correct": 8,
+          "verified_repair_success": 8,
+          "attempted_repairs": 8,
+          "verified_repair_rate": 1.0,
+          "failed_repair_attempts": 0,
+          "repeated_errors": 0,
+          "harmful_repairs": 0,
+          "abstained": 0,
+          "unknown": 0,
+          "p50_latency_ms": 13.346699999601697,
+          "p95_latency_ms": 16.43070000136504,
+          "provider_cost_usd": 0
+        },
+        "mlp": {
+          "cases": 8,
+          "first_attempt_correct": 8,
+          "final_correct": 8,
+          "verified_repair_success": 8,
+          "attempted_repairs": 8,
+          "verified_repair_rate": 1.0,
+          "failed_repair_attempts": 0,
+          "repeated_errors": 0,
+          "harmful_repairs": 0,
+          "abstained": 0,
+          "unknown": 0,
+          "p50_latency_ms": 20.910900000671973,
+          "p95_latency_ms": 22.935200000574696,
+          "provider_cost_usd": 0
+        }
+      },
+      "sample_size": 8,
+      "scenario_groups": 8,
+      "trusted_final_groups": 0,
+      "limits": [
+        "Synthetic classification fit does not establish production policy improvement.",
+        "No off-policy estimate is made; alternatives were executed only on isolated local fixtures.",
+        "No stochastic live exploration; routing scores are not calibrated answer probabilities."
+      ],
+      "denominators": {
+        "correctness": "All frozen final cases, including failures/unknowns.",
+        "repair_success": "Verified local action successes / all executed repair attempts.",
+        "harmful": "Wrong final answers marked verified after repairs; rejected attempts counted separately.",
+        "latency": "Whole isolated executor, including feature/ranking/validation; excludes queue and input loading.",
+        "cost": "Provider usage only; training CPU/RSS are separate measurements."
+      }
+    },
+    "preferred_candidate": "linear",
+    "active_model": "rules-memory-v1",
+    "release_eligible": false,
+    "note": "Main LLM/embedding weights frozen. These are numerically trained selector candidates, not automatically active models."
+  },
+  "job_status": "READY",
+  "attempt": 1,
+  "max_attempts": 3,
+  "error_code": null,
+  "retry_eligible": true,
+  "created_at": "2026-11-04T19:50:45.209627+00:00"
+}

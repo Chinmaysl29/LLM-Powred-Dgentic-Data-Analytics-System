@@ -1,2 +1,21 @@
 import { Link } from 'react-router-dom';
-export default function CreateReportPage() { return <div className="ws-page"><h1 className="ws-page-heading">Create report</h1><div className="ws-empty"><h2>Report generation needs a verified data contract</h2><p>The current report generator inserts predefined business claims and does not retain source dataset identifiers. Generation is unavailable until those issues are resolved.</p><Link className="reports-btn-secondary" to="/analysis">Open analytics</Link><Link className="reports-btn-secondary" to="/reports">View saved reports</Link></div></div>; }
+export default function CreateReportPage() {
+  return (
+    <div className="ws-page">
+      <h1 className="ws-page-heading">Create report</h1>
+      <div className="ws-empty">
+        <h2>Report generation needs a verified data contract</h2>
+        <p>
+          The current report generator inserts predefined business claims and does not retain source
+          dataset identifiers. Generation is unavailable until those issues are resolved.
+        </p>
+        <Link className="reports-btn-secondary" to="/analysis">
+          Open analytics
+        </Link>
+        <Link className="reports-btn-secondary" to="/reports">
+          View saved reports
+        </Link>
+      </div>
+    </div>
+  );
+}

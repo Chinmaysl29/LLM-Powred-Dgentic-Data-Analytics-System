@@ -1,0 +1,2082 @@
+[
+  {
+    "case_id": "66136bbf-d4e1-480c-8944-6a4c2e18f4eb",
+    "csv": "region,amount\ngroup,1234567890100000.12\ngroup,1234567890100001.12\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "b956be75-e43b-41cd-9dd4-29db51020983",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "train-synthetic-schema-scenario-0",
+      "split": "train",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "2469135780200001.24"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "e73d3209-f936-4d70-be9d-d929b257e4aa",
+    "csv": "region,amount\ngroup,4.25\ngroup,6.25\ngroup,8.25\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "6dd78bda-4355-4591-ab7d-188825d32bb6",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "train-synthetic-schema-scenario-1",
+      "split": "train",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "18.75"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "01823ad0-0d50-4fb9-bb81-8532f19afb25",
+    "csv": "region,amount\ngroup,1234567890100020.12\ngroup,1234567890100021.12\ngroup,1234567890100022.12\ngroup,1234567890100023.12\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "a22fa2cc-6302-447c-9ab3-8b66887ab0a9",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "train-synthetic-schema-scenario-2",
+      "split": "train",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "4938271560400086.48"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "6b2771b7-1e41-41c6-9187-8f2417408c0e",
+    "csv": "region,amount\ngroup,8.25\ngroup,12.25\ngroup,16.25\ngroup,20.25\ngroup,24.25\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "e23c9b7d-f445-41f6-a64d-923e672cb473",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "train-synthetic-schema-scenario-3",
+      "split": "train",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "81.25"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "d9b44514-dc00-4e1e-a3a0-21a587c2ba21",
+    "csv": "region,amount\ngroup,1234567890100040.12\ngroup,1234567890100041.12\ngroup,1234567890100042.12\ngroup,1234567890100043.12\ngroup,1234567890100044.12\ngroup,1234567890100045.12\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "f703f51d-5460-42b4-aed4-56f1ffe3f4b4",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "train-synthetic-schema-scenario-4",
+      "split": "train",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "7407407340600255.72"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "a8f42ff4-5585-4d9d-96c7-f679caeffc13",
+    "csv": "region,amount\ngroup,12.25\ngroup,18.25\ngroup,24.25\ngroup,30.25\ngroup,36.25\ngroup,42.25\ngroup,48.25\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "c523baf8-aba5-4b35-b1e3-673ff32f43ba",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "train-synthetic-schema-scenario-5",
+      "split": "train",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "211.75"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "f8bb4e12-3816-4dbe-bd42-df43c630d203",
+    "csv": "region,amount\ngroup,1234567890100060.12\ngroup,1234567890100061.12\ngroup,1234567890100062.12\ngroup,1234567890100063.12\ngroup,1234567890100064.12\ngroup,1234567890100065.12\ngroup,1234567890100066.12\ngroup,1234567890100067.12\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "2f6aff47-3033-4964-8123-4d402c938c4f",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "train-synthetic-schema-scenario-6",
+      "split": "train",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "9876543120800508.96"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "fc88c5a4-4e3e-4a53-967f-e9e9311c02e2",
+    "csv": "region,amount\ngroup,16.25\ngroup,24.25\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "1a4263eb-350d-4f2e-b1a0-a79b02ffcf6b",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "train-synthetic-schema-scenario-7",
+      "split": "train",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "40.50"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "a7908608-163c-4955-a073-90300b1e4b52",
+    "csv": "region,amount\ngroup,1234567890100080.12\ngroup,1234567890100081.12\ngroup,1234567890100082.12\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "5995ffd4-b953-48e9-b229-339c5b8192e2",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "train-synthetic-schema-scenario-8",
+      "split": "train",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "3703703670300243.36"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "070fdc6e-3131-4ef3-95de-6ef1e694fa90",
+    "csv": "region,amount\ngroup,20.25\ngroup,30.25\ngroup,40.25\ngroup,50.25\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "fdf841c8-6655-4d37-be87-7e4403f2d7c7",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "train-synthetic-schema-scenario-9",
+      "split": "train",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "141.00"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "3c474031-9d50-4c05-9f11-038ff5b9cd4c",
+    "csv": "region,amount\ngroup,1234567890100100.12\ngroup,1234567890100101.12\ngroup,1234567890100102.12\ngroup,1234567890100103.12\ngroup,1234567890100104.12\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "7576f0de-bc8c-41ec-a307-e5d8c14ad6a8",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "train-synthetic-schema-scenario-10",
+      "split": "train",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "6172839450500510.60"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "20744142-ca73-4d4b-a39b-1d872cfa0640",
+    "csv": "region,amount\ngroup,24.25\ngroup,36.25\ngroup,48.25\ngroup,60.25\ngroup,72.25\ngroup,84.25\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "8cb6ef6b-ec46-4d91-8fed-72d3f3eb8927",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "train-synthetic-schema-scenario-11",
+      "split": "train",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "325.50"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "0ea70c80-0dcb-4ec8-bad0-cc460eab705c",
+    "csv": "region,amount\ngroup,1234567890100120.12\ngroup,1234567890100121.12\ngroup,1234567890100122.12\ngroup,1234567890100123.12\ngroup,1234567890100124.12\ngroup,1234567890100125.12\ngroup,1234567890100126.12\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "149c46af-8251-4fb3-b359-9b4e010ecea3",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "train-synthetic-schema-scenario-12",
+      "split": "train",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "8641975230700861.84"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "730c60f2-0e97-493d-a992-c9822f0a3cbc",
+    "csv": "region,amount\ngroup,28.25\ngroup,42.25\ngroup,56.25\ngroup,70.25\ngroup,84.25\ngroup,98.25\ngroup,112.25\ngroup,126.25\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "6eda9340-9cc9-4379-ac4a-666e5084a39a",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "train-synthetic-schema-scenario-13",
+      "split": "train",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "618.00"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "efad6216-959e-40e0-82a1-84fd1e0ef668",
+    "csv": "region,amount\ngroup,1234567890100140.12\ngroup,1234567890100141.12\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "0d49293c-0a24-45f7-93bd-b6debf4d4e86",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "train-synthetic-schema-scenario-14",
+      "split": "train",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "2469135780200281.24"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "7389eab5-82c0-4de5-ace3-1adb3ffd42a4",
+    "csv": "region,amount\ngroup,32.25\ngroup,48.25\ngroup,64.25\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "e8e5deb6-7d25-4f52-9c4d-49f953aa1f81",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "train-synthetic-schema-scenario-15",
+      "split": "train",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "144.75"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "1efe52b2-d92b-409e-b559-d4cba19b6706",
+    "csv": "region,amount\ngroup,1234567890100160.12\ngroup,1234567890100161.12\ngroup,1234567890100162.12\ngroup,1234567890100163.12\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "49e8a81e-071b-41df-a2ec-0c2711f9df70",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "train-synthetic-schema-scenario-16",
+      "split": "train",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "4938271560400646.48"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "69acc001-97f7-425e-925e-e84b20a6a29c",
+    "csv": "region,amount\ngroup,36.25\ngroup,54.25\ngroup,72.25\ngroup,90.25\ngroup,108.25\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "0092d582-ba8a-4fda-a587-4be6f4dc9036",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "train-synthetic-schema-scenario-17",
+      "split": "train",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "361.25"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "f4b40961-cabf-4ab3-b4c9-b81f19abbaf6",
+    "csv": "region,amount\ngroup,1234567890100180.12\ngroup,1234567890100181.12\ngroup,1234567890100182.12\ngroup,1234567890100183.12\ngroup,1234567890100184.12\ngroup,1234567890100185.12\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "016ff854-bdd7-4b93-889a-4cc8b2a64839",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "train-synthetic-schema-scenario-18",
+      "split": "train",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "7407407340601095.72"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "e101b139-7983-4852-899c-526d894842ba",
+    "csv": "region,amount\ngroup,40.25\ngroup,60.25\ngroup,80.25\ngroup,100.25\ngroup,120.25\ngroup,140.25\ngroup,160.25\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "541cc8a7-170a-4e91-b9bc-e8aa396be2b5",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "train-synthetic-schema-scenario-19",
+      "split": "train",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "701.75"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "c1d230e9-b5cc-4f75-84b4-85f44d90946c",
+    "csv": "region,amount\ngroup,1234567890100200.12\ngroup,1234567890100201.12\ngroup,1234567890100202.12\ngroup,1234567890100203.12\ngroup,1234567890100204.12\ngroup,1234567890100205.12\ngroup,1234567890100206.12\ngroup,1234567890100207.12\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "92cdf3e4-aeb8-4325-82d0-65797e287665",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "train-synthetic-schema-scenario-20",
+      "split": "train",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "9876543120801628.96"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "d571c461-4971-4071-9a46-d2f9d076b599",
+    "csv": "region,amount\ngroup,44.25\ngroup,66.25\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "60a6b5c3-6e1c-45a3-bf17-3707870d3d45",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "train-synthetic-schema-scenario-21",
+      "split": "train",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "110.50"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "6be44dba-943d-4d2d-894e-6f8ed1c6b52a",
+    "csv": "region,amount\ngroup,1234567890100220.12\ngroup,1234567890100221.12\ngroup,1234567890100222.12\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "dc7793b2-0252-4f29-9f0e-7256d4b4255b",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "train-synthetic-schema-scenario-22",
+      "split": "train",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "3703703670300663.36"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "05a23732-6995-4719-a198-cb845c2ad0bd",
+    "csv": "region,amount\ngroup,48.25\ngroup,72.25\ngroup,96.25\ngroup,120.25\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "c39f8b9b-cd3c-40f7-9d20-d04d2957f793",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "train-synthetic-schema-scenario-23",
+      "split": "train",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "337.00"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "1e77e1ee-9fc2-4698-ac5a-1ecbc5ee42f6",
+    "csv": "region,amount\ngroup,1234567890101000.12\ngroup,1234567890101001.12\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "ac60ad51-b6ed-40b6-b892-168161b7e4d4",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "development-synthetic-schema-scenario-0",
+      "split": "development",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "2469135780202001.24"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "db10e03b-a7cf-4e7d-8e2b-9df9403af4fc",
+    "csv": "region,amount\ngroup,204.25\ngroup,306.25\ngroup,408.25\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "faea00b0-551d-4cad-80e9-50e6a2d14725",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "development-synthetic-schema-scenario-1",
+      "split": "development",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "918.75"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "8e0bb7a8-d2fb-4039-b750-efe02310595b",
+    "csv": "region,amount\ngroup,1234567890101020.12\ngroup,1234567890101021.12\ngroup,1234567890101022.12\ngroup,1234567890101023.12\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "7546f677-7f29-464d-8f55-1d1828eabcc5",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "development-synthetic-schema-scenario-2",
+      "split": "development",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "4938271560404086.48"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "d02dc77e-daf9-4129-97f5-07102024054a",
+    "csv": "region,amount\ngroup,208.25\ngroup,312.25\ngroup,416.25\ngroup,520.25\ngroup,624.25\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "0ea83ab0-7d32-470c-a831-ee17696a47ae",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "development-synthetic-schema-scenario-3",
+      "split": "development",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "2081.25"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "64c8f7b3-9523-415b-85af-59e312adeba2",
+    "csv": "region,amount\ngroup,1234567890101040.12\ngroup,1234567890101041.12\ngroup,1234567890101042.12\ngroup,1234567890101043.12\ngroup,1234567890101044.12\ngroup,1234567890101045.12\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "01dbdeaf-8d58-4da1-953f-ef808fed1f89",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "development-synthetic-schema-scenario-4",
+      "split": "development",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "7407407340606255.72"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "db7c2674-c9f3-4e58-9d8a-f15b4a59da89",
+    "csv": "region,amount\ngroup,212.25\ngroup,318.25\ngroup,424.25\ngroup,530.25\ngroup,636.25\ngroup,742.25\ngroup,848.25\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "6ead56b2-9134-4273-bce8-0ee9c38238c3",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "development-synthetic-schema-scenario-5",
+      "split": "development",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "3711.75"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "0067c0ee-5647-46bb-a090-7595a25a522d",
+    "csv": "region,amount\ngroup,1234567890101060.12\ngroup,1234567890101061.12\ngroup,1234567890101062.12\ngroup,1234567890101063.12\ngroup,1234567890101064.12\ngroup,1234567890101065.12\ngroup,1234567890101066.12\ngroup,1234567890101067.12\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "b4a5acf5-076b-479b-85c3-ed480c8127e9",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "development-synthetic-schema-scenario-6",
+      "split": "development",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "9876543120808508.96"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "44e94480-58bf-4cce-ba79-ae3ea4e5ed26",
+    "csv": "region,amount\ngroup,216.25\ngroup,324.25\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "21f508a5-93f7-461b-943a-c0e541c35636",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "development-synthetic-schema-scenario-7",
+      "split": "development",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "540.50"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "579e4d5a-69c0-4aad-bb60-6eb7502002c0",
+    "csv": "region,amount\ngroup,1234567890110000.12\ngroup,1234567890110001.12\ngroup,1234567890110002.12\ngroup,1234567890110003.12\ngroup,1234567890110004.12\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "d4ef96c9-e337-4e90-a3df-94c3be65dc5c",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "final-synthetic-schema-scenario-0",
+      "split": "final",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "6172839450550010.60"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "cb2e697b-eef4-4961-a95f-c63c036315f7",
+    "csv": "region,amount\ngroup,2004.25\ngroup,3006.25\ngroup,4008.25\ngroup,5010.25\ngroup,6012.25\ngroup,7014.25\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "737c962a-5b40-45b8-816b-af4c7deeabe2",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "final-synthetic-schema-scenario-1",
+      "split": "final",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "27055.50"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "1c5fa0d9-a137-48f3-92da-ad47907c1b28",
+    "csv": "region,amount\ngroup,1234567890110020.12\ngroup,1234567890110021.12\ngroup,1234567890110022.12\ngroup,1234567890110023.12\ngroup,1234567890110024.12\ngroup,1234567890110025.12\ngroup,1234567890110026.12\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "55333b86-61ee-43d6-88f1-35e425bf3ce8",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "final-synthetic-schema-scenario-2",
+      "split": "final",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "8641975230770161.84"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "b11b29c0-6e21-460b-b245-33f7ad6d28df",
+    "csv": "region,amount\ngroup,2008.25\ngroup,3012.25\ngroup,4016.25\ngroup,5020.25\ngroup,6024.25\ngroup,7028.25\ngroup,8032.25\ngroup,9036.25\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "6db43b9f-058e-4903-80d0-3cddc77beaca",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "final-synthetic-schema-scenario-3",
+      "split": "final",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "44178.00"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "3f62765d-f66d-400c-9216-5ef1b7b9b7a9",
+    "csv": "region,amount\ngroup,1234567890110040.12\ngroup,1234567890110041.12\ngroup,1234567890110042.12\ngroup,1234567890110043.12\ngroup,1234567890110044.12\ngroup,1234567890110045.12\ngroup,1234567890110046.12\ngroup,1234567890110047.12\ngroup,1234567890110048.12\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "cd99d10a-b328-412d-9d59-f3781d41fd3a",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "final-synthetic-schema-scenario-4",
+      "split": "final",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "11111111010990397.08"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "2e8da61b-be81-4113-9011-7dea2785f6b8",
+    "csv": "region,amount\ngroup,2012.25\ngroup,3018.25\ngroup,4024.25\ngroup,5030.25\ngroup,6036.25\ngroup,7042.25\ngroup,8048.25\ngroup,9054.25\ngroup,10060.25\ngroup,11066.25\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "81f9af3f-466b-4f39-99c1-0e938a21e33b",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "final-synthetic-schema-scenario-5",
+      "split": "final",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "65392.50"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "0d432ada-0ff0-4c86-84eb-d50c4d7f894d",
+    "csv": "region,amount\ngroup,1234567890110060.12\ngroup,1234567890110061.12\ngroup,1234567890110062.12\ngroup,1234567890110063.12\ngroup,1234567890110064.12\ngroup,1234567890110065.12\ngroup,1234567890110066.12\ngroup,1234567890110067.12\ngroup,1234567890110068.12\ngroup,1234567890110069.12\ngroup,1234567890110070.12\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "f4c5701e-4df4-450a-84a5-fb3296f026a9",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "final-synthetic-schema-scenario-6",
+      "split": "final",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "13580246791210716.32"
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "aa9f52f2-4ffb-4099-abc2-d2fb33cd3897",
+    "csv": "region,amount\ngroup,2016.25\ngroup,3024.25\ngroup,4032.25\ngroup,5040.25\ngroup,6048.25\n",
+    "contract_and_gold": {
+      "task": {
+        "workspace_id": "5877bc9b-f6c0-4881-b98f-fe59640266c9",
+        "objective": "Total amount by region",
+        "task_type": "descriptive",
+        "datasets": [
+          {
+            "dataset_id": "619cba97-9d23-4d9f-9d42-73f958706166",
+            "version": 1
+          }
+        ],
+        "metrics": [
+          {
+            "column": "amount",
+            "aggregation": "sum",
+            "missing": "reject",
+            "definition_ref": null
+          }
+        ],
+        "dimensions": [
+          "region"
+        ],
+        "grain": "one source transaction",
+        "filters": [],
+        "date_range": null,
+        "timezone": "UTC",
+        "units": "USD",
+        "currency": "USD",
+        "output": "table",
+        "definition_refs": [],
+        "assumptions": [],
+        "ambiguity": [],
+        "success_criteria": [
+          "Independent total matches declared definition"
+        ]
+      },
+      "scenario_group": "final-synthetic-schema-scenario-7",
+      "split": "final",
+      "source_kind": "synthetic",
+      "reference": "Independent Decimal sum of the listed synthetic source observations",
+      "expected_status": "verified",
+      "expected_rows": [
+        {
+          "region": "group",
+          "value": "20161.25"
+        }
+      ]
+    }
+  }
+]

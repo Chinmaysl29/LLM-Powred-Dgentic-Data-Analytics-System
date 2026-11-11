@@ -119,7 +119,9 @@ export const datasetService = {
 
     if (isSupabaseConfigured()) {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (user) {
           currentUserId = user.id;
           const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
@@ -142,10 +144,7 @@ export const datasetService = {
     if (datasetName) {
       formData.append('dataset_name', datasetName);
     }
-    const data = await apiClient.post<BackendDatasetResponse>(
-      '/api/v1/datasets/upload',
-      formData,
-    );
+    const data = await apiClient.post<BackendDatasetResponse>('/api/v1/datasets/upload', formData);
     const mapped = mapBackendDatasetToFrontend(data);
 
     // Record dataset metadata in Supabase datasets table if user is authenticated
@@ -189,12 +188,22 @@ export const datasetService = {
    * Fetch real preview records directly from canonical JSON or source storage.
    */
   async getPreview(datasetId: string, limit = 50): Promise<DatasetPreview> {
-    const res = await apiClient.get<{ columns: string[]; rows: Record<string, CellValue>[]; total_rows: number | null; preview_rows?: number; count_status?: 'exact' | 'unknown' }>(
-      `/api/v1/datasets/${encodeURIComponent(datasetId)}/preview?limit=${limit}`,
-    );
-    if (!res || !Array.isArray(res.columns) || !Array.isArray(res.rows)) throw new Error('The preview service returned invalid data. Please retry.');
-    return { columns: res.columns, rows: res.rows, totalRows: res.total_rows ?? null,
-      previewRows: res.preview_rows ?? res.rows.length, countStatus: res.count_status ?? (res.total_rows == null ? 'unknown' : 'exact') };
+    const res = await apiClient.get<{
+      columns: string[];
+      rows: Record<string, CellValue>[];
+      total_rows: number | null;
+      preview_rows?: number;
+      count_status?: 'exact' | 'unknown';
+    }>(`/api/v1/datasets/${encodeURIComponent(datasetId)}/preview?limit=${limit}`);
+    if (!res || !Array.isArray(res.columns) || !Array.isArray(res.rows))
+      throw new Error('The preview service returned invalid data. Please retry.');
+    return {
+      columns: res.columns,
+      rows: res.rows,
+      totalRows: res.total_rows ?? null,
+      previewRows: res.preview_rows ?? res.rows.length,
+      countStatus: res.count_status ?? (res.total_rows == null ? 'unknown' : 'exact'),
+    };
   },
 
   /**
@@ -246,16 +255,19 @@ export const datasetService = {
           high_cardinality_columns: string[];
           low_cardinality_columns: string[];
         };
-        numeric_columns_profile: Record<string, {
-          mean: number;
-          median: number;
-          min: number;
-          max: number;
-          std: number;
-          p25: number;
-          p75: number;
-          skewness: number;
-        }>;
+        numeric_columns_profile: Record<
+          string,
+          {
+            mean: number;
+            median: number;
+            min: number;
+            max: number;
+            std: number;
+            p25: number;
+            p75: number;
+            skewness: number;
+          }
+        >;
       }>(`/api/v1/datasets/${encodeURIComponent(datasetId)}/profile`);
 
       if (data) {
@@ -312,31 +324,56 @@ export const datasetService = {
             {
               rule: 'Completeness',
               description: 'Percentage of non-null and present values',
-              status: data.completeness_score >= 90 ? 'passed' : data.completeness_score >= 80 ? 'warning' : 'failed',
+              status:
+                data.completeness_score >= 90
+                  ? 'passed'
+                  : data.completeness_score >= 80
+                    ? 'warning'
+                    : 'failed',
               score: Math.round(data.completeness_score),
             },
             {
               rule: 'Validity',
               description: 'Data format conformity and schema integrity',
-              status: data.validity_score >= 90 ? 'passed' : data.validity_score >= 80 ? 'warning' : 'failed',
+              status:
+                data.validity_score >= 90
+                  ? 'passed'
+                  : data.validity_score >= 80
+                    ? 'warning'
+                    : 'failed',
               score: Math.round(data.validity_score),
             },
             {
               rule: 'Uniqueness',
               description: 'Absence of duplicate records',
-              status: data.uniqueness_score >= 90 ? 'passed' : data.uniqueness_score >= 80 ? 'warning' : 'failed',
+              status:
+                data.uniqueness_score >= 90
+                  ? 'passed'
+                  : data.uniqueness_score >= 80
+                    ? 'warning'
+                    : 'failed',
               score: Math.round(data.uniqueness_score),
             },
             {
               rule: 'Consistency',
               description: 'Uniform data representations across features',
-              status: data.consistency_score >= 90 ? 'passed' : data.consistency_score >= 80 ? 'warning' : 'failed',
+              status:
+                data.consistency_score >= 90
+                  ? 'passed'
+                  : data.consistency_score >= 80
+                    ? 'warning'
+                    : 'failed',
               score: Math.round(data.consistency_score),
             },
             {
               rule: 'Integrity',
               description: 'Referential and structural integrity',
-              status: data.integrity_score >= 90 ? 'passed' : data.integrity_score >= 80 ? 'warning' : 'failed',
+              status:
+                data.integrity_score >= 90
+                  ? 'passed'
+                  : data.integrity_score >= 80
+                    ? 'warning'
+                    : 'failed',
               score: Math.round(data.integrity_score),
             },
           ],
@@ -383,9 +420,14 @@ export const datasetService = {
     return [];
   },
 
-  async rollbackVersion(datasetId: string, versionNumber: number): Promise<{ success: boolean; message: string }> {
+  async rollbackVersion(
+    datasetId: string,
+    versionNumber: number,
+  ): Promise<{ success: boolean; message: string }> {
     try {
-      await apiClient.post(`/api/v1/datasets/${encodeURIComponent(datasetId)}/versions/${versionNumber}/rollback`);
+      await apiClient.post(
+        `/api/v1/datasets/${encodeURIComponent(datasetId)}/versions/${versionNumber}/rollback`,
+      );
       return {
         success: true,
         message: `Dataset successfully rolled back to Version ${versionNumber}. Active parquet storage updated.`,
@@ -398,16 +440,62 @@ export const datasetService = {
 
   async getLineage(dataset: Dataset): Promise<DatasetLineageNode[]> {
     return [
-      ...(dataset.raw_path ? [{ id: 'source', type: 'source' as const, title: dataset.filename, description: 'Registered source path', path: dataset.raw_path, status: 'ready' as const }] : []),
-      ...(dataset.processed_path ? [{ id: 'processed', type: 'processed_storage' as const, title: 'Canonical dataset', description: 'Registered canonical path', path: dataset.processed_path, status: 'ready' as const }] : []),
+      ...(dataset.raw_path
+        ? [
+            {
+              id: 'source',
+              type: 'source' as const,
+              title: dataset.filename,
+              description: 'Registered source path',
+              path: dataset.raw_path,
+              status: 'ready' as const,
+            },
+          ]
+        : []),
+      ...(dataset.processed_path
+        ? [
+            {
+              id: 'processed',
+              type: 'processed_storage' as const,
+              title: 'Canonical dataset',
+              description: 'Registered canonical path',
+              path: dataset.processed_path,
+              status: 'ready' as const,
+            },
+          ]
+        : []),
     ];
   },
-  async listDatabaseConnections(): Promise<DatabaseConnection[]> { throw new Error('Database connection API is unavailable.'); },
-  async testDatabaseConnection(_conn: Partial<DatabaseConnection>): Promise<{ success: boolean; latencyMs: number; message: string }> { throw new Error('Database connection testing is unavailable.'); },
-  async saveDatabaseConnection(_conn: Omit<DatabaseConnection, 'id' | 'lastTestedAt'>): Promise<DatabaseConnection> { throw new Error('Database connection persistence is unavailable.'); },
-  async listApiConnections(): Promise<ApiConnection[]> { throw new Error('API connection registry is unavailable.'); },
-  async testApiConnection(_conn: Partial<ApiConnection>): Promise<{ success: boolean; latencyMs: number; message: string }> { throw new Error('API connection testing is unavailable.'); },
-  async saveApiConnection(_conn: Omit<ApiConnection, 'id' | 'lastTestedAt'>): Promise<ApiConnection> { throw new Error('API connection persistence is unavailable.'); },
-  async getWarehouseCatalog(): Promise<DataWarehouseCatalog> { throw new Error('Warehouse catalog API is unavailable.'); },
-  async refreshMaterializedView(_mvId: string): Promise<void> { throw new Error('Materialized-view refresh API is unavailable.'); },
+  async listDatabaseConnections(): Promise<DatabaseConnection[]> {
+    throw new Error('Database connection API is unavailable.');
+  },
+  async testDatabaseConnection(
+    _conn: Partial<DatabaseConnection>,
+  ): Promise<{ success: boolean; latencyMs: number; message: string }> {
+    throw new Error('Database connection testing is unavailable.');
+  },
+  async saveDatabaseConnection(
+    _conn: Omit<DatabaseConnection, 'id' | 'lastTestedAt'>,
+  ): Promise<DatabaseConnection> {
+    throw new Error('Database connection persistence is unavailable.');
+  },
+  async listApiConnections(): Promise<ApiConnection[]> {
+    throw new Error('API connection registry is unavailable.');
+  },
+  async testApiConnection(
+    _conn: Partial<ApiConnection>,
+  ): Promise<{ success: boolean; latencyMs: number; message: string }> {
+    throw new Error('API connection testing is unavailable.');
+  },
+  async saveApiConnection(
+    _conn: Omit<ApiConnection, 'id' | 'lastTestedAt'>,
+  ): Promise<ApiConnection> {
+    throw new Error('API connection persistence is unavailable.');
+  },
+  async getWarehouseCatalog(): Promise<DataWarehouseCatalog> {
+    throw new Error('Warehouse catalog API is unavailable.');
+  },
+  async refreshMaterializedView(_mvId: string): Promise<void> {
+    throw new Error('Materialized-view refresh API is unavailable.');
+  },
 };

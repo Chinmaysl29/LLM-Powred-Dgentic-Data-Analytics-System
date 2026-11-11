@@ -1,0 +1,36 @@
+{
+  "rows": [
+    {
+      "entity": "matched",
+      "current": 35,
+      "previous": 35,
+      "dimensions": {},
+      "absolute_change": "0",
+      "percentage_change": "0.000000"
+    }
+  ],
+  "totals": {
+    "current": "35",
+    "previous": "35",
+    "absolute_change": "0"
+  },
+  "causality": "Observed differences are associations; no cause is established.",
+  "precision": "decimal arithmetic, 38 significant digits; percentage rounded to 6 decimal places (half even)",
+  "comparable": true,
+  "current_id": "f056f648-e594-4660-8b34-5d3c4b3ed0d7",
+  "mismatches": [],
+  "previous_id": "f056f648-e594-4660-8b34-5d3c4b3ed0d7",
+  "contributions": [
+    {
+      "entity": "matched",
+      "dimensions": {},
+      "contribution": "0"
+    }
+  ],
+  "source_changed": false,
+  "system_changed": false,
+  "quality_changed": false,
+  "contribution_note": "Additive contributions reconcile to total change; new/removed groups represent absent activity in a complete aggregate, while null values remain unknown",
+  "absolute_change_unit": "USD",
+  "percentage_denominator": "absolute previous value; zero is undefined; missing is not zero"
+}

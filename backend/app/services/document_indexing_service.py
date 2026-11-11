@@ -11,6 +11,7 @@ from backend.app.models.dataset_version import DatasetVersion
 from backend.app.core.config import get_settings
 from backend.jobs.persistence import PersistentJobStore
 from backend.app.schemas.rag_pipeline import RAGIngestRequest, RAGQueryRequest
+from backend.app.services.storage_service import StorageService
 
 
 class DocumentSourceError(ValueError):

@@ -44,7 +44,10 @@ export const dashboardService = {
   async getWorkspaces(): Promise<WorkspaceItem[]> {
     if (!isSupabaseConfigured()) return [];
 
-    const { data, error } = await supabase.from('workspaces').select('*').order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('workspaces')
+      .select('*')
+      .order('created_at', { ascending: false });
     if (error) throw new Error('Workspace service is unavailable. Please retry.');
     if (!Array.isArray(data)) throw new Error('Workspace service returned invalid data.');
     return data as WorkspaceItem[];
@@ -56,7 +59,9 @@ export const dashboardService = {
   async createWorkspace(name: string, description?: string): Promise<WorkspaceItem | null> {
     if (!isSupabaseConfigured()) return null;
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) throw new Error('Must be authenticated to create a workspace.');
 
     const { data, error } = await supabase
@@ -79,7 +84,10 @@ export const dashboardService = {
   async getSavedVisualizations(): Promise<SavedVisualizationItem[]> {
     if (!isSupabaseConfigured()) return [];
 
-    const { data, error } = await supabase.from('saved_visualizations').select('*').order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('saved_visualizations')
+      .select('*')
+      .order('created_at', { ascending: false });
     if (error) throw new Error('Saved visualization service is unavailable. Please retry.');
     if (!Array.isArray(data)) throw new Error('Saved visualization service returned invalid data.');
     return data as SavedVisualizationItem[];
@@ -97,7 +105,9 @@ export const dashboardService = {
   ): Promise<SavedVisualizationItem | null> {
     if (!isSupabaseConfigured()) return null;
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) throw new Error('Must be authenticated to save visualizations.');
 
     const { data, error } = await supabase
@@ -129,7 +139,9 @@ export const dashboardService = {
 
     let reportCount = 0;
     if (isSupabaseConfigured()) {
-      const { count, error } = await supabase.from('reports').select('*', { count: 'exact', head: true });
+      const { count, error } = await supabase
+        .from('reports')
+        .select('*', { count: 'exact', head: true });
       if (error || count == null) throw new Error('Report count is unavailable. Please retry.');
       reportCount = count;
     }

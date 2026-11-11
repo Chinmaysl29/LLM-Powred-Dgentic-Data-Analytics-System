@@ -1,0 +1,2123 @@
+{
+  "scope": "Synthetic list metadata; restricted PG app role; FastAPI TestClient; sequential ASGI requests (no network latency)",
+  "workload": {
+    "workflows": 20,
+    "completed_runs_per_workflow": 3,
+    "incidents": 10,
+    "outputs_per_dataset": 80
+  },
+  "platform": {
+    "python": "3.11.18",
+    "logical_cpus": 12
+  },
+  "versions": {
+    "fastapi": "0.162.0",
+    "SQLAlchemy": "2.1.6",
+    "psycopg": "3.3.7"
+  },
+  "before_source_hashes": {
+    "backend/app/dataplane/api.py": "bb68829d1b334444530c0a3e94e7e095513d0fac7686c4593868eecaee4c0ebc",
+    "backend/app/dataplane/company_api.py": "9dcc3e9a6298dc3103049f42e7bb791b750d1a10c38c9056cf0a3259d948f802",
+    "backend/app/dataplane/company.py": "63b0f8925f72d812ba4369b9d349a208899755b53e5fe5cb693c688d4ccce1d5"
+  },
+  "after_source_hashes": {
+    "backend/app/dataplane/api.py": "72132dc112eb8eab4db0d626f56515467fbe35bb6fe821db3a18801b1d9c8249",
+    "backend/app/dataplane/company_api.py": "253820f6436013eed416c82b36aa35aaa4c0afba35e3636068868c45d1aebebd",
+    "backend/app/dataplane/company.py": "63b0f8925f72d812ba4369b9d349a208899755b53e5fe5cb693c688d4ccce1d5",
+    "backend/app/core/security.py": "886469a17a979c974fa45b4097890284747941481aa20d5586797cb300fa8c02",
+    "backend/app/core/workspace_authorization.py": "17227d9f53b1167465ff6b531d7af1161e2d0875960457cc974fb50cf3b6c72c",
+    "backend/app/dataplane/read_models.py": "9fb60ad3ccb505b42a5bc2d9365badf1aed9859dabb9f2efac65c1e530227934"
+  },
+  "endpoints": {
+    "dashboard": {
+      "before": {
+        "samples": 25,
+        "warmups": 5,
+        "latency_ms": {
+          "p50": 137.13097000072594,
+          "p95": 164.194224998937,
+          "p99": 192.96602999929746
+        },
+        "request_ms": [
+          135.40018200001214,
+          131.33092699899862,
+          135.49705700097547,
+          135.4225149989361,
+          134.83785900098155,
+          192.96602999929746,
+          134.65208500019799,
+          138.11705499938398,
+          152.32072300022992,
+          145.70067100066808,
+          137.13097000072594,
+          147.09288799895148,
+          164.194224998937,
+          142.44875199983653,
+          139.98512500074867,
+          143.1790139995428,
+          139.21299899993755,
+          133.5521000000881,
+          135.27009799872758,
+          146.3474430001952,
+          131.00466200012306,
+          131.10895700083347,
+          141.59491499958676,
+          136.27511599952413,
+          130.68652800029668
+        ],
+        "sql_queries_per_request": [
+          60,
+          60,
+          60,
+          60,
+          60,
+          60,
+          60,
+          60,
+          60,
+          60,
+          60,
+          60,
+          60,
+          60,
+          60,
+          60,
+          60,
+          60,
+          60,
+          60,
+          60,
+          60,
+          60,
+          60,
+          60
+        ],
+        "sql_duration_ms": [
+          51.69613300131459,
+          48.77407600542938,
+          51.97727499944449,
+          52.27272300726327,
+          51.55618499156844,
+          69.51306900009513,
+          52.285806985310046,
+          52.40608800340851,
+          57.08275699907972,
+          56.96027900194167,
+          52.784689998588874,
+          59.42866999794205,
+          64.9877590003598,
+          53.75619099504547,
+          52.8045079918229,
+          53.24340599327115,
+          53.31259799095278,
+          50.676312999712536,
+          53.35959801050194,
+          59.36638000639505,
+          47.074910000446835,
+          47.92639299739676,
+          52.895643002557335,
+          50.63556799359503,
+          49.0621299995837
+        ],
+        "client_process_cpu_seconds": 2.858749222,
+        "client_process_peak_rss_bytes": 684253184,
+        "sequential_requests_per_second": 7.071477855512091,
+        "response_sha256": "adc77ea695579cad39dc2330e21450c250130029619b772d1be3bdbf4feefc5f",
+        "median_sql_duration_ms": 52.784689998588874
+      },
+      "after": {
+        "samples": 25,
+        "warmups": 5,
+        "latency_ms": {
+          "p50": 61.94109100033529,
+          "p95": 76.44635399992694,
+          "p99": 77.47463400119159
+        },
+        "request_ms": [
+          68.6565910000354,
+          60.063311000703834,
+          61.94831600078032,
+          61.94109100033529,
+          59.2782960011391,
+          58.60117500014894,
+          59.64977499934321,
+          73.18489200042677,
+          72.47757600089244,
+          61.32327100021939,
+          60.05394200110459,
+          60.82845799937786,
+          59.72557199856965,
+          58.256673999494524,
+          58.07352699957846,
+          76.44635399992694,
+          68.95375000021886,
+          62.179200000173296,
+          59.15687100059586,
+          65.09290000030887,
+          59.21137099903717,
+          62.16094299998076,
+          64.97854400004144,
+          77.47463400119159,
+          63.689882999824476
+        ],
+        "sql_queries_per_request": [
+          11,
+          11,
+          11,
+          11,
+          11,
+          11,
+          11,
+          11,
+          11,
+          11,
+          11,
+          11,
+          11,
+          11,
+          11,
+          11,
+          11,
+          11,
+          11,
+          11,
+          11,
+          11,
+          11,
+          11,
+          11
+        ],
+        "sql_duration_ms": [
+          20.305539001128636,
+          16.59880800252722,
+          16.179143995032064,
+          17.270466001718887,
+          16.669447995809605,
+          15.931329002341954,
+          16.969511001661886,
+          22.327444998154533,
+          20.098766002774937,
+          16.40662000136217,
+          16.543746998650022,
+          16.9207839990122,
+          17.185234995849896,
+          15.637004997188342,
+          14.754100999198272,
+          20.783708998351358,
+          19.607321002695244,
+          16.235298999163206,
+          17.018915996231954,
+          17.106795001382125,
+          15.035309002996655,
+          15.91322000240325,
+          16.530760000023292,
+          21.4529519998905,
+          16.21820100081095
+        ],
+        "client_process_cpu_seconds": 1.3232442249999998,
+        "client_process_peak_rss_bytes": 682729472,
+        "sequential_requests_per_second": 15.689651986082024,
+        "response_sha256": "adc77ea695579cad39dc2330e21450c250130029619b772d1be3bdbf4feefc5f",
+        "median_sql_duration_ms": 16.669447995809605
+      },
+      "complete_response_equality": true
+    },
+    "company/workflows": {
+      "before": {
+        "samples": 25,
+        "warmups": 5,
+        "latency_ms": {
+          "p50": 354.26572599862993,
+          "p95": 433.86004499916453,
+          "p99": 690.763849999712
+        },
+        "request_ms": [
+          350.1887269994768,
+          358.83425300016825,
+          351.615010000387,
+          370.4860269990604,
+          425.03712300094776,
+          357.41957099889987,
+          344.52578499985975,
+          690.763849999712,
+          385.5092079993483,
+          349.2261489991506,
+          356.0505629993713,
+          350.78138099925127,
+          364.3895210007031,
+          392.3499400007131,
+          433.86004499916453,
+          392.7501830003166,
+          354.26572599862993,
+          351.5016220007965,
+          338.7352470017504,
+          332.93398299974797,
+          357.1662150006887,
+          354.14950999984285,
+          353.8627100006124,
+          343.37130800122395,
+          341.77731000090716
+        ],
+        "sql_queries_per_request": [
+          129,
+          129,
+          129,
+          129,
+          129,
+          129,
+          129,
+          129,
+          129,
+          129,
+          129,
+          129,
+          129,
+          129,
+          129,
+          129,
+          129,
+          129,
+          129,
+          129,
+          129,
+          129,
+          129,
+          129,
+          129
+        ],
+        "sql_duration_ms": [
+          206.11345798351977,
+          211.98113499303872,
+          210.45809700626705,
+          222.59231999305484,
+          244.73006700281985,
+          211.14359999955923,
+          199.83407700237876,
+          413.9956729923142,
+          220.84214700043958,
+          208.90675798546,
+          210.65271301267785,
+          209.13176899011887,
+          217.70752701013407,
+          231.4824719869648,
+          262.96969401118986,
+          231.09887399732543,
+          207.22561500951997,
+          204.04791699911584,
+          201.91216998864547,
+          197.84216600419313,
+          208.00119499472203,
+          208.14058300311444,
+          206.5394260080211,
+          201.38478298576956,
+          203.08434599610337
+        ],
+        "client_process_cpu_seconds": 5.661751584000001,
+        "client_process_peak_rss_bytes": 685101056,
+        "sequential_requests_per_second": 2.659135720026359,
+        "response_sha256": "efc350531b23221762bbfca25df8ea35870fc4fff64fa77556199fb052a77276",
+        "median_sql_duration_ms": 209.13176899011887
+      },
+      "after": {
+        "samples": 25,
+        "warmups": 5,
+        "latency_ms": {
+          "p50": 65.64271000024746,
+          "p95": 75.90772299954551,
+          "p99": 79.42500200078939
+        },
+        "request_ms": [
+          68.03699100055383,
+          66.53279999954975,
+          74.79009999951813,
+          75.90772299954551,
+          66.07760599945323,
+          63.053081999896676,
+          66.09641400063992,
+          65.11801299893705,
+          62.9831460009882,
+          63.846715000181575,
+          79.42500200078939,
+          69.08881600065797,
+          57.69234700164816,
+          62.419791998763685,
+          64.3426630012982,
+          62.51444299959985,
+          59.62399499912863,
+          71.40993800021533,
+          75.82928500050912,
+          61.77936399944883,
+          61.18473599963181,
+          62.15986000097473,
+          65.64271000024746,
+          69.61463500010723,
+          66.22893999883672
+        ],
+        "sql_queries_per_request": [
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12
+        ],
+        "sql_duration_ms": [
+          28.10894599861058,
+          26.960749999489053,
+          31.523969999398105,
+          31.09019100338628,
+          27.728402994398493,
+          27.184982003745972,
+          27.52511599464924,
+          26.25946300031501,
+          25.942866997866076,
+          26.74739000030968,
+          31.917172995235887,
+          27.410081997004454,
+          24.378138998145005,
+          25.46478899785143,
+          26.999898000212852,
+          26.184495001871255,
+          25.51527499963413,
+          32.74639699520776,
+          32.7287489981245,
+          25.692945995615446,
+          23.977703001946793,
+          25.170395001623547,
+          26.74234400546993,
+          29.78703999906429,
+          27.517260996319237
+        ],
+        "client_process_cpu_seconds": 1.150061311,
+        "client_process_peak_rss_bytes": 682827776,
+        "sequential_requests_per_second": 15.047558265333237,
+        "response_sha256": "efc350531b23221762bbfca25df8ea35870fc4fff64fa77556199fb052a77276",
+        "median_sql_duration_ms": 26.999898000212852
+      },
+      "complete_response_equality": true
+    },
+    "company/incidents": {
+      "before": {
+        "samples": 25,
+        "warmups": 5,
+        "latency_ms": {
+          "p50": 689.9110509984894,
+          "p95": 878.256912001234,
+          "p99": 1027.427629000158
+        },
+        "request_ms": [
+          685.1648749998276,
+          708.4994759989058,
+          660.5468119996658,
+          680.5849840002338,
+          718.1648349996976,
+          680.1828580009897,
+          751.0298710003553,
+          663.0300729993905,
+          667.6363759997912,
+          699.8748189998878,
+          679.0676589989744,
+          699.5223409994651,
+          878.256912001234,
+          1027.427629000158,
+          689.9110509984894,
+          796.8618539998715,
+          687.9881080003543,
+          719.9508369994874,
+          704.8431789989991,
+          705.6295639995369,
+          679.0735199992923,
+          666.7073299995536,
+          687.7187499994761,
+          670.5289630008338,
+          708.3322359994781
+        ],
+        "sql_queries_per_request": [
+          249,
+          249,
+          249,
+          249,
+          249,
+          249,
+          249,
+          249,
+          249,
+          249,
+          249,
+          249,
+          249,
+          249,
+          249,
+          249,
+          249,
+          249,
+          249,
+          249,
+          249,
+          249,
+          249,
+          249,
+          249
+        ],
+        "sql_duration_ms": [
+          401.8935779877211,
+          422.0691400078067,
+          392.8677200055972,
+          397.190605992364,
+          429.1458629977569,
+          402.4577369928011,
+          447.18857598491013,
+          394.8508290195605,
+          395.6933550107351,
+          410.28590600035386,
+          398.8807819896465,
+          414.6377470005973,
+          483.7116380003863,
+          426.75733399119054,
+          405.5093750193919,
+          463.69355799288314,
+          407.86533099526423,
+          422.2937160247966,
+          422.9930930014234,
+          416.8546099845116,
+          399.385775985138,
+          390.70648001506925,
+          405.55608599788684,
+          396.6468140024517,
+          422.38997102140274
+        ],
+        "client_process_cpu_seconds": 10.957218779999998,
+        "client_process_peak_rss_bytes": 691236864,
+        "sequential_requests_per_second": 1.3953590983301205,
+        "response_sha256": "7314ec78a1d08d55bb196526ad3f18b01537d396bbad603820ba36bc6a8529e7",
+        "median_sql_duration_ms": 407.86533099526423
+      },
+      "after": {
+        "samples": 25,
+        "warmups": 5,
+        "latency_ms": {
+          "p50": 78.55790500070725,
+          "p95": 97.50404099941079,
+          "p99": 105.633425000633
+        },
+        "request_ms": [
+          71.93280600040453,
+          81.37243099918123,
+          93.33699399940087,
+          74.8209230005159,
+          76.85156099978485,
+          78.55543099867646,
+          74.60722300129419,
+          81.62626100056514,
+          105.633425000633,
+          77.1412939993752,
+          80.68653000009363,
+          73.82865599902289,
+          78.55790500070725,
+          90.41762800006836,
+          93.56490200116241,
+          78.08154600024864,
+          76.95389699983934,
+          75.90781100043387,
+          77.37561599969922,
+          76.11842499863997,
+          97.50404099941079,
+          80.62109899947245,
+          79.15995799885422,
+          86.2615519999963,
+          80.06489900071756
+        ],
+        "sql_queries_per_request": [
+          13,
+          13,
+          13,
+          13,
+          13,
+          13,
+          13,
+          13,
+          13,
+          13,
+          13,
+          13,
+          13,
+          13,
+          13,
+          13,
+          13,
+          13,
+          13,
+          13,
+          13,
+          13,
+          13,
+          13,
+          13
+        ],
+        "sql_duration_ms": [
+          27.22445900508319,
+          28.730701998938457,
+          35.00836000057461,
+          26.342639997892547,
+          26.5234930011502,
+          28.990612998313736,
+          27.2254499977862,
+          28.687896998235374,
+          35.0199620006606,
+          26.2559480015625,
+          31.28522599945427,
+          27.312986996548716,
+          28.712024999549612,
+          29.122262998498627,
+          31.491992001974722,
+          26.701590002630837,
+          27.641118997053127,
+          26.68076400004793,
+          28.540878000058,
+          27.6247850015352,
+          36.342190996947465,
+          28.53062900248915,
+          27.60581500842818,
+          30.481655998300994,
+          28.9880579966848
+        ],
+        "client_process_cpu_seconds": 1.503692871000002,
+        "client_process_peak_rss_bytes": 684826624,
+        "sequential_requests_per_second": 12.249000740494266,
+        "response_sha256": "7314ec78a1d08d55bb196526ad3f18b01537d396bbad603820ba36bc6a8529e7",
+        "median_sql_duration_ms": 28.540878000058
+      },
+      "complete_response_equality": true
+    }
+  },
+  "browser_before": {
+    "mode": "before",
+    "browser": "156.0.8078.79",
+    "samples": [
+      {
+        "dictionary": 7,
+        "workflows": 7,
+        "policy": 7,
+        "incidents": 7
+      },
+      {
+        "dictionary": 7,
+        "workflows": 7,
+        "policy": 7,
+        "incidents": 7
+      },
+      {
+        "dictionary": 7,
+        "workflows": 7,
+        "policy": 7,
+        "incidents": 7
+      },
+      {
+        "dictionary": 7,
+        "workflows": 7,
+        "policy": 7,
+        "incidents": 7
+      },
+      {
+        "dictionary": 7,
+        "workflows": 7,
+        "policy": 7,
+        "incidents": 7
+      }
+    ],
+    "warmups": 1,
+    "characters_per_search": 7,
+    "inter_key_delay_ms": 75,
+    "checks": [
+      "Latest search is displayed",
+      "Manual refresh reloads every panel",
+      "No browser errors"
+    ],
+    "scope": "Development server Chromium request counts; render duration and production load time not measured"
+  },
+  "browser_after": {
+    "mode": "after",
+    "browser": "156.0.8078.79",
+    "samples": [
+      {
+        "dictionary": 1,
+        "workflows": 0,
+        "policy": 0,
+        "incidents": 0
+      },
+      {
+        "dictionary": 1,
+        "workflows": 0,
+        "policy": 0,
+        "incidents": 0
+      },
+      {
+        "dictionary": 1,
+        "workflows": 0,
+        "policy": 0,
+        "incidents": 0
+      },
+      {
+        "dictionary": 1,
+        "workflows": 0,
+        "policy": 0,
+        "incidents": 0
+      },
+      {
+        "dictionary": 1,
+        "workflows": 0,
+        "policy": 0,
+        "incidents": 0
+      }
+    ],
+    "warmups": 1,
+    "characters_per_search": 7,
+    "inter_key_delay_ms": 75,
+    "checks": [
+      "Latest search is displayed",
+      "Manual refresh reloads every panel",
+      "No browser errors",
+      "Search failure is visible and clears after successful retry"
+    ],
+    "scope": "Development server Chromium request counts; render duration and production load time not measured"
+  },
+  "query_plans": [
+    {
+      "planning_ms": 0.216,
+      "execution_ms": 0.34,
+      "plan": {
+        "Node Type": "Sort",
+        "Actual Rows": 60,
+        "Actual Loops": 1,
+        "Sort Method": "quicksort",
+        "Sort Space Used": 42,
+        "Sort Space Type": "Memory",
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0,
+        "Shared Hit Blocks": 20,
+        "Shared Read Blocks": 0,
+        "Plans": [
+          {
+            "Node Type": "Subquery Scan",
+            "Actual Rows": 60,
+            "Actual Loops": 1,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Shared Hit Blocks": 20,
+            "Shared Read Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "WindowAgg",
+                "Actual Rows": 60,
+                "Actual Loops": 1,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0,
+                "Shared Hit Blocks": 20,
+                "Shared Read Blocks": 0,
+                "Plans": [
+                  {
+                    "Node Type": "Sort",
+                    "Actual Rows": 60,
+                    "Actual Loops": 1,
+                    "Sort Method": "quicksort",
+                    "Sort Space Used": 42,
+                    "Sort Space Type": "Memory",
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0,
+                    "Shared Hit Blocks": 20,
+                    "Shared Read Blocks": 0,
+                    "Plans": [
+                      {
+                        "Node Type": "Bitmap Heap Scan",
+                        "Actual Rows": 60,
+                        "Actual Loops": 1,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0,
+                        "Shared Hit Blocks": 20,
+                        "Shared Read Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Bitmap Index Scan",
+                            "Index Name": "uq_background_job_request",
+                            "Actual Rows": 60,
+                            "Actual Loops": 1,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 2,
+                            "Shared Read Blocks": 0,
+                            "Plans": []
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "planning_ms": 4.459,
+      "execution_ms": 2.152,
+      "plan": {
+        "Node Type": "Subquery Scan",
+        "Actual Rows": 80,
+        "Actual Loops": 1,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0,
+        "Shared Hit Blocks": 1992,
+        "Shared Read Blocks": 0,
+        "Plans": [
+          {
+            "Node Type": "WindowAgg",
+            "Actual Rows": 80,
+            "Actual Loops": 1,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Shared Hit Blocks": 1992,
+            "Shared Read Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "Sort",
+                "Actual Rows": 120,
+                "Actual Loops": 1,
+                "Sort Method": "quicksort",
+                "Sort Space Used": 38,
+                "Sort Space Type": "Memory",
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0,
+                "Shared Hit Blocks": 1992,
+                "Shared Read Blocks": 0,
+                "Plans": [
+                  {
+                    "Node Type": "Bitmap Heap Scan",
+                    "Actual Rows": 120,
+                    "Actual Loops": 1,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0,
+                    "Shared Hit Blocks": 1992,
+                    "Shared Read Blocks": 0,
+                    "Plans": [
+                      {
+                        "Node Type": "BitmapAnd",
+                        "Actual Rows": 0,
+                        "Actual Loops": 1,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0,
+                        "Shared Hit Blocks": 165,
+                        "Shared Read Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Bitmap Index Scan",
+                            "Index Name": "ix_dataplane_scope",
+                            "Actual Rows": 120,
+                            "Actual Loops": 1,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 5,
+                            "Shared Read Blocks": 0,
+                            "Plans": []
+                          },
+                          {
+                            "Node Type": "Bitmap Index Scan",
+                            "Index Name": "ix_dataplane_parent_id",
+                            "Actual Rows": 140,
+                            "Actual Loops": 1,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 160,
+                            "Shared Read Blocks": 0,
+                            "Plans": []
+                          }
+                        ]
+                      },
+                      {
+                        "Node Type": "Nested Loop",
+                        "Actual Rows": 1,
+                        "Actual Loops": 120,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0,
+                        "Shared Hit Blocks": 1800,
+                        "Shared Read Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Nested Loop",
+                            "Actual Rows": 1,
+                            "Actual Loops": 120,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 1440,
+                            "Shared Read Blocks": 0,
+                            "Plans": [
+                              {
+                                "Node Type": "Nested Loop",
+                                "Actual Rows": 1,
+                                "Actual Loops": 120,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0,
+                                "Shared Hit Blocks": 1080,
+                                "Shared Read Blocks": 0,
+                                "Plans": [
+                                  {
+                                    "Node Type": "Nested Loop",
+                                    "Actual Rows": 1,
+                                    "Actual Loops": 120,
+                                    "Temp Read Blocks": 0,
+                                    "Temp Written Blocks": 0,
+                                    "Shared Hit Blocks": 720,
+                                    "Shared Read Blocks": 0,
+                                    "Plans": [
+                                      {
+                                        "Node Type": "Index Scan",
+                                        "Index Name": "ix_workspaces_tenant_status",
+                                        "Actual Rows": 1,
+                                        "Actual Loops": 120,
+                                        "Temp Read Blocks": 0,
+                                        "Temp Written Blocks": 0,
+                                        "Shared Hit Blocks": 360,
+                                        "Shared Read Blocks": 0,
+                                        "Plans": []
+                                      },
+                                      {
+                                        "Node Type": "Index Scan",
+                                        "Index Name": "ix_tenants_id",
+                                        "Actual Rows": 1,
+                                        "Actual Loops": 120,
+                                        "Temp Read Blocks": 0,
+                                        "Temp Written Blocks": 0,
+                                        "Shared Hit Blocks": 360,
+                                        "Shared Read Blocks": 0,
+                                        "Plans": []
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "Node Type": "Index Scan",
+                                    "Index Name": "ix_tenant_memberships_user",
+                                    "Actual Rows": 1,
+                                    "Actual Loops": 120,
+                                    "Temp Read Blocks": 0,
+                                    "Temp Written Blocks": 0,
+                                    "Shared Hit Blocks": 360,
+                                    "Shared Read Blocks": 0,
+                                    "Plans": []
+                                  }
+                                ]
+                              },
+                              {
+                                "Node Type": "Index Scan",
+                                "Index Name": "users_pkey",
+                                "Actual Rows": 1,
+                                "Actual Loops": 120,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0,
+                                "Shared Hit Blocks": 360,
+                                "Shared Read Blocks": 0,
+                                "Plans": []
+                              }
+                            ]
+                          },
+                          {
+                            "Node Type": "Index Scan",
+                            "Index Name": "ix_workspace_memberships_user",
+                            "Actual Rows": 1,
+                            "Actual Loops": 120,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 360,
+                            "Shared Read Blocks": 0,
+                            "Plans": []
+                          }
+                        ]
+                      },
+                      {
+                        "Node Type": "Nested Loop",
+                        "Actual Rows": 1,
+                        "Actual Loops": 1,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0,
+                        "Shared Hit Blocks": 6,
+                        "Shared Read Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Index Scan",
+                            "Index Name": "ix_datasets_owner_id",
+                            "Actual Rows": 1,
+                            "Actual Loops": 1,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 3,
+                            "Shared Read Blocks": 0,
+                            "Plans": []
+                          },
+                          {
+                            "Node Type": "Index Scan",
+                            "Index Name": "dataset_workspace_bindings_pkey",
+                            "Actual Rows": 1,
+                            "Actual Loops": 1,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 3,
+                            "Shared Read Blocks": 0,
+                            "Plans": []
+                          }
+                        ]
+                      },
+                      {
+                        "Node Type": "Nested Loop",
+                        "Actual Rows": 0,
+                        "Actual Loops": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0,
+                        "Shared Hit Blocks": 0,
+                        "Shared Read Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Nested Loop",
+                            "Actual Rows": 0,
+                            "Actual Loops": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 0,
+                            "Shared Read Blocks": 0,
+                            "Plans": [
+                              {
+                                "Node Type": "Nested Loop",
+                                "Actual Rows": 0,
+                                "Actual Loops": 0,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0,
+                                "Shared Hit Blocks": 0,
+                                "Shared Read Blocks": 0,
+                                "Plans": [
+                                  {
+                                    "Node Type": "Index Scan",
+                                    "Index Name": "tenant_memberships_pkey",
+                                    "Actual Rows": 0,
+                                    "Actual Loops": 0,
+                                    "Temp Read Blocks": 0,
+                                    "Temp Written Blocks": 0,
+                                    "Shared Hit Blocks": 0,
+                                    "Shared Read Blocks": 0,
+                                    "Plans": []
+                                  },
+                                  {
+                                    "Node Type": "Nested Loop",
+                                    "Actual Rows": 0,
+                                    "Actual Loops": 0,
+                                    "Temp Read Blocks": 0,
+                                    "Temp Written Blocks": 0,
+                                    "Shared Hit Blocks": 0,
+                                    "Shared Read Blocks": 0,
+                                    "Plans": [
+                                      {
+                                        "Node Type": "Index Scan",
+                                        "Index Name": "ix_workspaces_tenant_status",
+                                        "Actual Rows": 0,
+                                        "Actual Loops": 0,
+                                        "Temp Read Blocks": 0,
+                                        "Temp Written Blocks": 0,
+                                        "Shared Hit Blocks": 0,
+                                        "Shared Read Blocks": 0,
+                                        "Plans": []
+                                      },
+                                      {
+                                        "Node Type": "Index Scan",
+                                        "Index Name": "ix_tenants_id",
+                                        "Actual Rows": 0,
+                                        "Actual Loops": 0,
+                                        "Temp Read Blocks": 0,
+                                        "Temp Written Blocks": 0,
+                                        "Shared Hit Blocks": 0,
+                                        "Shared Read Blocks": 0,
+                                        "Plans": []
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "Node Type": "Index Scan",
+                                "Index Name": "users_pkey",
+                                "Actual Rows": 0,
+                                "Actual Loops": 0,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0,
+                                "Shared Hit Blocks": 0,
+                                "Shared Read Blocks": 0,
+                                "Plans": []
+                              }
+                            ]
+                          },
+                          {
+                            "Node Type": "Index Scan",
+                            "Index Name": "ix_workspace_memberships_user",
+                            "Actual Rows": 0,
+                            "Actual Loops": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 0,
+                            "Shared Read Blocks": 0,
+                            "Plans": []
+                          }
+                        ]
+                      },
+                      {
+                        "Node Type": "Nested Loop",
+                        "Actual Rows": 0,
+                        "Actual Loops": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0,
+                        "Shared Hit Blocks": 0,
+                        "Shared Read Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Index Scan",
+                            "Index Name": "ix_datasets_owner_id",
+                            "Actual Rows": 0,
+                            "Actual Loops": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 0,
+                            "Shared Read Blocks": 0,
+                            "Plans": []
+                          },
+                          {
+                            "Node Type": "Index Scan",
+                            "Index Name": "dataset_workspace_bindings_pkey",
+                            "Actual Rows": 0,
+                            "Actual Loops": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 0,
+                            "Shared Read Blocks": 0,
+                            "Plans": []
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "planning_ms": 3.404,
+      "execution_ms": 0.423,
+      "plan": {
+        "Node Type": "Subquery Scan",
+        "Actual Rows": 20,
+        "Actual Loops": 1,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0,
+        "Shared Hit Blocks": 325,
+        "Shared Read Blocks": 0,
+        "Plans": [
+          {
+            "Node Type": "WindowAgg",
+            "Actual Rows": 20,
+            "Actual Loops": 1,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Shared Hit Blocks": 325,
+            "Shared Read Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "Sort",
+                "Actual Rows": 20,
+                "Actual Loops": 1,
+                "Sort Method": "quicksort",
+                "Sort Space Used": 27,
+                "Sort Space Type": "Memory",
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0,
+                "Shared Hit Blocks": 325,
+                "Shared Read Blocks": 0,
+                "Plans": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Index Name": "ix_dataplane_scope",
+                    "Actual Rows": 20,
+                    "Actual Loops": 1,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0,
+                    "Shared Hit Blocks": 325,
+                    "Shared Read Blocks": 0,
+                    "Plans": [
+                      {
+                        "Node Type": "Nested Loop",
+                        "Actual Rows": 1,
+                        "Actual Loops": 20,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0,
+                        "Shared Hit Blocks": 300,
+                        "Shared Read Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Nested Loop",
+                            "Actual Rows": 1,
+                            "Actual Loops": 20,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 240,
+                            "Shared Read Blocks": 0,
+                            "Plans": [
+                              {
+                                "Node Type": "Nested Loop",
+                                "Actual Rows": 1,
+                                "Actual Loops": 20,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0,
+                                "Shared Hit Blocks": 180,
+                                "Shared Read Blocks": 0,
+                                "Plans": [
+                                  {
+                                    "Node Type": "Nested Loop",
+                                    "Actual Rows": 1,
+                                    "Actual Loops": 20,
+                                    "Temp Read Blocks": 0,
+                                    "Temp Written Blocks": 0,
+                                    "Shared Hit Blocks": 120,
+                                    "Shared Read Blocks": 0,
+                                    "Plans": [
+                                      {
+                                        "Node Type": "Index Scan",
+                                        "Index Name": "ix_workspaces_tenant_status",
+                                        "Actual Rows": 1,
+                                        "Actual Loops": 20,
+                                        "Temp Read Blocks": 0,
+                                        "Temp Written Blocks": 0,
+                                        "Shared Hit Blocks": 60,
+                                        "Shared Read Blocks": 0,
+                                        "Plans": []
+                                      },
+                                      {
+                                        "Node Type": "Index Scan",
+                                        "Index Name": "ix_tenants_id",
+                                        "Actual Rows": 1,
+                                        "Actual Loops": 20,
+                                        "Temp Read Blocks": 0,
+                                        "Temp Written Blocks": 0,
+                                        "Shared Hit Blocks": 60,
+                                        "Shared Read Blocks": 0,
+                                        "Plans": []
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "Node Type": "Index Scan",
+                                    "Index Name": "ix_tenant_memberships_user",
+                                    "Actual Rows": 1,
+                                    "Actual Loops": 20,
+                                    "Temp Read Blocks": 0,
+                                    "Temp Written Blocks": 0,
+                                    "Shared Hit Blocks": 60,
+                                    "Shared Read Blocks": 0,
+                                    "Plans": []
+                                  }
+                                ]
+                              },
+                              {
+                                "Node Type": "Index Scan",
+                                "Index Name": "users_pkey",
+                                "Actual Rows": 1,
+                                "Actual Loops": 20,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0,
+                                "Shared Hit Blocks": 60,
+                                "Shared Read Blocks": 0,
+                                "Plans": []
+                              }
+                            ]
+                          },
+                          {
+                            "Node Type": "Index Scan",
+                            "Index Name": "ix_workspace_memberships_user",
+                            "Actual Rows": 1,
+                            "Actual Loops": 20,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 60,
+                            "Shared Read Blocks": 0,
+                            "Plans": []
+                          }
+                        ]
+                      },
+                      {
+                        "Node Type": "Nested Loop",
+                        "Actual Rows": 1,
+                        "Actual Loops": 1,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0,
+                        "Shared Hit Blocks": 6,
+                        "Shared Read Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Index Scan",
+                            "Index Name": "ix_datasets_owner_id",
+                            "Actual Rows": 1,
+                            "Actual Loops": 1,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 3,
+                            "Shared Read Blocks": 0,
+                            "Plans": []
+                          },
+                          {
+                            "Node Type": "Index Scan",
+                            "Index Name": "dataset_workspace_bindings_pkey",
+                            "Actual Rows": 1,
+                            "Actual Loops": 1,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 3,
+                            "Shared Read Blocks": 0,
+                            "Plans": []
+                          }
+                        ]
+                      },
+                      {
+                        "Node Type": "Nested Loop",
+                        "Actual Rows": 0,
+                        "Actual Loops": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0,
+                        "Shared Hit Blocks": 0,
+                        "Shared Read Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Nested Loop",
+                            "Actual Rows": 0,
+                            "Actual Loops": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 0,
+                            "Shared Read Blocks": 0,
+                            "Plans": [
+                              {
+                                "Node Type": "Nested Loop",
+                                "Actual Rows": 0,
+                                "Actual Loops": 0,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0,
+                                "Shared Hit Blocks": 0,
+                                "Shared Read Blocks": 0,
+                                "Plans": [
+                                  {
+                                    "Node Type": "Index Scan",
+                                    "Index Name": "tenant_memberships_pkey",
+                                    "Actual Rows": 0,
+                                    "Actual Loops": 0,
+                                    "Temp Read Blocks": 0,
+                                    "Temp Written Blocks": 0,
+                                    "Shared Hit Blocks": 0,
+                                    "Shared Read Blocks": 0,
+                                    "Plans": []
+                                  },
+                                  {
+                                    "Node Type": "Nested Loop",
+                                    "Actual Rows": 0,
+                                    "Actual Loops": 0,
+                                    "Temp Read Blocks": 0,
+                                    "Temp Written Blocks": 0,
+                                    "Shared Hit Blocks": 0,
+                                    "Shared Read Blocks": 0,
+                                    "Plans": [
+                                      {
+                                        "Node Type": "Index Scan",
+                                        "Index Name": "ix_workspaces_tenant_status",
+                                        "Actual Rows": 0,
+                                        "Actual Loops": 0,
+                                        "Temp Read Blocks": 0,
+                                        "Temp Written Blocks": 0,
+                                        "Shared Hit Blocks": 0,
+                                        "Shared Read Blocks": 0,
+                                        "Plans": []
+                                      },
+                                      {
+                                        "Node Type": "Index Scan",
+                                        "Index Name": "ix_tenants_id",
+                                        "Actual Rows": 0,
+                                        "Actual Loops": 0,
+                                        "Temp Read Blocks": 0,
+                                        "Temp Written Blocks": 0,
+                                        "Shared Hit Blocks": 0,
+                                        "Shared Read Blocks": 0,
+                                        "Plans": []
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "Node Type": "Index Scan",
+                                "Index Name": "users_pkey",
+                                "Actual Rows": 0,
+                                "Actual Loops": 0,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0,
+                                "Shared Hit Blocks": 0,
+                                "Shared Read Blocks": 0,
+                                "Plans": []
+                              }
+                            ]
+                          },
+                          {
+                            "Node Type": "Index Scan",
+                            "Index Name": "ix_workspace_memberships_user",
+                            "Actual Rows": 0,
+                            "Actual Loops": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 0,
+                            "Shared Read Blocks": 0,
+                            "Plans": []
+                          }
+                        ]
+                      },
+                      {
+                        "Node Type": "Nested Loop",
+                        "Actual Rows": 0,
+                        "Actual Loops": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0,
+                        "Shared Hit Blocks": 0,
+                        "Shared Read Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Index Scan",
+                            "Index Name": "ix_datasets_owner_id",
+                            "Actual Rows": 0,
+                            "Actual Loops": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 0,
+                            "Shared Read Blocks": 0,
+                            "Plans": []
+                          },
+                          {
+                            "Node Type": "Index Scan",
+                            "Index Name": "dataset_workspace_bindings_pkey",
+                            "Actual Rows": 0,
+                            "Actual Loops": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 0,
+                            "Shared Read Blocks": 0,
+                            "Plans": []
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "planning_ms": 2.467,
+      "execution_ms": 1.297,
+      "plan": {
+        "Node Type": "Sort",
+        "Actual Rows": 80,
+        "Actual Loops": 1,
+        "Sort Method": "quicksort",
+        "Sort Space Used": 44,
+        "Sort Space Type": "Memory",
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0,
+        "Shared Hit Blocks": 1244,
+        "Shared Read Blocks": 0,
+        "Plans": [
+          {
+            "Node Type": "Subquery Scan",
+            "Actual Rows": 80,
+            "Actual Loops": 1,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Shared Hit Blocks": 1244,
+            "Shared Read Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "WindowAgg",
+                "Actual Rows": 80,
+                "Actual Loops": 1,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0,
+                "Shared Hit Blocks": 1244,
+                "Shared Read Blocks": 0,
+                "Plans": [
+                  {
+                    "Node Type": "Sort",
+                    "Actual Rows": 80,
+                    "Actual Loops": 1,
+                    "Sort Method": "quicksort",
+                    "Sort Space Used": 114,
+                    "Sort Space Type": "Memory",
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0,
+                    "Shared Hit Blocks": 1244,
+                    "Shared Read Blocks": 0,
+                    "Plans": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Index Name": "ix_dataplane_scope",
+                        "Actual Rows": 80,
+                        "Actual Loops": 1,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0,
+                        "Shared Hit Blocks": 1244,
+                        "Shared Read Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Nested Loop",
+                            "Actual Rows": 1,
+                            "Actual Loops": 80,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 1200,
+                            "Shared Read Blocks": 0,
+                            "Plans": [
+                              {
+                                "Node Type": "Nested Loop",
+                                "Actual Rows": 1,
+                                "Actual Loops": 80,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0,
+                                "Shared Hit Blocks": 960,
+                                "Shared Read Blocks": 0,
+                                "Plans": [
+                                  {
+                                    "Node Type": "Nested Loop",
+                                    "Actual Rows": 1,
+                                    "Actual Loops": 80,
+                                    "Temp Read Blocks": 0,
+                                    "Temp Written Blocks": 0,
+                                    "Shared Hit Blocks": 720,
+                                    "Shared Read Blocks": 0,
+                                    "Plans": [
+                                      {
+                                        "Node Type": "Nested Loop",
+                                        "Actual Rows": 1,
+                                        "Actual Loops": 80,
+                                        "Temp Read Blocks": 0,
+                                        "Temp Written Blocks": 0,
+                                        "Shared Hit Blocks": 480,
+                                        "Shared Read Blocks": 0,
+                                        "Plans": [
+                                          {
+                                            "Node Type": "Index Scan",
+                                            "Index Name": "ix_workspaces_tenant_status",
+                                            "Actual Rows": 1,
+                                            "Actual Loops": 80,
+                                            "Temp Read Blocks": 0,
+                                            "Temp Written Blocks": 0,
+                                            "Shared Hit Blocks": 240,
+                                            "Shared Read Blocks": 0,
+                                            "Plans": []
+                                          },
+                                          {
+                                            "Node Type": "Index Scan",
+                                            "Index Name": "ix_tenants_id",
+                                            "Actual Rows": 1,
+                                            "Actual Loops": 80,
+                                            "Temp Read Blocks": 0,
+                                            "Temp Written Blocks": 0,
+                                            "Shared Hit Blocks": 240,
+                                            "Shared Read Blocks": 0,
+                                            "Plans": []
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "Node Type": "Index Scan",
+                                        "Index Name": "ix_tenant_memberships_user",
+                                        "Actual Rows": 1,
+                                        "Actual Loops": 80,
+                                        "Temp Read Blocks": 0,
+                                        "Temp Written Blocks": 0,
+                                        "Shared Hit Blocks": 240,
+                                        "Shared Read Blocks": 0,
+                                        "Plans": []
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "Node Type": "Index Scan",
+                                    "Index Name": "users_pkey",
+                                    "Actual Rows": 1,
+                                    "Actual Loops": 80,
+                                    "Temp Read Blocks": 0,
+                                    "Temp Written Blocks": 0,
+                                    "Shared Hit Blocks": 240,
+                                    "Shared Read Blocks": 0,
+                                    "Plans": []
+                                  }
+                                ]
+                              },
+                              {
+                                "Node Type": "Index Scan",
+                                "Index Name": "ix_workspace_memberships_user",
+                                "Actual Rows": 1,
+                                "Actual Loops": 80,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0,
+                                "Shared Hit Blocks": 240,
+                                "Shared Read Blocks": 0,
+                                "Plans": []
+                              }
+                            ]
+                          },
+                          {
+                            "Node Type": "Nested Loop",
+                            "Actual Rows": 1,
+                            "Actual Loops": 1,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 6,
+                            "Shared Read Blocks": 0,
+                            "Plans": [
+                              {
+                                "Node Type": "Index Scan",
+                                "Index Name": "ix_datasets_owner_id",
+                                "Actual Rows": 1,
+                                "Actual Loops": 1,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0,
+                                "Shared Hit Blocks": 3,
+                                "Shared Read Blocks": 0,
+                                "Plans": []
+                              },
+                              {
+                                "Node Type": "Index Scan",
+                                "Index Name": "dataset_workspace_bindings_pkey",
+                                "Actual Rows": 1,
+                                "Actual Loops": 1,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0,
+                                "Shared Hit Blocks": 3,
+                                "Shared Read Blocks": 0,
+                                "Plans": []
+                              }
+                            ]
+                          },
+                          {
+                            "Node Type": "Nested Loop",
+                            "Actual Rows": 0,
+                            "Actual Loops": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 0,
+                            "Shared Read Blocks": 0,
+                            "Plans": [
+                              {
+                                "Node Type": "Nested Loop",
+                                "Actual Rows": 0,
+                                "Actual Loops": 0,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0,
+                                "Shared Hit Blocks": 0,
+                                "Shared Read Blocks": 0,
+                                "Plans": [
+                                  {
+                                    "Node Type": "Nested Loop",
+                                    "Actual Rows": 0,
+                                    "Actual Loops": 0,
+                                    "Temp Read Blocks": 0,
+                                    "Temp Written Blocks": 0,
+                                    "Shared Hit Blocks": 0,
+                                    "Shared Read Blocks": 0,
+                                    "Plans": [
+                                      {
+                                        "Node Type": "Index Scan",
+                                        "Index Name": "tenant_memberships_pkey",
+                                        "Actual Rows": 0,
+                                        "Actual Loops": 0,
+                                        "Temp Read Blocks": 0,
+                                        "Temp Written Blocks": 0,
+                                        "Shared Hit Blocks": 0,
+                                        "Shared Read Blocks": 0,
+                                        "Plans": []
+                                      },
+                                      {
+                                        "Node Type": "Nested Loop",
+                                        "Actual Rows": 0,
+                                        "Actual Loops": 0,
+                                        "Temp Read Blocks": 0,
+                                        "Temp Written Blocks": 0,
+                                        "Shared Hit Blocks": 0,
+                                        "Shared Read Blocks": 0,
+                                        "Plans": [
+                                          {
+                                            "Node Type": "Index Scan",
+                                            "Index Name": "ix_workspaces_tenant_status",
+                                            "Actual Rows": 0,
+                                            "Actual Loops": 0,
+                                            "Temp Read Blocks": 0,
+                                            "Temp Written Blocks": 0,
+                                            "Shared Hit Blocks": 0,
+                                            "Shared Read Blocks": 0,
+                                            "Plans": []
+                                          },
+                                          {
+                                            "Node Type": "Index Scan",
+                                            "Index Name": "ix_tenants_id",
+                                            "Actual Rows": 0,
+                                            "Actual Loops": 0,
+                                            "Temp Read Blocks": 0,
+                                            "Temp Written Blocks": 0,
+                                            "Shared Hit Blocks": 0,
+                                            "Shared Read Blocks": 0,
+                                            "Plans": []
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "Node Type": "Index Scan",
+                                    "Index Name": "users_pkey",
+                                    "Actual Rows": 0,
+                                    "Actual Loops": 0,
+                                    "Temp Read Blocks": 0,
+                                    "Temp Written Blocks": 0,
+                                    "Shared Hit Blocks": 0,
+                                    "Shared Read Blocks": 0,
+                                    "Plans": []
+                                  }
+                                ]
+                              },
+                              {
+                                "Node Type": "Index Scan",
+                                "Index Name": "ix_workspace_memberships_user",
+                                "Actual Rows": 0,
+                                "Actual Loops": 0,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0,
+                                "Shared Hit Blocks": 0,
+                                "Shared Read Blocks": 0,
+                                "Plans": []
+                              }
+                            ]
+                          },
+                          {
+                            "Node Type": "Nested Loop",
+                            "Actual Rows": 0,
+                            "Actual Loops": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 0,
+                            "Shared Read Blocks": 0,
+                            "Plans": [
+                              {
+                                "Node Type": "Index Scan",
+                                "Index Name": "ix_datasets_owner_id",
+                                "Actual Rows": 0,
+                                "Actual Loops": 0,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0,
+                                "Shared Hit Blocks": 0,
+                                "Shared Read Blocks": 0,
+                                "Plans": []
+                              },
+                              {
+                                "Node Type": "Index Scan",
+                                "Index Name": "dataset_workspace_bindings_pkey",
+                                "Actual Rows": 0,
+                                "Actual Loops": 0,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0,
+                                "Shared Hit Blocks": 0,
+                                "Shared Read Blocks": 0,
+                                "Plans": []
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "planning_ms": 2.949,
+      "execution_ms": 0.161,
+      "plan": {
+        "Node Type": "Subquery Scan",
+        "Actual Rows": 0,
+        "Actual Loops": 1,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0,
+        "Shared Hit Blocks": 22,
+        "Shared Read Blocks": 0,
+        "Plans": [
+          {
+            "Node Type": "WindowAgg",
+            "Actual Rows": 0,
+            "Actual Loops": 1,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Shared Hit Blocks": 22,
+            "Shared Read Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "Sort",
+                "Actual Rows": 0,
+                "Actual Loops": 1,
+                "Sort Method": "quicksort",
+                "Sort Space Used": 25,
+                "Sort Space Type": "Memory",
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0,
+                "Shared Hit Blocks": 22,
+                "Shared Read Blocks": 0,
+                "Plans": [
+                  {
+                    "Node Type": "Bitmap Heap Scan",
+                    "Actual Rows": 0,
+                    "Actual Loops": 1,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0,
+                    "Shared Hit Blocks": 22,
+                    "Shared Read Blocks": 0,
+                    "Plans": [
+                      {
+                        "Node Type": "BitmapAnd",
+                        "Actual Rows": 0,
+                        "Actual Loops": 1,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0,
+                        "Shared Hit Blocks": 22,
+                        "Shared Read Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Bitmap Index Scan",
+                            "Index Name": "ix_dataplane_workspace_id",
+                            "Actual Rows": 231,
+                            "Actual Loops": 1,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 2,
+                            "Shared Read Blocks": 0,
+                            "Plans": []
+                          },
+                          {
+                            "Node Type": "Bitmap Index Scan",
+                            "Index Name": "uq_company_review_revision",
+                            "Actual Rows": 0,
+                            "Actual Loops": 1,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 20,
+                            "Shared Read Blocks": 0,
+                            "Plans": []
+                          }
+                        ]
+                      },
+                      {
+                        "Node Type": "Nested Loop",
+                        "Actual Rows": 0,
+                        "Actual Loops": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0,
+                        "Shared Hit Blocks": 0,
+                        "Shared Read Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Nested Loop",
+                            "Actual Rows": 0,
+                            "Actual Loops": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 0,
+                            "Shared Read Blocks": 0,
+                            "Plans": [
+                              {
+                                "Node Type": "Nested Loop",
+                                "Actual Rows": 0,
+                                "Actual Loops": 0,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0,
+                                "Shared Hit Blocks": 0,
+                                "Shared Read Blocks": 0,
+                                "Plans": [
+                                  {
+                                    "Node Type": "Nested Loop",
+                                    "Actual Rows": 0,
+                                    "Actual Loops": 0,
+                                    "Temp Read Blocks": 0,
+                                    "Temp Written Blocks": 0,
+                                    "Shared Hit Blocks": 0,
+                                    "Shared Read Blocks": 0,
+                                    "Plans": [
+                                      {
+                                        "Node Type": "Index Scan",
+                                        "Index Name": "ix_workspaces_tenant_status",
+                                        "Actual Rows": 0,
+                                        "Actual Loops": 0,
+                                        "Temp Read Blocks": 0,
+                                        "Temp Written Blocks": 0,
+                                        "Shared Hit Blocks": 0,
+                                        "Shared Read Blocks": 0,
+                                        "Plans": []
+                                      },
+                                      {
+                                        "Node Type": "Index Scan",
+                                        "Index Name": "ix_tenants_id",
+                                        "Actual Rows": 0,
+                                        "Actual Loops": 0,
+                                        "Temp Read Blocks": 0,
+                                        "Temp Written Blocks": 0,
+                                        "Shared Hit Blocks": 0,
+                                        "Shared Read Blocks": 0,
+                                        "Plans": []
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "Node Type": "Index Scan",
+                                    "Index Name": "ix_tenant_memberships_user",
+                                    "Actual Rows": 0,
+                                    "Actual Loops": 0,
+                                    "Temp Read Blocks": 0,
+                                    "Temp Written Blocks": 0,
+                                    "Shared Hit Blocks": 0,
+                                    "Shared Read Blocks": 0,
+                                    "Plans": []
+                                  }
+                                ]
+                              },
+                              {
+                                "Node Type": "Index Scan",
+                                "Index Name": "users_pkey",
+                                "Actual Rows": 0,
+                                "Actual Loops": 0,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0,
+                                "Shared Hit Blocks": 0,
+                                "Shared Read Blocks": 0,
+                                "Plans": []
+                              }
+                            ]
+                          },
+                          {
+                            "Node Type": "Index Scan",
+                            "Index Name": "ix_workspace_memberships_user",
+                            "Actual Rows": 0,
+                            "Actual Loops": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 0,
+                            "Shared Read Blocks": 0,
+                            "Plans": []
+                          }
+                        ]
+                      },
+                      {
+                        "Node Type": "Nested Loop",
+                        "Actual Rows": 0,
+                        "Actual Loops": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0,
+                        "Shared Hit Blocks": 0,
+                        "Shared Read Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Index Scan",
+                            "Index Name": "ix_datasets_owner_id",
+                            "Actual Rows": 0,
+                            "Actual Loops": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 0,
+                            "Shared Read Blocks": 0,
+                            "Plans": []
+                          },
+                          {
+                            "Node Type": "Index Scan",
+                            "Index Name": "dataset_workspace_bindings_pkey",
+                            "Actual Rows": 0,
+                            "Actual Loops": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 0,
+                            "Shared Read Blocks": 0,
+                            "Plans": []
+                          }
+                        ]
+                      },
+                      {
+                        "Node Type": "Nested Loop",
+                        "Actual Rows": 0,
+                        "Actual Loops": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0,
+                        "Shared Hit Blocks": 0,
+                        "Shared Read Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Nested Loop",
+                            "Actual Rows": 0,
+                            "Actual Loops": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 0,
+                            "Shared Read Blocks": 0,
+                            "Plans": [
+                              {
+                                "Node Type": "Nested Loop",
+                                "Actual Rows": 0,
+                                "Actual Loops": 0,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0,
+                                "Shared Hit Blocks": 0,
+                                "Shared Read Blocks": 0,
+                                "Plans": [
+                                  {
+                                    "Node Type": "Index Scan",
+                                    "Index Name": "tenant_memberships_pkey",
+                                    "Actual Rows": 0,
+                                    "Actual Loops": 0,
+                                    "Temp Read Blocks": 0,
+                                    "Temp Written Blocks": 0,
+                                    "Shared Hit Blocks": 0,
+                                    "Shared Read Blocks": 0,
+                                    "Plans": []
+                                  },
+                                  {
+                                    "Node Type": "Nested Loop",
+                                    "Actual Rows": 0,
+                                    "Actual Loops": 0,
+                                    "Temp Read Blocks": 0,
+                                    "Temp Written Blocks": 0,
+                                    "Shared Hit Blocks": 0,
+                                    "Shared Read Blocks": 0,
+                                    "Plans": [
+                                      {
+                                        "Node Type": "Index Scan",
+                                        "Index Name": "ix_workspaces_tenant_status",
+                                        "Actual Rows": 0,
+                                        "Actual Loops": 0,
+                                        "Temp Read Blocks": 0,
+                                        "Temp Written Blocks": 0,
+                                        "Shared Hit Blocks": 0,
+                                        "Shared Read Blocks": 0,
+                                        "Plans": []
+                                      },
+                                      {
+                                        "Node Type": "Index Scan",
+                                        "Index Name": "ix_tenants_id",
+                                        "Actual Rows": 0,
+                                        "Actual Loops": 0,
+                                        "Temp Read Blocks": 0,
+                                        "Temp Written Blocks": 0,
+                                        "Shared Hit Blocks": 0,
+                                        "Shared Read Blocks": 0,
+                                        "Plans": []
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "Node Type": "Index Scan",
+                                "Index Name": "users_pkey",
+                                "Actual Rows": 0,
+                                "Actual Loops": 0,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0,
+                                "Shared Hit Blocks": 0,
+                                "Shared Read Blocks": 0,
+                                "Plans": []
+                              }
+                            ]
+                          },
+                          {
+                            "Node Type": "Index Scan",
+                            "Index Name": "ix_workspace_memberships_user",
+                            "Actual Rows": 0,
+                            "Actual Loops": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 0,
+                            "Shared Read Blocks": 0,
+                            "Plans": []
+                          }
+                        ]
+                      },
+                      {
+                        "Node Type": "Nested Loop",
+                        "Actual Rows": 0,
+                        "Actual Loops": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0,
+                        "Shared Hit Blocks": 0,
+                        "Shared Read Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Index Scan",
+                            "Index Name": "ix_datasets_owner_id",
+                            "Actual Rows": 0,
+                            "Actual Loops": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 0,
+                            "Shared Read Blocks": 0,
+                            "Plans": []
+                          },
+                          {
+                            "Node Type": "Index Scan",
+                            "Index Name": "dataset_workspace_bindings_pkey",
+                            "Actual Rows": 0,
+                            "Actual Loops": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Shared Hit Blocks": 0,
+                            "Shared Read Blocks": 0,
+                            "Plans": []
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

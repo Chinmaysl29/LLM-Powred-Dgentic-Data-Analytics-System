@@ -1,0 +1,14 @@
+{
+  "dataset_id": "6093adfa-93d5-44d1-ae86-f8821e8229b4",
+  "dataset_name": "tenant_b_data",
+  "columns": [
+    "item",
+    "amount"
+  ],
+  "records": [
+    {
+      "item": "Book",
+      "amount": 45
+    }
+  ]
+}

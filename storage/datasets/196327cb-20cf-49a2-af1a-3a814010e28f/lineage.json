@@ -1,0 +1,1 @@
+{"dataset_id": "196327cb-20cf-49a2-af1a-3a814010e28f", "current_version": 1, "lineage": [{"version_id": "0d829508-6bec-4d8c-9d78-6309111f3134", "version_number": 1, "parent_version_id": null, "change_type": "initial_upload", "timestamp": "2026-11-11 16:35:13.645883+00:00", "author": "system", "description": "Initial ingestion of sales_categories.csv"}]}

@@ -1,0 +1,18 @@
+{
+  "dataset_id": "2abdc487-8688-4847-baaa-9379c0bafc71",
+  "dataset_name": "audit",
+  "columns": [
+    "region",
+    "amount"
+  ],
+  "records": [
+    {
+      "region": "east",
+      "amount": 10
+    },
+    {
+      "region": "west",
+      "amount": 25
+    }
+  ]
+}

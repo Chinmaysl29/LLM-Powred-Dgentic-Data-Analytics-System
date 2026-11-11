@@ -1,0 +1,44 @@
+﻿{
+    "worker_restarted":  true,
+    "worker_restart_policy":  "unless-stopped",
+    "services":  {
+                     "dataanalyst-postgres-1":  {
+                                                    "status":  "running",
+                                                    "health":  "healthy",
+                                                    "image":  "sha256:933463a6c8eba2b9f5cd414138738cd8d5519cd2c471214c222652f547a66a32"
+                                                },
+                     "dataanalyst-redis-1":  {
+                                                 "status":  "running",
+                                                 "health":  "healthy",
+                                                 "image":  "sha256:2e3eb11462c4e3759e6972678dd051d150ff54b1e60714b3c33b701260172a90"
+                                             },
+                     "dataanalyst-backend-1":  {
+                                                   "status":  "running",
+                                                   "health":  "healthy",
+                                                   "image":  "sha256:010744e006ced2825aa63ebe261f88a4ab15cfa494e257baa2adfc62b6252a9c"
+                                               },
+                     "dataanalyst-dataplane-worker-1":  {
+                                                            "status":  "running",
+                                                            "health":  "healthy",
+                                                            "image":  "sha256:010744e006ced2825aa63ebe261f88a4ab15cfa494e257baa2adfc62b6252a9c"
+                                                        },
+                     "dataanalyst-chromadb-1":  {
+                                                    "status":  "running",
+                                                    "health":  "healthy",
+                                                    "image":  "sha256:e0e78dc7609a599b63c99753442c7d01b1d3d369ce0e3bf3e0540536fec4fa7a"
+                                                },
+                     "dataanalyst-frontend-1":  {
+                                                    "status":  "running",
+                                                    "health":  "healthy",
+                                                    "image":  "sha256:926d8c1d59a2734fbe35d6b41f7008b78123b36c302107b1bbe409810383cd73"
+                                                }
+                 },
+    "worker_memory_bytes":  1073741824,
+    "migration":  "019_dataplane",
+    "pip_check":  "passed",
+    "http":  {
+                 "frontend":  200,
+                 "authenticated_dataplane":  401
+             },
+    "checked_at":  "2026-11-08T17:29:28.1232402Z"
+}

@@ -74,7 +74,9 @@ export const DebugInfoModal: React.FC<DebugInfoModalProps> = ({ isOpen, onClose 
             </div>
             <div className="settings-debug-row">
               <span className="settings-debug-label">Display Resolution</span>
-              <span className="settings-debug-val">{debugData.screenResolution} ({debugData.devicePixelRatio})</span>
+              <span className="settings-debug-val">
+                {debugData.screenResolution} ({debugData.devicePixelRatio})
+              </span>
             </div>
             <div className="settings-debug-row">
               <span className="settings-debug-label">Active Timezone</span>
@@ -87,19 +89,11 @@ export const DebugInfoModal: React.FC<DebugInfoModalProps> = ({ isOpen, onClose 
           </div>
 
           <div className="settings-modal-actions">
-            <button
-              type="button"
-              className="settings-btn-secondary"
-              onClick={handleCopy}
-            >
+            <button type="button" className="settings-btn-secondary" onClick={handleCopy}>
               {copied ? <Check size={14} /> : <Copy size={14} />}
               {copied ? 'Copied' : 'Copy Diagnostics'}
             </button>
-            <button
-              type="button"
-              className="settings-btn-primary"
-              onClick={onClose}
-            >
+            <button type="button" className="settings-btn-primary" onClick={onClose}>
               Close
             </button>
           </div>

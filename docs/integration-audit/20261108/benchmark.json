@@ -1,0 +1,51 @@
+[
+  {
+    "mode": "generate",
+    "rows": 10000000,
+    "seconds": 1.8706916920054937,
+    "bytes": 15653366,
+    "peak_rss_bytes": 114843648
+  },
+  {
+    "rows": [
+      {
+        "region": 0,
+        "value": 12495000000
+      },
+      {
+        "region": 1,
+        "value": 12497500000
+      },
+      {
+        "region": 2,
+        "value": 12500000000
+      },
+      {
+        "region": 3,
+        "value": 12502500000
+      }
+    ],
+    "columns": [
+      "region",
+      "value"
+    ],
+    "result_rows": 4,
+    "result_bytes": 140,
+    "input_bytes": 15653366,
+    "input_rows": 10000000,
+    "elapsed_ms": 109.056,
+    "engine": "duckdb",
+    "engine_version": "2.0.0",
+    "query_hash": "9dc0780f035679583ffd5ba6c5e4ca815e16dfe41bb71e2f9447fab18e8ec412",
+    "result_hash": "eb936a9fe2f8addb36413cdd4ee3f13f8c32d4ef3cebefb178f9edee26316d5c",
+    "sql": "SELECT \"region\", SUM(\"amount\") AS value FROM \"source\" GROUP BY \"region\" ORDER BY \"region\" ASC NULLS LAST LIMIT 101",
+    "parameters": [],
+    "snapshot_hash": "30df308d065bd0e7e56908e1b002f8c86220fefc19109fab65254a1238a80cb8",
+    "mode": "query",
+    "source_rows": 10000000,
+    "oracle_passed": true,
+    "total_seconds": 0.31695438199676573,
+    "source_bytes": 15653366,
+    "peak_rss_bytes": 99762176
+  }
+]

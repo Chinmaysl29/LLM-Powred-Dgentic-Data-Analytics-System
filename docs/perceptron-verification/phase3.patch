@@ -1,0 +1,637 @@
+diff --git a/.gitignore b/.gitignore
+--- a/.gitignore
++++ b/.gitignore
+@@ -49,6 +49,8 @@
+ 
+ # Downloaded model weights belong to persistent runtime storage, not source control.
+ /storage/model-cache/
++# Private dataset-derived golden answers and evaluation reports stay local.
++/storage/learning/golden/
+ 
+ # Node / frontend
+ node_modules/
+diff --git a/backend/app/learning/golden.py b/backend/app/learning/golden.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/learning/golden.py
+@@ -0,0 +1,199 @@
++"""Offline, read-only regression evaluation. Never trains or promotes weights."""
++from __future__ import annotations
++
++from decimal import Decimal, InvalidOperation
++import hashlib
++import json
++from pathlib import Path
++import tempfile
++
++from backend.app.learning.golden_cases import SOURCES, question_contracts
++from backend.app.learning.golden_reference import read_excel, expected_rows
++
++MAX_SOURCE_BYTES = 50_000_000
++ABS_TOLERANCE = Decimal("0.00000001")
++REL_TOLERANCE = Decimal("0.00000000000001")
++
++
++def digest(raw: bytes) -> str:
++    return hashlib.sha256(raw).hexdigest()
++
++
++def encode(value: object) -> bytes:
++    return (json.dumps(value, sort_keys=True, indent=2, allow_nan=False) + "\n").encode()
++
++
++def source_bytes(root: Path, relative: str) -> bytes:
++    path = (root / relative).resolve()
++    if Path(relative).is_absolute() or not path.is_relative_to(root.resolve()) or path.suffix.lower() != ".xlsx":
++        raise ValueError("Golden source must be an Excel file within the source root")
++    if path.stat().st_size > MAX_SOURCE_BYTES:
++        raise ValueError("Golden source exceeds size bound")
++    return path.read_bytes()
++
++
++def freeze(root: Path, sources: dict[str, str], destination: Path) -> str:
++    """Create once. Re-freezing requires a new destination, never overwrite gold."""
++    if set(sources) != set(SOURCES):
++        raise ValueError("All four approved source types are required")
++    records, provenance = {}, {}
++    for name, spec in SOURCES.items():
++        raw = source_bytes(root, sources[name])
++        rows = read_excel(raw, sheet_name=spec["sheet"], header_row=spec["header_row"], columns=spec["columns"])
++        if not rows:
++            raise ValueError("Empty golden source")
++        records[name] = rows
++        provenance[name] = {"path": sources[name], "sha256": digest(raw), "row_count": len(rows),
++                            "sheet": spec["sheet"], "header_row": spec["header_row"], "columns": spec["columns"]}
++    cases = question_contracts()
++    for case in cases:
++        if case["kind"] == "analytics":
++            case["expected_rows"] = [] if case["expected_status"] == "clarification_required" else expected_rows(
++                records[case["source"]], case["operation"], case["metric"], case["dimension"])
++    manifest = {"format": 1, "purpose": "regression_only", "reference": "openpyxl + Decimal, 50-digit context",
++                "absolute_tolerance": str(ABS_TOLERANCE), "relative_tolerance": str(REL_TOLERANCE),
++                "sources": provenance, "cases": cases}
++    raw_manifest = encode(manifest)
++    destination.parent.mkdir(parents=True, exist_ok=True)
++    # x mode protects an existing approved manifest, even under concurrent runs.
++    with destination.open("xb") as stream:
++        stream.write(raw_manifest)
++    return digest(raw_manifest)
++
++
++def load_manifest(path: Path, expected_digest: str) -> dict:
++    if path.stat().st_size > 2_000_000:
++        raise ValueError("Golden manifest exceeds size bound")
++    raw = path.read_bytes()
++    if digest(raw) != expected_digest:
++        raise ValueError("Golden manifest hash mismatch")
++    manifest = json.loads(raw)
++    if (manifest.get("format") != 1 or manifest.get("purpose") != "regression_only"
++            or manifest.get("absolute_tolerance") != str(ABS_TOLERANCE)
++            or manifest.get("relative_tolerance") != str(REL_TOLERANCE)
++            or set(manifest.get("sources", {})) != set(SOURCES)):
++        raise ValueError("Unsupported golden manifest contract")
++    contracts = question_contracts()
++    cases = manifest.get("cases", [])
++    if len(cases) != len(contracts) or len(cases) < 30:
++        raise ValueError("Incomplete golden coverage")
++    for case, contract in zip(cases, contracts):
++        if {key: value for key, value in case.items() if key != "expected_rows"} != contract:
++            raise ValueError("Golden case contract changed or duplicated")
++        if case["kind"] == "analytics" and not isinstance(case.get("expected_rows"), list):
++            raise ValueError("Golden answer is missing")
++    for name, source in manifest["sources"].items():
++        spec = SOURCES[name]
++        if any(source.get(key) != spec[key] for key in ("columns", "sheet", "header_row")):
++            raise ValueError("Golden source contract changed")
++        if type(source.get("row_count")) is not int or source["row_count"] <= 0:
++            raise ValueError("Golden source row count is invalid")
++    return manifest
++
++
++def same_rows(actual: list[dict], expected: list[dict], numeric_column: str | None,
++              dimension: str | None, *, ordered: bool = False) -> bool:
++    if len(actual) != len(expected):
++        return False
++    if dimension and not ordered:
++        actual = sorted(actual, key=lambda row: str(row.get(dimension)))
++        expected = sorted(expected, key=lambda row: str(row.get(dimension)))
++    for left, right in zip(actual, expected):
++        if set(left) != set(right):
++            return False
++        for key, target in right.items():
++            value = left[key]
++            if key != numeric_column:
++                if value != target:
++                    return False
++            elif target is None or value is None:
++                if target is not None or value is not None:
++                    return False
++            else:
++                try:
++                    if isinstance(value, bool):
++                        return False
++                    a, b = Decimal(str(value)), Decimal(str(target))
++                    if not a.is_finite() or not b.is_finite() or abs(a - b) > max(ABS_TOLERANCE, abs(b) * REL_TOLERANCE):
++                        return False
++                except (InvalidOperation, ValueError):
++                    return False
++    return True
++
++
++async def evaluate(root: Path, manifest_path: Path, expected_digest: str, candidate_payload: dict | None = None) -> dict:
++    # Imports are intentionally absent from the independent freeze/reference path.
++    from backend.app.learning.features import extract, bootstrap_prior, feature_version
++    from backend.app.learning.perceptron import AveragedPerceptron
++    from backend.app.services.intent_classification_service import IntentRegistry
++    from backend.app.services.natural_language_analytics import NaturalLanguageAnalyticsService
++    from backend.app.services.tabular_loader import load_tabular_dataframe
++
++    manifest = load_manifest(manifest_path, expected_digest)
++    model = bootstrap_prior() if candidate_payload is None else AveragedPerceptron.from_payload(candidate_payload, feature_version())
++    candidate_hash = digest(encode(model.to_payload(feature_version())))
++    frames, source_hashes = {}, {}
++    # Read each original once and evaluate the exact bytes whose hash was checked.
++    with tempfile.TemporaryDirectory(prefix="perceptron-golden-") as directory:
++        for name, source in manifest["sources"].items():
++            raw = source_bytes(root, source["path"])
++            if digest(raw) != source["sha256"]:
++                raise ValueError("Golden source hash mismatch")
++            path = Path(directory) / f"{name}.xlsx"
++            path.write_bytes(raw)
++            frame = load_tabular_dataframe(path)
++            if len(frame) != source["row_count"] or list(frame.columns) != source["columns"]:
++                raise ValueError("Application loader disagrees with frozen source structure")
++            frames[name] = frame
++            source_hashes[name] = source["sha256"]
++
++    registry, analytics = IntentRegistry(), NaturalLanguageAnalyticsService()
++    results = []
++    for case in manifest["cases"]:
++        frame = frames[case["source"]]
++        result = {"id": case["id"], "kind": case["kind"], "passed": False}
++        if case["kind"] == "intent":
++            matched, _, _ = registry.match_heuristic(case["question"])
++            baseline = matched.name if matched else "unknown"
++            schema = {"columns": list(frame.columns), "dtypes": {c: str(t) for c, t in frame.dtypes.items()}}
++            prediction = model.predict(extract(case["question"], schema))
++            result.update(expected_intent=case["expected_intent"], baseline_intent=baseline,
++                shadow_intent=prediction.intent, abstained=prediction.abstained,
++                baseline_passed=baseline == case["expected_intent"], passed=prediction.intent == case["expected_intent"])
++        else:
++            # This invokes the existing deterministic executor, not the learner.
++            # Check the actual chat bypass predicate as well as its operation.
++            try:
++                if not analytics.is_analytics_query(case["question"]):
++                    raise ValueError("Golden question did not select the analytics route")
++                output = await analytics.analyze(case["question"], dataframe=frame.copy(deep=True))
++                numeric = "records" if case["operation"] == "count" else case["metric"]
++                result["passed"] = (output.get("status") == case["expected_status"]
++                    and (output.get("plan") or {}).get("operation") == case["operation"]
++                    and same_rows(output.get("data", []), case["expected_rows"], numeric, case["dimension"],
++                                  ordered=case["operation"] == "top"))
++                result["status"] = output.get("status")
++            except Exception:
++                result["error"] = "ANALYTICS_EXECUTION_FAILED"
++        results.append(result)
++    intents = [row for row in results if row["kind"] == "intent"]
++    answers = [row for row in results if row["kind"] == "analytics"]
++    baseline_correct = sum(row["baseline_passed"] for row in intents)
++    candidate_correct = sum(row["passed"] for row in intents)
++    regressions = [row["id"] for row in intents if row["baseline_passed"] and not row["passed"]]
++    code_paths = [Path(__file__), Path(__file__).with_name("golden_cases.py"),
++                  Path(__file__).with_name("golden_reference.py"), Path(__file__).with_name("features.py"),
++                  Path(__file__).with_name("perceptron.py"),
++                  Path(__file__).parents[1] / "services/natural_language_analytics.py",
++                  Path(__file__).parents[1] / "services/tabular_loader.py",
++                  Path(__file__).parents[1] / "services/intent_classification_service.py"]
++    code_digest = digest(b"".join(path.read_bytes() for path in code_paths))
++    return {"format": 1, "manifest_digest": expected_digest, "candidate_digest": candidate_hash,
++        "feature_version": feature_version(), "code_digest": code_digest, "source_hashes": source_hashes,
++        "case_count": len(results), "intent_count": len(intents), "answer_count": len(answers),
++        "baseline_correct": baseline_correct, "candidate_correct": candidate_correct,
++        "baseline_accuracy": baseline_correct / len(intents), "candidate_accuracy": candidate_correct / len(intents),
++        "answers_passed": sum(row["passed"] for row in answers), "abstentions": sum(row["abstained"] for row in intents),
++        "regressions": regressions, "beats_baseline": candidate_correct > baseline_correct,
++        "quality_gate_passed": all(row["passed"] for row in results) and not regressions and candidate_correct >= baseline_correct,
++        "promotion_performed": False, "training_performed": False, "cases": results}
+diff --git a/backend/app/learning/golden_cases.py b/backend/app/learning/golden_cases.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/learning/golden_cases.py
+@@ -0,0 +1,65 @@
++"""Curated question contracts for the four user-approved saved spreadsheets.
++
++Labels follow the meaning of each question, never classifier output. Expected
++numbers are computed only by the independent reference oracle during freezing.
++"""
++
++SOURCES = {
++    "cashflow": {"sheet": "Cash Flow", "header_row": 1,
++        "columns": ["id", "company_id", "year", "operating_activity", "investing_activity", "financing_activity", "net_cash_flow"],
++        "metrics": ["net_cash_flow", "operating_activity", "financing_activity"]},
++    "profitandloss": {"sheet": "Profit & Loss", "header_row": 1,
++        "columns": ["id", "company_id", "year", "sales", "expenses", "operating_profit", "opm_percentage", "other_income", "interest", "depreciation", "profit_before_tax", "tax_percentage", "net_profit", "eps", "dividend_payout"],
++        "metrics": ["sales", "net_profit", "operating_profit"]},
++    "balancesheet": {"sheet": "Balance Sheet", "header_row": 1,
++        "columns": ["id", "company_id", "year", "equity_capital", "reserves", "borrowings", "other_liabilities", "total_liabilities", "fixed_assets", "cwip", "investments", "other_asset", "total_assets"],
++        "metrics": ["total_assets", "borrowings", "equity_capital"]},
++    "prosandcons": {"sheet": "Pros & Cons", "header_row": 1,
++        "columns": ["id", "company_id", "pros", "cons"], "metrics": []},
++}
++
++# These test the canonical intent API, which is distinct from the chat analytics bypass.
++INTENT_QUESTIONS = [
++    ("dataset_overview", "prosandcons", "Describe the dataset schema", "Summarize the pros and cons dataset"),
++    ("eda_analysis", "profitandloss", "Perform exploratory data analysis on sales", "Explore the data on net_profit"),
++    ("trend_analysis", "cashflow", "Show net_cash_flow trends over time", "Analyze historical operating_activity trends"),
++    ("comparison_analysis", "balancesheet", "Compare borrowings with reserves", "Comparison between fixed_assets and investments"),
++    ("distribution_analysis", "profitandloss", "Show the distribution of sales", "Histogram of operating_profit"),
++    ("correlation_analysis", "balancesheet", "Correlation between total_assets and borrowings", "Is there a correlation between reserves and fixed_assets?"),
++    ("ranking_analysis", "cashflow", "Top 5 company_id by net_cash_flow", "Bottom 5 company_id by operating_activity"),
++    ("forecasting", "profitandloss", "Forecast sales next quarter", "Predict net_profit for next year"),
++    ("anomaly_detection", "cashflow", "Find outliers in financing_activity", "Detect anomalies in net_cash_flow"),
++    ("dashboard_generation", "balancesheet", "Create dashboard with total_assets and borrowings", "Build a dashboard for equity_capital"),
++    ("report_generation", "profitandloss", "Generate report on sales and expenses", "Create a report about net_profit"),
++    ("recommendation_generation", "cashflow", "Give me recommendations about net_cash_flow", "Suggest strategies to improve operating_activity"),
++    ("what_if_analysis", "profitandloss", "What if we increase expenses by 10 percent?", "Simulate the impact of lower sales"),
++    ("sql_query", "balancesheet", "Write a SQL query for total_assets by company_id", "SELECT company_id, borrowings FROM balancesheet"),
++    ("rag_query", "prosandcons", "Search documentation explaining the pros and cons fields", "Look up in docs the company_id definition"),
++    ("data_quality", "cashflow", "Find duplicate records by id", "Check data quality for missing financing_activity values"),
++    ("unknown", "prosandcons", "Hello", "Tell me a bedtime story about a dragon"),
++]
++
++
++def question_contracts() -> list[dict]:
++    cases = []
++    for source, spec in SOURCES.items():
++        for metric in spec["metrics"]:
++            for operation, phrase in (("sum", "total"), ("average", "average"), ("min", "minimum"), ("max", "maximum")):
++                cases.append(dict(id=f"{source}-{metric}-{operation}", kind="analytics", source=source,
++                    question=f"show {phrase} {metric}", expected_status="complete", operation=operation,
++                    metric=metric, dimension=None))
++        cases.append(dict(id=f"{source}-count", kind="analytics", source=source,
++            question="count records", expected_status="complete", operation="count", metric=None, dimension=None))
++        cases.append(dict(id=f"{source}-clarification", kind="analytics", source=source,
++            question="show total", expected_status="clarification_required", operation="sum", metric=None, dimension=None))
++        if spec["metrics"]:
++            metric = spec["metrics"][0]
++            for operation, phrase in (("sum", "total"), ("top", "top 5")):
++                cases.append(dict(id=f"{source}-group-{operation}", kind="analytics", source=source,
++                    question=f"show {phrase} {metric} by company_id", expected_status="complete",
++                    operation=operation, metric=metric, dimension="company_id"))
++    for label, source, *questions in INTENT_QUESTIONS:
++        for index, question in enumerate(questions, 1):
++            cases.append(dict(id=f"intent-{label}-{index}", kind="intent", source=source,
++                              question=question, expected_intent=label))
++    return cases
+diff --git a/backend/app/learning/golden_reference.py b/backend/app/learning/golden_reference.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/learning/golden_reference.py
+@@ -0,0 +1,85 @@
++"""Independent Excel/Decimal oracle for golden fixtures; no app analytics imports."""
++from __future__ import annotations
++
++from collections import defaultdict
++from decimal import Decimal, InvalidOperation, localcontext
++from io import BytesIO
++import re
++from typing import Any
++
++from openpyxl import load_workbook
++
++
++def read_excel(raw: bytes, *, sheet_name: str, header_row: int, columns: list[str]) -> list[dict[str, Any]]:
++    book = load_workbook(BytesIO(raw), read_only=True, data_only=True)
++    try:
++        sheet = book[sheet_name]
++        values = sheet.iter_rows(min_row=header_row + 1, values_only=True)
++        if list(next(values)) != columns:
++            raise ValueError("Golden source header changed")
++        return [dict(zip(columns, row)) for row in values if any(value is not None for value in row)]
++    finally:
++        book.close()
++
++
++def number(value: Any) -> Decimal | None:
++    if value is None:
++        return None
++    if isinstance(value, bool):
++        raise ValueError("Boolean is not a financial measure")
++    if isinstance(value, str):
++        value = value.strip()
++        if value.casefold() in {"", "na", "n/a", "null", "none", "-", "--"}:
++            return None
++        negative = value.startswith("(") and value.endswith(")")
++        if negative:
++            value = "-" + value[1:-1]
++        value = re.sub(r"(?:Rs\.?|INR|USD|EUR|GBP|[₹$€£])\s*", "", value, flags=re.I)
++        value = value.removesuffix("%").replace(",", "")
++    try:
++        result = Decimal(str(value))
++    except InvalidOperation as exc:
++        raise ValueError("Unrecognized financial source value") from exc
++    if not result.is_finite():
++        raise ValueError("Non-finite source measure")
++    return result
++
++
++def expected_rows(rows: list[dict], operation: str, metric: str | None = None,
++                  dimension: str | None = None, limit: int = 5) -> list[dict]:
++    """Named operations only; never evaluate a formula supplied as text."""
++    if operation == "count":
++        return [{"records": str(len(rows))}]
++    if operation not in {"sum", "average", "min", "max", "top"} or not metric:
++        raise ValueError("Unsupported golden reference operation")
++    groups: dict[Any, list[Decimal]] = defaultdict(list)
++    if dimension is None:
++        groups[None] = []
++    for row in rows:
++        key = row[dimension] if dimension else None
++        groups[key]  # Retain groups whose measures are all missing.
++        value = number(row[metric])
++        if value is not None:
++            groups[key].append(value)
++    output = []
++    with localcontext() as context:
++        context.prec = 50
++        for key, values in groups.items():
++            if not values:
++                result = None
++            elif operation in {"sum", "top"}:
++                result = sum(values, Decimal(0))
++            elif operation == "average":
++                result = sum(values, Decimal(0)) / len(values)
++            elif operation == "min":
++                result = min(values)
++            else:
++                result = max(values)
++            item = {metric: None if result is None else str(result)}
++            if dimension:
++                item[dimension] = key
++            output.append(item)
++    if operation == "top":
++        output.sort(key=lambda row: (row[metric] is None, -Decimal(row[metric]) if row[metric] is not None else Decimal(0), str(row[dimension])))
++        output = output[:limit]
++    return output
+diff --git a/scripts/perceptron_golden.py b/scripts/perceptron_golden.py
+new file mode 100644
+--- /dev/null
++++ b/scripts/perceptron_golden.py
+@@ -0,0 +1,52 @@
++"""Freeze/evaluate approved local golden sources without DB access or training."""
++import argparse
++import asyncio
++import json
++from pathlib import Path
++import sys
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT))
++
++
++def main() -> int:
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("command", choices=("freeze", "evaluate"))
++    parser.add_argument("--root", type=Path, default=ROOT)
++    parser.add_argument("--manifest", type=Path, required=True)
++    parser.add_argument("--source", action="append", default=[], help="name=relative/path.xlsx; repeat for each of four sources")
++    parser.add_argument("--manifest-sha256", help="Reviewed digest emitted by freeze")
++    parser.add_argument("--candidate", type=Path, help="Validated JSON inference snapshot; default is the fixed seed")
++    parser.add_argument("--report", type=Path)
++    args = parser.parse_args()
++    from backend.app.learning.golden import freeze, evaluate, encode
++    try:
++        if args.command == "freeze":
++            sources = dict(item.split("=", 1) for item in args.source)
++            if len(sources) != len(args.source):
++                raise ValueError("Duplicate source key")
++            value = freeze(args.root, sources, args.manifest)
++            print(json.dumps({"manifest_sha256": value, "status": "frozen"}))
++            return 0
++        if not args.manifest_sha256 or not args.report:
++            parser.error("evaluate requires --manifest-sha256 and --report")
++        payload = None
++        if args.candidate:
++            if args.candidate.stat().st_size > 1_000_000:
++                raise ValueError("Candidate exceeds size bound")
++            payload = json.loads(args.candidate.read_bytes())
++        result = asyncio.run(evaluate(args.root, args.manifest, args.manifest_sha256, payload))
++        args.report.parent.mkdir(parents=True, exist_ok=True)
++        with args.report.open("xb") as stream:
++            stream.write(encode(result))
++        print(json.dumps({key: result[key] for key in ("case_count", "intent_count", "answer_count", "baseline_correct",
++            "candidate_correct", "answers_passed", "quality_gate_passed", "promotion_performed")}))
++        return 0 if result["quality_gate_passed"] else 1
++    except (ValueError, OSError, KeyError, TypeError):
++        # Do not expose raw data, workbook contents, or credentials in exceptions.
++        print("Golden evaluation refused: check input integrity, source contract and output paths.", file=sys.stderr)
++        return 2
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/backend/tests/test_perceptron_golden.py b/backend/tests/test_perceptron_golden.py
+new file mode 100644
+--- /dev/null
++++ b/backend/tests/test_perceptron_golden.py
+@@ -0,0 +1,199 @@
++"""Offline regression integrity tests. All workbooks here contain synthetic data."""
++import asyncio
++from decimal import Decimal
++import json
++
++import pytest
++from openpyxl import Workbook
++
++from backend.app.learning.golden import freeze, evaluate, load_manifest, encode, digest, same_rows, source_bytes
++from backend.app.learning.golden_cases import SOURCES, question_contracts
++from backend.app.learning.golden_reference import expected_rows, number
++from backend.app.learning.features import bootstrap_prior, feature_version
++from backend.app.learning.perceptron import AveragedPerceptron, LABELS
++
++
++@pytest.fixture
++def frozen(tmp_path):
++    sources = {}
++    for name, spec in SOURCES.items():
++        book = Workbook()
++        sheet = book.active
++        sheet.title = spec["sheet"]
++        sheet.append(["Synthetic financial example"])
++        sheet.append(spec["columns"])
++        for index in range(1, 13):
++            values = {column: index * (position + 1) + 0.25 for position, column in enumerate(spec["columns"])}
++            values.update(id=index, company_id=f"company-{index % 6}", year=f"Mar {2020 + index}",
++                          pros="Synthetic positive", cons="Synthetic negative")
++            if index == 3:
++                for metric in spec["metrics"]:
++                    values[metric] = None
++            sheet.append([values[column] for column in spec["columns"]])
++        path = tmp_path / f"{name}.xlsx"
++        book.save(path)
++        book.close()
++        sources[name] = path.name
++    path = tmp_path / "manifest.json"
++    fingerprint = freeze(tmp_path, sources, path)
++    return tmp_path, sources, path, fingerprint
++
++
++def test_independent_decimal_reference():
++    rows = [{"company": "a", "amount": "$1,000.10"}, {"company": "a", "amount": "(20.05)"},
++            {"company": "b", "amount": None}, {"company": None, "amount": "2.45"}]
++    assert expected_rows(rows, "sum", "amount") == [{"amount": "982.50"}]
++    assert expected_rows(rows, "average", "amount") == [{"amount": "327.50"}]
++    assert expected_rows(rows, "min", "amount") == [{"amount": "-20.05"}]
++    assert expected_rows(rows, "max", "amount") == [{"amount": "1000.10"}]
++    assert expected_rows(rows, "count") == [{"records": "4"}]
++    assert expected_rows(rows, "top", "amount", "company", limit=2) == [
++        {"company": "a", "amount": "980.05"}, {"company": None, "amount": "2.45"}]
++    assert expected_rows(rows[2:3], "sum", "amount") == [{"amount": None}]
++    assert number("12.5%") == Decimal("12.5")
++    assert number("\u20b91,200.50") == Decimal("1200.50")
++
++
++@pytest.mark.parametrize("value", [True, "NaN", "Infinity", "not a number", "__import__('os').system('echo bad')"])
++def test_reference_rejects_invalid_measures(value):
++    with pytest.raises(ValueError):
++        number(value)
++
++
++def test_reference_freeze_has_no_classifier_or_executor_dependency(frozen, monkeypatch):
++    from backend.app.services.natural_language_analytics import NaturalLanguageAnalyticsService
++    from backend.app.services.intent_classification_service import IntentRegistry
++
++    def forbidden(*args, **kwargs):
++        raise AssertionError("Reference must not ask implementation for expected answers")
++
++    monkeypatch.setattr(NaturalLanguageAnalyticsService, "analyze", forbidden)
++    monkeypatch.setattr(IntentRegistry, "match_heuristic", forbidden)
++    root, sources, path, fingerprint = frozen
++    second = root / "second.json"
++    assert freeze(root, sources, second) == fingerprint
++    assert path.read_bytes() == second.read_bytes()
++    manifest = load_manifest(path, fingerprint)
++    assert len(manifest["cases"]) == 84
++    assert {c["expected_intent"] for c in manifest["cases"] if c["kind"] == "intent"} == set(LABELS)
++    with pytest.raises(FileExistsError):
++        freeze(root, sources, path)
++
++
++def test_evaluation_is_deterministic_read_only_and_never_trains(frozen, monkeypatch):
++    root, sources, path, fingerprint = frozen
++    before = {name: (root / name).read_bytes() for name in sources.values()}
++    payload = bootstrap_prior().to_payload(feature_version())
++    serialized = encode(payload)
++
++    def forbidden(*args, **kwargs):
++        raise AssertionError("Golden examples must never train weights")
++
++    monkeypatch.setattr(AveragedPerceptron, "update", forbidden)
++    first = asyncio.run(evaluate(root, path, fingerprint, payload))
++    assert first == asyncio.run(evaluate(root, path, fingerprint, payload))
++    assert first["case_count"] == 84 and first["answer_count"] == first["answers_passed"] == 50
++    assert first["intent_count"] == 34
++    assert not first["training_performed"] and not first["promotion_performed"]
++    assert encode(payload) == serialized
++    assert before == {name: (root / name).read_bytes() for name in sources.values()}
++    assert all("question" not in item and "expected_rows" not in item for item in first["cases"])
++
++
++def test_weak_candidate_fails_gate(frozen):
++    root, _, path, fingerprint = frozen
++    payload = AveragedPerceptron().to_payload(feature_version())
++    report = asyncio.run(evaluate(root, path, fingerprint, payload))
++    assert not report["quality_gate_passed"] and not report["beats_baseline"]
++    assert report["regressions"] and report["candidate_correct"] == 2
++    assert report["answers_passed"] == 50
++
++
++def test_wrong_answer_and_executor_error_fail_gate(frozen, monkeypatch):
++    from backend.app.services.natural_language_analytics import NaturalLanguageAnalyticsService
++    original = NaturalLanguageAnalyticsService.analyze
++
++    async def broken(self, question, **kwargs):
++        if question == "count records":
++            raise RuntimeError("private source data must not appear in report")
++        result = await original(self, question, **kwargs)
++        if question == "show total net_cash_flow":
++            result["data"][0]["net_cash_flow"] += 100
++        return result
++
++    monkeypatch.setattr(NaturalLanguageAnalyticsService, "analyze", broken)
++    root, _, path, fingerprint = frozen
++    report = asyncio.run(evaluate(root, path, fingerprint))
++    assert not report["quality_gate_passed"] and report["answers_passed"] == 45
++    assert "private source" not in json.dumps(report)
++
++
++@pytest.mark.parametrize("change", ["digest", "coverage", "duplicate", "label", "tolerance", "source"])
++def test_rejects_tampered_contract(frozen, change):
++    root, _, path, fingerprint = frozen
++    manifest = json.loads(path.read_bytes())
++    if change == "coverage":
++        manifest["cases"].pop()
++    elif change == "duplicate":
++        manifest["cases"][1] = manifest["cases"][0]
++    elif change == "label":
++        manifest["cases"][-1]["expected_intent"] = "sql_query"
++    elif change == "tolerance":
++        manifest["absolute_tolerance"] = "1000000"
++    elif change == "source":
++        manifest["sources"]["cashflow"]["columns"] = ["wrong"]
++    else:
++        fingerprint = "0" * 64
++    if change != "digest":
++        path.write_bytes(encode(manifest))
++        fingerprint = digest(path.read_bytes())
++    with pytest.raises(ValueError):
++        load_manifest(path, fingerprint)
++
++
++def test_source_bytes_are_hash_pinned(frozen):
++    root, sources, path, fingerprint = frozen
++    with (root / sources["cashflow"]).open("ab") as stream:
++        stream.write(b"changed")
++    with pytest.raises(ValueError, match="source hash"):
++        asyncio.run(evaluate(root, path, fingerprint))
++
++
++def test_outside_root_and_symlink_refused(tmp_path):
++    outside = tmp_path / "outside.xlsx"
++    outside.write_bytes(b"not opened")
++    inside = tmp_path / "inside"
++    inside.mkdir()
++    for relative in ("../outside.xlsx", str(outside)):
++        with pytest.raises(ValueError):
++            source_bytes(inside, relative)
++    (inside / "link.xlsx").symlink_to(outside)
++    with pytest.raises(ValueError):
++        source_bytes(inside, "link.xlsx")
++
++
++def test_invalid_candidate_refused(frozen):
++    root, _, path, fingerprint = frozen
++    payload = bootstrap_prior().to_payload(feature_version())
++    payload["feature_version"] = "incompatible"
++    with pytest.raises(ValueError):
++        asyncio.run(evaluate(root, path, fingerprint, payload))
++
++
++@pytest.mark.parametrize("actual,expected,passed", [
++    (0, "0", True), (None, None, True), (None, "0", False),
++    (True, "1", False), (float("nan"), "0", False),
++    (1.000000001, "1", True), (1.01, "1", False),
++    (1000000000000.005, "1000000000000", True),
++])
++def test_numeric_tolerance(actual, expected, passed):
++    assert same_rows([{"v": actual}], [{"v": expected}], "v", None) is passed
++
++
++def test_group_membership_cardinality_and_ranking_order():
++    rows = [{"group": "a", "v": 20}, {"group": "b", "v": 10}]
++    assert same_rows(rows[::-1], rows, "v", "group")
++    assert not same_rows(rows[::-1], rows, "v", "group", ordered=True)
++    assert not same_rows(rows[:1], rows, "v", "group")
++    assert not same_rows([{"group": "c", "v": 20}, rows[1]], rows, "v", "group")
++    assert not same_rows([{"v": 20}, rows[1]], rows, "v", "group")

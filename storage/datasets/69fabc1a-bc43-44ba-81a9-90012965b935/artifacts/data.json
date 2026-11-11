@@ -1,0 +1,26 @@
+{
+  "dataset_id": "69fabc1a-bc43-44ba-81a9-90012965b935",
+  "dataset_name": "Inventory JSON Test",
+  "columns": [
+    "sku",
+    "name",
+    "stock"
+  ],
+  "records": [
+    {
+      "sku": "SKU-001",
+      "name": "Keyboard",
+      "stock": 45
+    },
+    {
+      "sku": "SKU-002",
+      "name": "Mouse",
+      "stock": 120
+    },
+    {
+      "sku": "SKU-003",
+      "name": "Monitor",
+      "stock": 15
+    }
+  ]
+}

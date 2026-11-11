@@ -12,8 +12,9 @@
  * - No fake statistics, no placeholder charts
  */
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useAsyncResource } from '../../hooks/useAsyncResource';
 import {
   BarChart3,
   TrendingUp,
@@ -91,12 +92,18 @@ function SkeletonCard({ span = 'eda-span-4' }: { span?: string }) {
     <div className={`eda-card ${span}`} aria-hidden="true">
       <div className="eda-card-header">
         <div className="eda-card-header-left">
-          <div className="eda-skeleton eda-skeleton-h12 eda-skeleton-w60" style={{ marginBottom: 6 }} />
+          <div
+            className="eda-skeleton eda-skeleton-h12 eda-skeleton-w60"
+            style={{ marginBottom: 6 }}
+          />
           <div className="eda-skeleton eda-skeleton-h20 eda-skeleton-w80" />
         </div>
       </div>
       <div className="eda-card-body">
-        <div className="eda-skeleton eda-skeleton-h80 eda-skeleton-w100" style={{ borderRadius: 6 }} />
+        <div
+          className="eda-skeleton eda-skeleton-h80 eda-skeleton-w100"
+          style={{ borderRadius: 6 }}
+        />
       </div>
     </div>
   );
@@ -105,13 +112,7 @@ function SkeletonCard({ span = 'eda-span-4' }: { span?: string }) {
 // ---------------------------------------------------------------------------
 // Card 01 — Dataset Overview
 // ---------------------------------------------------------------------------
-function Card01Overview({
-  results,
-  datasetName,
-}: {
-  results: EDAResults;
-  datasetName: string;
-}) {
+function Card01Overview({ results, datasetName }: { results: EDAResults; datasetName: string }) {
   const s = results.dataset_summary;
   return (
     <div className="eda-card eda-span-4">
@@ -119,7 +120,9 @@ function Card01Overview({
         <div className="eda-card-header-left">
           <p className="eda-card-eyebrow">01 / DATASET OVERVIEW</p>
           <h2 className="eda-card-title">Your data, at a glance.</h2>
-          <p className="eda-card-desc" title={datasetName}>{shortLabel(datasetName, 28)}</p>
+          <p className="eda-card-desc" title={datasetName}>
+            {shortLabel(datasetName, 28)}
+          </p>
         </div>
         <span className="eda-card-badge">{s.dataset_type.toUpperCase()}</span>
       </div>
@@ -140,14 +143,20 @@ function Card01Overview({
       <div className="eda-section-divider" />
       <div className="eda-card-body">
         <div className="eda-pill-list">
-          {s.numeric_columns.slice(0, 4).map(c => (
-            <span key={c} className="eda-pill">{c}</span>
+          {s.numeric_columns.slice(0, 4).map((c) => (
+            <span key={c} className="eda-pill">
+              {c}
+            </span>
           ))}
-          {s.categorical_columns.slice(0, 3).map(c => (
-            <span key={c} className="eda-pill eda-pill-lime">{c}</span>
+          {s.categorical_columns.slice(0, 3).map((c) => (
+            <span key={c} className="eda-pill eda-pill-lime">
+              {c}
+            </span>
           ))}
           {s.numeric_columns.length + s.categorical_columns.length > 7 && (
-            <span className="eda-pill">+{s.numeric_columns.length + s.categorical_columns.length - 7} more</span>
+            <span className="eda-pill">
+              +{s.numeric_columns.length + s.categorical_columns.length - 7} more
+            </span>
           )}
         </div>
         {s.is_sampled && (
@@ -166,10 +175,12 @@ function Card01Overview({
 function Card02Quality({ results }: { results: EDAResults }) {
   const mv = results.missing_values;
   const totalCols = results.dataset_summary.column_count;
-  const completeness = results.dataset_summary.row_count > 0 && totalCols > 0
-    ? 100 - mv.missing_percentage : null;
-  const completeColumns = totalCols > 0 && results.dataset_summary.row_count > 0
-    ? ((totalCols - mv.affected_columns_count) / totalCols) * 100 : null;
+  const completeness =
+    results.dataset_summary.row_count > 0 && totalCols > 0 ? 100 - mv.missing_percentage : null;
+  const completeColumns =
+    totalCols > 0 && results.dataset_summary.row_count > 0
+      ? ((totalCols - mv.affected_columns_count) / totalCols) * 100
+      : null;
   const metrics = [
     { name: 'Non-missing cells', value: completeness },
     { name: 'Columns without missing values', value: completeColumns },
@@ -182,12 +193,20 @@ function Card02Quality({ results }: { results: EDAResults }) {
           <p className="eda-card-eyebrow">02 / DATA QUALITY</p>
           <h2 className="eda-card-title">Check the foundations.</h2>
         </div>
-        <CheckCircle2 size={16} color={completeness != null && completeness >= 90 ? '#6ee7b7' : '#f59e0b'} />
+        <CheckCircle2
+          size={16}
+          color={completeness != null && completeness >= 90 ? '#6ee7b7' : '#f59e0b'}
+        />
       </div>
       <div className="eda-card-body">
         <div className="eda-quality-row">
-          {metrics.map(m => {
-            const cls = m.value != null && m.value >= 90 ? '' : m.value != null && m.value >= 70 ? 'eda-quality-fill-warn' : 'eda-quality-fill-err';
+          {metrics.map((m) => {
+            const cls =
+              m.value != null && m.value >= 90
+                ? ''
+                : m.value != null && m.value >= 70
+                  ? 'eda-quality-fill-warn'
+                  : 'eda-quality-fill-err';
             return (
               <div key={m.name} className="eda-quality-item">
                 <div className="eda-quality-label-row">
@@ -206,7 +225,8 @@ function Card02Quality({ results }: { results: EDAResults }) {
         </div>
         <p style={{ fontSize: 10, color: '#5A6A6A', marginTop: 12, lineHeight: 1.5 }}>
           {mv.affected_columns_count} of {totalCols} columns have missing values.
-          {mv.total_missing_cells > 0 && ` Total: ${mv.total_missing_cells.toLocaleString()} empty cells.`}
+          {mv.total_missing_cells > 0 &&
+            ` Total: ${mv.total_missing_cells.toLocaleString()} empty cells.`}
           Uniqueness and validity are not measured by this analysis.
         </p>
       </div>
@@ -252,19 +272,44 @@ function Card03Distribution({ results }: { results: EDAResults }) {
         <select
           className="eda-dist-select"
           value={col}
-          onChange={e => setCol(e.target.value)}
+          onChange={(e) => setCol(e.target.value)}
           aria-label="Select column for distribution"
         >
-          {numCols.map(c => <option key={c} value={c}>{c}</option>)}
+          {numCols.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
         </select>
 
         {stat && (
           <>
-            <p className="eda-card-desc">Quartile interval widths (% of value range), not observation frequencies.</p>
+            <p className="eda-card-desc">
+              Quartile interval widths (% of value range), not observation frequencies.
+            </p>
             {/* Quartile range widths */}
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 80, marginBottom: 8 }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'flex-end',
+                gap: 4,
+                height: 80,
+                marginBottom: 8,
+              }}
+            >
               {bars.map((b, i) => (
-                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, height: '100%', justifyContent: 'flex-end' }}>
+                <div
+                  key={i}
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 3,
+                    height: '100%',
+                    justifyContent: 'flex-end',
+                  }}
+                >
                   <div
                     style={{
                       width: '100%',
@@ -275,12 +320,23 @@ function Card03Distribution({ results }: { results: EDAResults }) {
                     }}
                     title={`${b.label}: ${b.value.toFixed(1)}% of range`}
                   />
-                  <span style={{ fontSize: 8, color: '#4A5A5A', textAlign: 'center', lineHeight: 1.2 }}>{b.label}</span>
+                  <span
+                    style={{ fontSize: 8, color: '#4A5A5A', textAlign: 'center', lineHeight: 1.2 }}
+                  >
+                    {b.label}
+                  </span>
                 </div>
               ))}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 16px', fontSize: 10 }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '4px 16px',
+                fontSize: 10,
+              }}
+            >
               {[
                 ['Mean', fmt(stat.mean)],
                 ['Median', fmt(stat.median)],
@@ -289,14 +345,38 @@ function Card03Distribution({ results }: { results: EDAResults }) {
                 ['Min', fmt(stat.min)],
                 ['Max', fmt(stat.max)],
               ].map(([k, v]) => (
-                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #1A2020', paddingBottom: 3 }}>
+                <div
+                  key={k}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    borderBottom: '1px solid #1A2020',
+                    paddingBottom: 3,
+                  }}
+                >
                   <span style={{ color: '#5A6A6A' }}>{k}</span>
-                  <span style={{ color: '#AEB5AF', fontVariantNumeric: 'tabular-nums', fontFamily: 'ui-monospace, monospace' }}>{v}</span>
+                  <span
+                    style={{
+                      color: '#AEB5AF',
+                      fontVariantNumeric: 'tabular-nums',
+                      fontFamily: 'ui-monospace, monospace',
+                    }}
+                  >
+                    {v}
+                  </span>
                 </div>
               ))}
             </div>
             {dist && (
-              <p style={{ fontSize: 9, color: '#5A6A6A', marginTop: 6, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              <p
+                style={{
+                  fontSize: 9,
+                  color: '#5A6A6A',
+                  marginTop: 6,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                }}
+              >
                 {dist.distribution_type} · {dist.is_symmetric ? 'symmetric' : 'asymmetric'}
               </p>
             )}
@@ -329,60 +409,113 @@ function Card04BoxPlot({ results }: { results: EDAResults }) {
         <select
           className="eda-dist-select"
           value={col}
-          onChange={e => setCol(e.target.value)}
+          onChange={(e) => setCol(e.target.value)}
           aria-label="Select column for box plot"
         >
-          {numCols.map(c => <option key={c} value={c}>{c}</option>)}
+          {numCols.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
         </select>
 
-        {stat && (() => {
-          const { min, max, q25, median, q75 } = stat;
-          const range = max - min || 1;
-          const pct = (v: number) => ((v - min) / range) * 100;
+        {stat &&
+          (() => {
+            const { min, max, q25, median, q75 } = stat;
+            const range = max - min || 1;
+            const pct = (v: number) => ((v - min) / range) * 100;
 
-          return (
-            <div>
-              <svg viewBox="0 0 240 80" className="eda-chart-svg" role="img" aria-label={`Box plot for ${col}`}>
-                <title>{`${col} box plot: min=${fmt(min)}, Q25=${fmt(q25)}, median=${fmt(median)}, Q75=${fmt(q75)}, max=${fmt(max)}`}</title>
-                {/* Whisker line */}
-                <line x1={10 + pct(min) / 100 * 220} x2={10 + pct(max) / 100 * 220}
-                  y1="40" y2="40" stroke="#3A4848" strokeWidth="1.5" />
-                {/* IQR box */}
-                <rect
-                  x={10 + pct(q25) / 100 * 220}
-                  y="26"
-                  width={(pct(q75) - pct(q25)) / 100 * 220}
-                  height="28"
-                  fill="#2A3838"
-                  stroke="#3A5050"
-                  strokeWidth="1"
-                  rx="2"
-                />
-                {/* Median line */}
-                <line
-                  x1={10 + pct(median) / 100 * 220}
-                  x2={10 + pct(median) / 100 * 220}
-                  y1="26" y2="54"
-                  stroke="#D6FA43"
-                  strokeWidth="2"
-                />
-                {/* Min whisker */}
-                <line x1={10 + pct(min) / 100 * 220} x2={10 + pct(min) / 100 * 220}
-                  y1="33" y2="47" stroke="#3A4848" strokeWidth="1.5" />
-                {/* Max whisker */}
-                <line x1={10 + pct(max) / 100 * 220} x2={10 + pct(max) / 100 * 220}
-                  y1="33" y2="47" stroke="#3A4848" strokeWidth="1.5" />
-                {/* Labels */}
-                <text x={10 + pct(min) / 100 * 220} y="72" textAnchor="middle" fontSize="8" fill="#5A6A6A">{fmt(min, 0)}</text>
-                <text x={10 + pct(median) / 100 * 220} y="16" textAnchor="middle" fontSize="8" fill="#D6FA43">{fmt(median)}</text>
-                <text x={10 + pct(max) / 100 * 220} y="72" textAnchor="middle" fontSize="8" fill="#5A6A6A">{fmt(max, 0)}</text>
-              </svg>
-              <p style={{ fontSize: 9, color: '#3A4A4A', textAlign: 'center', marginTop: 4 }}>
-                IQR: {fmt(q75 - q25)} · Median highlighted in lime
-              </p>
-            </div>
-          );
-        })()}
+            return (
+              <div>
+                <svg
+                  viewBox="0 0 240 80"
+                  className="eda-chart-svg"
+                  role="img"
+                  aria-label={`Box plot for ${col}`}
+                >
+                  <title>{`${col} box plot: min=${fmt(min)}, Q25=${fmt(q25)}, median=${fmt(median)}, Q75=${fmt(q75)}, max=${fmt(max)}`}</title>
+                  {/* Whisker line */}
+                  <line
+                    x1={10 + (pct(min) / 100) * 220}
+                    x2={10 + (pct(max) / 100) * 220}
+                    y1="40"
+                    y2="40"
+                    stroke="#3A4848"
+                    strokeWidth="1.5"
+                  />
+                  {/* IQR box */}
+                  <rect
+                    x={10 + (pct(q25) / 100) * 220}
+                    y="26"
+                    width={((pct(q75) - pct(q25)) / 100) * 220}
+                    height="28"
+                    fill="#2A3838"
+                    stroke="#3A5050"
+                    strokeWidth="1"
+                    rx="2"
+                  />
+                  {/* Median line */}
+                  <line
+                    x1={10 + (pct(median) / 100) * 220}
+                    x2={10 + (pct(median) / 100) * 220}
+                    y1="26"
+                    y2="54"
+                    stroke="#D6FA43"
+                    strokeWidth="2"
+                  />
+                  {/* Min whisker */}
+                  <line
+                    x1={10 + (pct(min) / 100) * 220}
+                    x2={10 + (pct(min) / 100) * 220}
+                    y1="33"
+                    y2="47"
+                    stroke="#3A4848"
+                    strokeWidth="1.5"
+                  />
+                  {/* Max whisker */}
+                  <line
+                    x1={10 + (pct(max) / 100) * 220}
+                    x2={10 + (pct(max) / 100) * 220}
+                    y1="33"
+                    y2="47"
+                    stroke="#3A4848"
+                    strokeWidth="1.5"
+                  />
+                  {/* Labels */}
+                  <text
+                    x={10 + (pct(min) / 100) * 220}
+                    y="72"
+                    textAnchor="middle"
+                    fontSize="8"
+                    fill="#5A6A6A"
+                  >
+                    {fmt(min, 0)}
+                  </text>
+                  <text
+                    x={10 + (pct(median) / 100) * 220}
+                    y="16"
+                    textAnchor="middle"
+                    fontSize="8"
+                    fill="#D6FA43"
+                  >
+                    {fmt(median)}
+                  </text>
+                  <text
+                    x={10 + (pct(max) / 100) * 220}
+                    y="72"
+                    textAnchor="middle"
+                    fontSize="8"
+                    fill="#5A6A6A"
+                  >
+                    {fmt(max, 0)}
+                  </text>
+                </svg>
+                <p style={{ fontSize: 9, color: '#3A4A4A', textAlign: 'center', marginTop: 4 }}>
+                  IQR: {fmt(q75 - q25)} · Median highlighted in lime
+                </p>
+              </div>
+            );
+          })()}
       </div>
     </div>
   );
@@ -411,21 +544,26 @@ function Card05Correlation({ results }: { results: EDAResults }) {
           <thead>
             <tr>
               <th />
-              {cols.map(c => (
-                <th key={c} title={c}>{shortLabel(c, 8)}</th>
+              {cols.map((c) => (
+                <th key={c} title={c}>
+                  {shortLabel(c, 8)}
+                </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {cols.map(row => (
+            {cols.map((row) => (
               <tr key={row}>
                 <th style={{ textAlign: 'right', paddingRight: 6 }}>{shortLabel(row, 8)}</th>
-                {cols.map(colKey => {
+                {cols.map((colKey) => {
                   const r = matrix[row]?.[colKey] ?? 0;
                   return (
                     <td
                       key={colKey}
-                      style={{ background: corrColor(r), color: Math.abs(r) > 0.4 ? '#F4F5F0' : '#5A6A6A' }}
+                      style={{
+                        background: corrColor(r),
+                        color: Math.abs(r) > 0.4 ? '#F4F5F0' : '#5A6A6A',
+                      }}
                       title={`${row} × ${colKey}: ${r.toFixed(3)}`}
                     >
                       {r.toFixed(2)}
@@ -439,17 +577,38 @@ function Card05Correlation({ results }: { results: EDAResults }) {
       </div>
       {results.correlations.strongest_correlations.length > 0 && (
         <div className="eda-card-body" style={{ paddingTop: 4 }}>
-          <p style={{ fontSize: 9, color: '#5A6A6A', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>
+          <p
+            style={{
+              fontSize: 9,
+              color: '#5A6A6A',
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em',
+              marginBottom: 6,
+            }}
+          >
             Strongest pairs
           </p>
           {results.correlations.strongest_correlations.slice(0, 3).map((p, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, padding: '3px 0', borderBottom: '1px solid #1A2020' }}>
-              <span style={{ color: '#7A8A8A' }}>{shortLabel(p.column_a, 10)} × {shortLabel(p.column_b, 10)}</span>
-              <span style={{
-                color: p.correlation > 0 ? '#6ee7b7' : '#f87171',
-                fontWeight: 700,
-                fontFamily: 'ui-monospace, monospace',
-              }}>
+            <div
+              key={i}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                fontSize: 10,
+                padding: '3px 0',
+                borderBottom: '1px solid #1A2020',
+              }}
+            >
+              <span style={{ color: '#7A8A8A' }}>
+                {shortLabel(p.column_a, 10)} × {shortLabel(p.column_b, 10)}
+              </span>
+              <span
+                style={{
+                  color: p.correlation > 0 ? '#6ee7b7' : '#f87171',
+                  fontWeight: 700,
+                  fontFamily: 'ui-monospace, monospace',
+                }}
+              >
                 {p.correlation.toFixed(3)}
               </span>
             </div>
@@ -480,17 +639,27 @@ function Card06Trend({ results }: { results: EDAResults }) {
         <div className="eda-trend-row">
           {trends.trends.slice(0, 4).map((t, i) => (
             <div key={i} className="eda-trend-item">
-              <div className={`eda-trend-dir ${t.trend_type}`}>
-                {trendIcon(t.trend_type)}
-              </div>
+              <div className={`eda-trend-dir ${t.trend_type}`}>{trendIcon(t.trend_type)}</div>
               <div className="eda-trend-meta">
                 <p className="eda-trend-col">{t.metric_column}</p>
                 <p className="eda-trend-desc">{t.description}</p>
                 {t.seasonality_detected && (
-                  <span style={{ fontSize: 9, color: '#D6FA43', fontWeight: 600, letterSpacing: '0.08em' }}>SEASONALITY DETECTED</span>
+                  <span
+                    style={{
+                      fontSize: 9,
+                      color: '#D6FA43',
+                      fontWeight: 600,
+                      letterSpacing: '0.08em',
+                    }}
+                  >
+                    SEASONALITY DETECTED
+                  </span>
                 )}
               </div>
-              <span className="eda-trend-rate">{t.growth_rate_pct >= 0 ? '+' : ''}{fmtPct(t.growth_rate_pct)}</span>
+              <span className="eda-trend-rate">
+                {t.growth_rate_pct >= 0 ? '+' : ''}
+                {fmtPct(t.growth_rate_pct)}
+              </span>
             </div>
           ))}
         </div>
@@ -529,17 +698,23 @@ function Card07Categories({ results }: { results: EDAResults }) {
         <select
           className="eda-dist-select"
           value={col}
-          onChange={e => setCol(e.target.value)}
+          onChange={(e) => setCol(e.target.value)}
           aria-label="Select categorical column"
           style={{ background: '#E8E8E0', borderColor: '#D0D0C8', color: '#374151' }}
         >
-          {catKeys.map(c => <option key={c} value={c}>{c}</option>)}
+          {catKeys.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
         </select>
 
         {detail && (
           <>
             <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 10, color: '#9CA3AF' }}>{detail.unique_count} unique values</span>
+              <span style={{ fontSize: 10, color: '#9CA3AF' }}>
+                {detail.unique_count} unique values
+              </span>
               <span style={{ fontSize: 10, color: '#9CA3AF', textTransform: 'capitalize' }}>
                 {detail.cardinality_level} cardinality
               </span>
@@ -547,7 +722,9 @@ function Card07Categories({ results }: { results: EDAResults }) {
             <div className="eda-bar-rows">
               {topEntries.map(([label, count]) => (
                 <div key={label} className="eda-bar-row">
-                  <span className="eda-bar-label" title={label}>{shortLabel(label)}</span>
+                  <span className="eda-bar-label" title={label}>
+                    {shortLabel(label)}
+                  </span>
                   <div className="eda-bar-track">
                     <div
                       className="eda-bar-fill"
@@ -579,9 +756,8 @@ function Card08Scatter({ results }: { results: EDAResults }) {
   if (numCols.length < 2) return null;
 
   // We don't have raw row data here — show statistical summary as proxy
-  const corrVal = xCol !== yCol
-    ? (results.correlations.correlation_matrix[xCol]?.[yCol] ?? null)
-    : null;
+  const corrVal =
+    xCol !== yCol ? (results.correlations.correlation_matrix[xCol]?.[yCol] ?? null) : null;
 
   return (
     <div className="eda-card eda-span-4">
@@ -589,7 +765,9 @@ function Card08Scatter({ results }: { results: EDAResults }) {
         <div className="eda-card-header-left">
           <p className="eda-card-eyebrow">08 / PAIR SUMMARY</p>
           <h2 className="eda-card-title">Two-variable relationship.</h2>
-          <p className="eda-card-desc">Correlation and ranges; paired observations are not available in this summary.</p>
+          <p className="eda-card-desc">
+            Correlation and ranges; paired observations are not available in this summary.
+          </p>
         </div>
       </div>
       <div className="eda-card-body">
@@ -597,26 +775,49 @@ function Card08Scatter({ results }: { results: EDAResults }) {
           <select
             className="eda-dist-select"
             value={xCol}
-            onChange={e => setXCol(e.target.value)}
+            onChange={(e) => setXCol(e.target.value)}
             aria-label="X axis column"
             style={{ flex: 1, minWidth: 0 }}
           >
-            {numCols.map(c => <option key={c} value={c}>{c}</option>)}
+            {numCols.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
           </select>
           <select
             className="eda-dist-select"
             value={yCol}
-            onChange={e => setYCol(e.target.value)}
+            onChange={(e) => setYCol(e.target.value)}
             aria-label="Y axis column"
             style={{ flex: 1, minWidth: 0 }}
           >
-            {numCols.map(c => <option key={c} value={c}>{c}</option>)}
+            {numCols.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
           </select>
         </div>
 
         {corrVal != null && (
-          <div style={{ padding: '12px', background: '#0e1111', borderRadius: 6, marginBottom: 10, textAlign: 'center' }}>
-            <span style={{ fontSize: 28, fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: corrVal > 0 ? '#6ee7b7' : corrVal < -0.3 ? '#f87171' : '#D6FA43' }}>
+          <div
+            style={{
+              padding: '12px',
+              background: '#0e1111',
+              borderRadius: 6,
+              marginBottom: 10,
+              textAlign: 'center',
+            }}
+          >
+            <span
+              style={{
+                fontSize: 28,
+                fontWeight: 800,
+                fontVariantNumeric: 'tabular-nums',
+                color: corrVal > 0 ? '#6ee7b7' : corrVal < -0.3 ? '#f87171' : '#D6FA43',
+              }}
+            >
               {corrVal.toFixed(3)}
             </span>
             <p style={{ fontSize: 10, color: '#5A6A6A', marginTop: 4 }}>Pearson correlation</p>
@@ -629,9 +830,24 @@ function Card08Scatter({ results }: { results: EDAResults }) {
               { label: xCol, stat: xStat },
               { label: yCol, stat: yStat },
             ].map(({ label, stat }, index) => (
-              <div key={`${index}-${label}`} style={{ background: '#0e1111', borderRadius: 6, padding: 10 }}>
-                <p style={{ fontSize: 9, color: '#5A6A6A', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>{shortLabel(label, 10)}</p>
-                <p style={{ fontSize: 11, color: '#AEB5AF', fontFamily: 'ui-monospace, monospace' }}>
+              <div
+                key={`${index}-${label}`}
+                style={{ background: '#0e1111', borderRadius: 6, padding: 10 }}
+              >
+                <p
+                  style={{
+                    fontSize: 9,
+                    color: '#5A6A6A',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                    marginBottom: 4,
+                  }}
+                >
+                  {shortLabel(label, 10)}
+                </p>
+                <p
+                  style={{ fontSize: 11, color: '#AEB5AF', fontFamily: 'ui-monospace, monospace' }}
+                >
                   {fmt(stat.min, 0)} → {fmt(stat.max, 0)}
                 </p>
                 <p style={{ fontSize: 10, color: '#6A7A7A' }}>μ={fmt(stat.mean)}</p>
@@ -658,26 +874,46 @@ function Card09Missing({ results }: { results: EDAResults }) {
           <p className="eda-card-eyebrow">09 / MISSING VALUES</p>
           <h2 className="eda-card-title">Missingness patterns.</h2>
         </div>
-        <span className="eda-card-badge" style={{ color: mv.affected_columns_count > 0 ? '#f59e0b' : '#D6FA43', background: mv.affected_columns_count > 0 ? 'rgba(245,158,11,0.1)' : 'rgba(214,250,67,0.1)' }}>
+        <span
+          className="eda-card-badge"
+          style={{
+            color: mv.affected_columns_count > 0 ? '#f59e0b' : '#D6FA43',
+            background:
+              mv.affected_columns_count > 0 ? 'rgba(245,158,11,0.1)' : 'rgba(214,250,67,0.1)',
+          }}
+        >
           {mv.affected_columns_count} COLS
         </span>
       </div>
       <div className="eda-card-body">
         {affectedCols.length === 0 ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#6ee7b7', fontSize: 12 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              color: '#6ee7b7',
+              fontSize: 12,
+            }}
+          >
             <CheckCircle2 size={14} />
             <span>No missing values detected.</span>
           </div>
         ) : (
           <div className="eda-missing-list">
-            {affectedCols.map(colName => {
+            {affectedCols.map((colName) => {
               const detail = mv.column_details[colName];
               const pct = detail?.missing_percentage ?? 0;
               return (
                 <div key={colName} className="eda-missing-row">
-                  <span className="eda-missing-col-name" title={colName}>{shortLabel(colName, 16)}</span>
+                  <span className="eda-missing-col-name" title={colName}>
+                    {shortLabel(colName, 16)}
+                  </span>
                   <div className="eda-missing-bar-track">
-                    <div className="eda-missing-bar-fill" style={{ width: `${Math.min(100, pct)}%` }} />
+                    <div
+                      className="eda-missing-bar-fill"
+                      style={{ width: `${Math.min(100, pct)}%` }}
+                    />
                   </div>
                   <span className="eda-missing-pct">{fmtPct(pct)}</span>
                 </div>
@@ -726,7 +962,18 @@ function Card10Stats({ results }: { results: EDAResults }) {
           <tbody>
             {statEntries.map(([col, s]: [string, NumericColumnStatistics]) => (
               <tr key={col}>
-                <td style={{ fontWeight: 600, color: '#F4F5F0', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis' }} title={col}>{col}</td>
+                <td
+                  style={{
+                    fontWeight: 600,
+                    color: '#F4F5F0',
+                    maxWidth: 120,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                  title={col}
+                >
+                  {col}
+                </td>
                 <td>{s.count.toLocaleString()}</td>
                 <td className="lime">{fmt(s.mean)}</td>
                 <td>{fmt(s.median)}</td>
@@ -741,7 +988,8 @@ function Card10Stats({ results }: { results: EDAResults }) {
         </table>
       </div>
       <p className="eda-chart-caption">
-        Showing {statEntries.length} of {Object.keys(results.statistics).length} numeric columns. Values computed by backend analytics pipeline.
+        Showing {statEntries.length} of {Object.keys(results.statistics).length} numeric columns.
+        Values computed by backend analytics pipeline.
       </p>
     </div>
   );
@@ -773,16 +1021,20 @@ function Card11Anomaly({ results }: { results: EDAResults }) {
         <select
           className="eda-outlier-col-select"
           value={col}
-          onChange={e => setCol(e.target.value)}
+          onChange={(e) => setCol(e.target.value)}
           aria-label="Select column for outlier detection"
         >
-          {outlierEntries.map(([c]) => <option key={c} value={c}>{c}</option>)}
+          {outlierEntries.map(([c]) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
         </select>
 
         {detail && (
           <>
             <div className="eda-outlier-methods">
-              {[detail.iqr, detail.z_score].map(m => (
+              {[detail.iqr, detail.z_score].map((m) => (
                 <div key={m.method} className="eda-outlier-method">
                   <p className="eda-outlier-method-name">{m.method}</p>
                   <p className="eda-outlier-count">{m.outlier_count.toLocaleString()}</p>
@@ -797,10 +1049,28 @@ function Card11Anomaly({ results }: { results: EDAResults }) {
             </div>
             {detail.iqr.sample_outliers.length > 0 && (
               <div style={{ marginTop: 10 }}>
-                <p style={{ fontSize: 9, color: '#5A6A6A', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Sample outlier values</p>
+                <p
+                  style={{
+                    fontSize: 9,
+                    color: '#5A6A6A',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                    marginBottom: 4,
+                  }}
+                >
+                  Sample outlier values
+                </p>
                 <div className="eda-pill-list">
                   {detail.iqr.sample_outliers.slice(0, 6).map((v, i) => (
-                    <span key={i} className="eda-pill" style={{ color: '#f59e0b', borderColor: 'rgba(245,158,11,0.2)', background: 'rgba(245,158,11,0.06)' }}>
+                    <span
+                      key={i}
+                      className="eda-pill"
+                      style={{
+                        color: '#f59e0b',
+                        borderColor: 'rgba(245,158,11,0.2)',
+                        background: 'rgba(245,158,11,0.06)',
+                      }}
+                    >
                       {fmt(v)}
                     </span>
                   ))}
@@ -831,7 +1101,16 @@ function Card12Composition({ results }: { results: EDAResults }) {
         .slice(0, 8)
     : [];
 
-  const COLORS = ['#D6FA43', '#14b8a6', '#3b82f6', '#f59e0b', '#a855f7', '#ec4899', '#6ee7b7', '#f87171'];
+  const COLORS = [
+    '#D6FA43',
+    '#14b8a6',
+    '#3b82f6',
+    '#f59e0b',
+    '#a855f7',
+    '#ec4899',
+    '#6ee7b7',
+    '#f87171',
+  ];
 
   return (
     <div className="eda-card eda-span-4">
@@ -845,19 +1124,28 @@ function Card12Composition({ results }: { results: EDAResults }) {
         <select
           className="eda-dist-select"
           value={col}
-          onChange={e => setCol(e.target.value)}
+          onChange={(e) => setCol(e.target.value)}
           aria-label="Select category column"
         >
-          {catKeys.map(c => <option key={c} value={c}>{c}</option>)}
+          {catKeys.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
         </select>
 
         {entries.length > 0 && (
           <div className="eda-bar-rows">
             {entries.map(([label, pct], i) => (
               <div key={label} className="eda-bar-row">
-                <span className="eda-bar-label" title={label}>{shortLabel(label)}</span>
+                <span className="eda-bar-label" title={label}>
+                  {shortLabel(label)}
+                </span>
                 <div className="eda-bar-track">
-                  <div className="eda-bar-fill" style={{ width: `${pct}%`, background: COLORS[i % COLORS.length] }} />
+                  <div
+                    className="eda-bar-fill"
+                    style={{ width: `${pct}%`, background: COLORS[i % COLORS.length] }}
+                  />
                 </div>
                 <span className="eda-bar-value">{fmtPct(pct)}</span>
               </div>
@@ -874,12 +1162,14 @@ function Card12Composition({ results }: { results: EDAResults }) {
 // ---------------------------------------------------------------------------
 function Card13Pareto({ results }: { results: EDAResults }) {
   const cats = results.categorical_analysis;
-  const catKeys = Object.keys(cats).filter(k => cats[k].cardinality_level !== 'high');
+  const catKeys = Object.keys(cats).filter((k) => cats[k].cardinality_level !== 'high');
   if (!catKeys.length) return null;
 
   const col = catKeys[0];
   const detail = cats[col];
-  const entries = Object.entries(detail.top_categories).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  const entries = Object.entries(detail.top_categories)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10);
   const total = entries.reduce((s, [, v]) => s + v, 0);
 
   const withCumulative = entries.map(([label, count], idx) => {
@@ -900,16 +1190,25 @@ function Card13Pareto({ results }: { results: EDAResults }) {
         <div className="eda-bar-rows">
           {withCumulative.map(({ label, count, cumPct }) => (
             <div key={label} className="eda-bar-row">
-              <span className="eda-bar-label" title={label}>{shortLabel(label)}</span>
+              <span className="eda-bar-label" title={label}>
+                {shortLabel(label)}
+              </span>
               <div className="eda-bar-track">
-                <div className="eda-bar-fill" style={{ width: `${(count / (total || 1)) * 100}%`, background: '#374151' }} />
+                <div
+                  className="eda-bar-fill"
+                  style={{ width: `${(count / (total || 1)) * 100}%`, background: '#374151' }}
+                />
               </div>
-              <span className="eda-bar-value" style={{ color: '#101313', fontSize: 9 }}>{fmtPct(cumPct)}</span>
+              <span className="eda-bar-value" style={{ color: '#101313', fontSize: 9 }}>
+                {fmtPct(cumPct)}
+              </span>
             </div>
           ))}
         </div>
         <p style={{ fontSize: 10, color: '#9CA3AF', marginTop: 10 }}>
-          Percentages refer only to the displayed categories. Top {Math.ceil(entries.length * 0.2)} categories account for {fmtPct(withCumulative[Math.ceil(entries.length * 0.2) - 1]?.cumPct ?? 0)}.
+          Percentages refer only to the displayed categories. Top {Math.ceil(entries.length * 0.2)}{' '}
+          categories account for{' '}
+          {fmtPct(withCumulative[Math.ceil(entries.length * 0.2) - 1]?.cumPct ?? 0)}.
         </p>
       </div>
     </div>
@@ -933,14 +1232,21 @@ function Card18Findings({ results }: { results: EDAResults }) {
         <span className="eda-card-badge">{insights.length} INSIGHTS</span>
       </div>
       <div className="eda-card-body">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 8 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: 8,
+          }}
+        >
           {insights.map((ins, i) => (
             <div key={i} className="eda-insight-item">
               <span className="eda-insight-category">{ins.category}</span>
               <p className="eda-insight-title">{ins.title}</p>
               <p className="eda-insight-text">{ins.insight}</p>
               <span className={`eda-insight-impact ${ins.impact}`}>
-                {ins.impact === 'high' ? '▲' : ins.impact === 'medium' ? '◆' : '▼'} {ins.impact.toUpperCase()} IMPACT
+                {ins.impact === 'high' ? '▲' : ins.impact === 'medium' ? '◆' : '▼'}{' '}
+                {ins.impact.toUpperCase()} IMPACT
               </span>
             </div>
           ))}
@@ -962,24 +1268,39 @@ function KPIBanner({ results }: { results: EDAResults }) {
     <div className="eda-card-lime eda-span-12">
       <div className="eda-stat-grid eda-stat-grid-4">
         <div className="eda-stat-cell">
-          <span className="eda-stat-value" style={{ color: '#101313' }}>{s.numeric_columns.length}</span>
-          <span className="eda-stat-label" style={{ color: '#4a5a00' }}>Numeric Columns</span>
+          <span className="eda-stat-value" style={{ color: '#101313' }}>
+            {s.numeric_columns.length}
+          </span>
+          <span className="eda-stat-label" style={{ color: '#4a5a00' }}>
+            Numeric Columns
+          </span>
         </div>
         <div className="eda-stat-cell">
-          <span className="eda-stat-value" style={{ color: '#101313' }}>{s.categorical_columns.length}</span>
-          <span className="eda-stat-label" style={{ color: '#4a5a00' }}>Categorical Columns</span>
+          <span className="eda-stat-value" style={{ color: '#101313' }}>
+            {s.categorical_columns.length}
+          </span>
+          <span className="eda-stat-label" style={{ color: '#4a5a00' }}>
+            Categorical Columns
+          </span>
         </div>
         <div className="eda-stat-cell">
-          <span className="eda-stat-value" style={{ color: mv.affected_columns_count > 0 ? '#c05800' : '#101313' }}>
+          <span
+            className="eda-stat-value"
+            style={{ color: mv.affected_columns_count > 0 ? '#c05800' : '#101313' }}
+          >
             {mv.affected_columns_count}
           </span>
-          <span className="eda-stat-label" style={{ color: '#4a5a00' }}>Cols With Missing</span>
+          <span className="eda-stat-label" style={{ color: '#4a5a00' }}>
+            Cols With Missing
+          </span>
         </div>
         <div className="eda-stat-cell">
           <span className="eda-stat-value" style={{ color: '#101313' }}>
             {hasTrend ? results.trends.trends.length : 0}
           </span>
-          <span className="eda-stat-label" style={{ color: '#4a5a00' }}>Trend Signals</span>
+          <span className="eda-stat-label" style={{ color: '#4a5a00' }}>
+            Trend Signals
+          </span>
         </div>
       </div>
     </div>
@@ -995,72 +1316,58 @@ export default function EDAStudioPage() {
   const searchParams = new URLSearchParams(location.search);
   const initialDatasetId = searchParams.get('dataset') ?? searchParams.get('datasetId') ?? '';
 
-  const [datasets, setDatasets]           = useState<Dataset[]>([]);
-  const [selectedId, setSelectedId]       = useState(initialDatasetId);
+  const [datasets, setDatasets] = useState<Dataset[]>([]);
+  const [selectedId, setSelectedId] = useState(initialDatasetId);
   const [chartFilters, setChartFilters] = useState<Record<string, unknown>>({});
   const [filterColumn, setFilterColumn] = useState('');
   const [filterValue, setFilterValue] = useState('');
   const [filterOperator, setFilterOperator] = useState('eq');
-  const [results, setResults]             = useState<EDAResults | null>(null);
   const [loadingDatasets, setLoadingDatasets] = useState(true);
-  const [loadingEDA, setLoadingEDA]       = useState(false);
-  const [error, setError]                 = useState('');
-  const [execMs, setExecMs]               = useState<number | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
+  const [datasetError, setError] = useState('');
+  const [revision, setRevision] = useState(0);
 
   // Load dataset list
   useEffect(() => {
     let active = true;
-    datasetService.list().then(items => {
-      if (!active) return;
-      setDatasets(items);
-      if (!selectedId && items.length) setSelectedId(items[0].dataset_id);
-    }).catch(e => {
-      if (active) setError(e instanceof Error ? e.message : 'Unable to load datasets.');
-    }).finally(() => {
-      if (active) setLoadingDatasets(false);
-    });
-    return () => { active = false; };
+    datasetService
+      .list()
+      .then((items) => {
+        if (!active) return;
+        setDatasets(items);
+        setSelectedId((current) => current || items[0]?.dataset_id || '');
+      })
+      .catch((e) => {
+        if (active) setError(e instanceof Error ? e.message : 'Unable to load datasets.');
+      })
+      .finally(() => {
+        if (active) setLoadingDatasets(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
-  // Run EDA
-  const runEDA = useCallback(async (datasetId: string) => {
-    if (!datasetId) return;
-    abortRef.current?.abort();
-    const ctrl = new AbortController();
-    abortRef.current = ctrl;
-
-    setLoadingEDA(true);
-    setError('');
-    setResults(null);
-    setExecMs(null);
-
-    const t0 = performance.now();
-    try {
-      const res = await edaService.analyze(datasetId, { signal: ctrl.signal, filters: chartFilters });
-      if (ctrl.signal.aborted) return;
-      setResults(res);
-      setExecMs(Math.round(performance.now() - t0));
-    } catch (e) {
-      if (ctrl.signal.aborted) return;
-      setError(e instanceof Error ? e.message : 'EDA analysis failed.');
-    } finally {
-      if (!ctrl.signal.aborted) setLoadingEDA(false);
-    }
-  }, [chartFilters]);
-
-  // Auto-run when dataset changes
-  useEffect(() => {
-    if (selectedId) void runEDA(selectedId);
-    return () => { abortRef.current?.abort(); };
-  }, [selectedId, runEDA]);
+  const fetchEDA = useCallback(
+    async (signal: AbortSignal) => {
+      const startedAt = performance.now();
+      const results = await edaService.analyze(selectedId, { signal, filters: chartFilters });
+      return { results, execMs: Math.round(performance.now() - startedAt) };
+    },
+    [selectedId, chartFilters],
+  );
+  const eda = useAsyncResource(selectedId ? fetchEDA : null, revision);
+  const results = eda.data?.results ?? null;
+  const execMs = eda.data?.execMs ?? null;
+  const loadingEDA = eda.loading;
+  const error = datasetError || eda.error;
+  const runEDA = () => setRevision((value) => value + 1);
 
   const selectedDataset = useMemo(
-    () => datasets.find(d => d.dataset_id === selectedId),
+    () => datasets.find((d) => d.dataset_id === selectedId),
     [datasets, selectedId],
   );
 
-  const hasTrend = results?.trends.has_time_series && (results.trends.trends.length > 0);
+  const hasTrend = results?.trends.has_time_series && results.trends.trends.length > 0;
 
   // Export results as JSON
   function handleExport() {
@@ -1090,22 +1397,26 @@ export default function EDAStudioPage() {
             <select
               className="eda-dataset-select"
               value={selectedId}
-              onChange={e => {
+              onChange={(e) => {
                 setSelectedId(e.target.value);
                 navigate(`/eda?dataset=${e.target.value}`, { replace: true });
               }}
               aria-label="Select dataset for EDA"
             >
-              <option value="" disabled>Select a dataset</option>
-              {datasets.map(d => (
-                <option key={d.dataset_id} value={d.dataset_id}>{d.name || d.filename}</option>
+              <option value="" disabled>
+                Select a dataset
+              </option>
+              {datasets.map((d) => (
+                <option key={d.dataset_id} value={d.dataset_id}>
+                  {d.name || d.filename}
+                </option>
               ))}
             </select>
           )}
           <button
             className="eda-run-btn"
             disabled={!selectedId || loadingEDA}
-            onClick={() => void runEDA(selectedId)}
+            onClick={() => void runEDA()}
             aria-label="Re-run EDA analysis"
           >
             <RefreshCw size={13} />
@@ -1170,8 +1481,18 @@ export default function EDAStudioPage() {
             <strong>Analysis Error</strong>
             <p style={{ marginTop: 2, opacity: 0.8 }}>{error}</p>
             <button
-              style={{ marginTop: 8, fontSize: 11, color: '#fca5a5', cursor: 'pointer', background: 'none', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 4, padding: '3px 10px', fontFamily: 'inherit' }}
-              onClick={() => void runEDA(selectedId)}
+              style={{
+                marginTop: 8,
+                fontSize: 11,
+                color: '#fca5a5',
+                cursor: 'pointer',
+                background: 'none',
+                border: '1px solid rgba(239,68,68,0.3)',
+                borderRadius: 4,
+                padding: '3px 10px',
+                fontFamily: 'inherit',
+              }}
+              onClick={() => void runEDA()}
             >
               Retry
             </button>
@@ -1182,30 +1503,49 @@ export default function EDAStudioPage() {
       {/* ======= EMPTY STATE ======= */}
       {!loadingEDA && !results && !error && !loadingDatasets && !datasets.length && (
         <div className="eda-empty-state">
-          <div className="eda-empty-icon"><BarChart3 size={24} /></div>
+          <div className="eda-empty-icon">
+            <BarChart3 size={24} />
+          </div>
           <h2 className="eda-empty-title">No datasets available.</h2>
-          <p className="eda-empty-sub">Upload a dataset to begin exploratory analysis. The system will automatically compute statistics, distributions, correlations, and insights.</p>
+          <p className="eda-empty-sub">
+            Upload a dataset to begin exploratory analysis. The system will automatically compute
+            statistics, distributions, correlations, and insights.
+          </p>
           <Link to="/datasets/upload" className="eda-run-btn" style={{ textDecoration: 'none' }}>
             Upload a dataset
           </Link>
         </div>
       )}
 
-      {!loadingEDA && !results && !error && !loadingDatasets && datasets.length > 0 && !selectedId && (
-        <div className="eda-empty-state">
-          <div className="eda-empty-icon"><Activity size={24} /></div>
-          <h2 className="eda-empty-title">Select a dataset to analyze.</h2>
-          <p className="eda-empty-sub">Choose a dataset from the selector above to begin automated EDA.</p>
-        </div>
-      )}
+      {!loadingEDA &&
+        !results &&
+        !error &&
+        !loadingDatasets &&
+        datasets.length > 0 &&
+        !selectedId && (
+          <div className="eda-empty-state">
+            <div className="eda-empty-icon">
+              <Activity size={24} />
+            </div>
+            <h2 className="eda-empty-title">Select a dataset to analyze.</h2>
+            <p className="eda-empty-sub">
+              Choose a dataset from the selector above to begin automated EDA.
+            </p>
+          </div>
+        )}
 
       {/* ======= LOADING ======= */}
       {loadingEDA && (
         <div className="eda-loading-overlay" role="status" aria-live="polite">
           <div className="eda-spinner" />
           <p className="eda-loading-text">Running EDA pipeline…</p>
-          <p className="eda-loading-text" style={{ color: '#2A3838' }}>Profiling · Statistics · Correlations · Trends · Insights</p>
-          <div className="eda-canvas" style={{ width: '100%', maxWidth: 1200, margin: '24px auto 0' }}>
+          <p className="eda-loading-text" style={{ color: '#2A3838' }}>
+            Profiling · Statistics · Correlations · Trends · Insights
+          </p>
+          <div
+            className="eda-canvas"
+            style={{ width: '100%', maxWidth: 1200, margin: '24px auto 0' }}
+          >
             <SkeletonCard span="eda-span-4" />
             <SkeletonCard span="eda-span-4" />
             <SkeletonCard span="eda-span-4" />
@@ -1218,22 +1558,77 @@ export default function EDAStudioPage() {
       {/* ======= BENTO CANVAS ======= */}
       {results && !loadingEDA && (
         <div className="eda-canvas" role="region" aria-label="EDA visualization canvas">
-
           {/* Row 1: KPI Banner */}
           <KPIBanner results={results} />
-          <div className="eda-card eda-span-12"><div className="eda-card-body">
-            <label>Full dataset filter <select aria-label="Filter column" value={filterColumn} onChange={e=>setFilterColumn(e.target.value)}><option value="">Choose column</option>{results.dataset_summary.column_names.map(c=><option key={c}>{c}</option>)}</select></label>
-            <select aria-label="Filter comparison" value={filterOperator} onChange={e=>setFilterOperator(e.target.value)}><option value="eq">Equals</option><option value="gte">At least / from date</option><option value="lte">At most / to date</option></select>
-            <input aria-label="Filter value" value={filterValue} onChange={e=>setFilterValue(e.target.value)}/>
-            <button onClick={()=>{if(!filterColumn)return; const value=results.dataset_summary.numeric_columns.includes(filterColumn)?Number(filterValue):filterValue; setChartFilters({conditions:[...((chartFilters.conditions as unknown[])??[]),{column:filterColumn,operator:filterOperator,value}]});}}>Apply</button>
-            <button onClick={()=>setChartFilters({})}>Reset filters</button>
-            <p>All charts recompute from the same filtered source. Click a category bar to drill into that category. {JSON.stringify(chartFilters)}</p>
-          </div></div>
-          <EDAChartCoordinates charts={results.chart_manifest??[]} onCategory={(column,value)=>setChartFilters({conditions:[...((chartFilters.conditions as unknown[])??[]),{column,operator:'eq',value}]})}/>
-
+          <div className="eda-card eda-span-12">
+            <div className="eda-card-body">
+              <label>
+                Full dataset filter{' '}
+                <select
+                  aria-label="Filter column"
+                  value={filterColumn}
+                  onChange={(e) => setFilterColumn(e.target.value)}
+                >
+                  <option value="">Choose column</option>
+                  {results.dataset_summary.column_names.map((c) => (
+                    <option key={c}>{c}</option>
+                  ))}
+                </select>
+              </label>
+              <select
+                aria-label="Filter comparison"
+                value={filterOperator}
+                onChange={(e) => setFilterOperator(e.target.value)}
+              >
+                <option value="eq">Equals</option>
+                <option value="gte">At least / from date</option>
+                <option value="lte">At most / to date</option>
+              </select>
+              <input
+                aria-label="Filter value"
+                value={filterValue}
+                onChange={(e) => setFilterValue(e.target.value)}
+              />
+              <button
+                onClick={() => {
+                  if (!filterColumn) return;
+                  const value = results.dataset_summary.numeric_columns.includes(filterColumn)
+                    ? Number(filterValue)
+                    : filterValue;
+                  setChartFilters({
+                    conditions: [
+                      ...((chartFilters.conditions as unknown[]) ?? []),
+                      { column: filterColumn, operator: filterOperator, value },
+                    ],
+                  });
+                }}
+              >
+                Apply
+              </button>
+              <button onClick={() => setChartFilters({})}>Reset filters</button>
+              <p>
+                All charts recompute from the same filtered source. Click a category bar to drill
+                into that category. {JSON.stringify(chartFilters)}
+              </p>
+            </div>
+          </div>
+          <EDAChartCoordinates
+            charts={results.chart_manifest ?? []}
+            onCategory={(column, value) =>
+              setChartFilters({
+                conditions: [
+                  ...((chartFilters.conditions as unknown[]) ?? []),
+                  { column, operator: 'eq', value },
+                ],
+              })
+            }
+          />
 
           {/* Row 2: Overview + Quality + Distribution */}
-          <Card01Overview results={results} datasetName={selectedDataset?.name ?? selectedDataset?.filename ?? selectedId} />
+          <Card01Overview
+            results={results}
+            datasetName={selectedDataset?.name ?? selectedDataset?.filename ?? selectedId}
+          />
           <Card02Quality results={results} />
           {!results.chart_manifest?.length && <Card03Distribution results={results} />}
 
@@ -1259,8 +1654,14 @@ export default function EDAStudioPage() {
           <Card18Findings results={results} />
 
           {/* Navigational CTAs */}
-          <div className="eda-card eda-span-6" style={{ background: 'transparent', border: '1px dashed #1E2828' }}>
-            <div className="eda-card-body" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div
+            className="eda-card eda-span-6"
+            style={{ background: 'transparent', border: '1px dashed #1E2828' }}
+          >
+            <div
+              className="eda-card-body"
+              style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
+            >
               <p style={{ fontSize: 11, color: '#5A6A6A', margin: 0 }}>Continue analysis →</p>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <Link to={`/visualizations?dataset=${selectedId}`} className="eda-secondary-btn">
@@ -1279,12 +1680,16 @@ export default function EDAStudioPage() {
             </div>
           </div>
 
-          <div className="eda-card eda-span-6" style={{ background: 'transparent', border: '1px dashed #1E2828' }}>
+          <div
+            className="eda-card eda-span-6"
+            style={{ background: 'transparent', border: '1px dashed #1E2828' }}
+          >
             <div className="eda-card-body">
               <p style={{ fontSize: 10, color: '#3A4A4A', lineHeight: 1.6 }}>
                 All values are computed by the backend analytics pipeline from your actual dataset.
-                No statistics are fabricated or estimated beyond the declared adaptive sampling threshold.
-                Use the export button to access the full JSON result for audit or downstream processing.
+                No statistics are fabricated or estimated beyond the declared adaptive sampling
+                threshold. Use the export button to access the full JSON result for audit or
+                downstream processing.
               </p>
             </div>
           </div>

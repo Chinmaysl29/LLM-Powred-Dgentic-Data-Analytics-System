@@ -1,0 +1,20 @@
+{
+  "configured_project": "qjcudbkamhldswcyxypv",
+  "packages": {"@supabase/supabase-js": "2.119.0", "@supabase/ssr": "0.12.7"},
+  "skills_installed": ["supabase", "supabase-postgres-best-practices"],
+  "backend_checks": {"passed": 39, "seconds": 73.19, "database": "Separate analyst-supabase-verify project with synthetic data"},
+  "tested_copy_scope": "ORM data plus tenant_memberships, workspace_memberships and dataset_workspace_bindings; actual verified run and decision",
+  "copy_checks": ["Full migration chain in a private schema", "SQL NULL versus JSON null", "Decimal precision", "Timestamp and CSV quoting", "Sequence continuation", "Refusal of existing target data", "Non-superuser/non-bypass runtime role", "Workspace authorization after copying", "Immutable evidence after copying"],
+  "frontend": {"production_build": "passed", "targeted_eslint": "passed", "live_browser": "browser.json"},
+  "targeted_ruff": "passed",
+  "live_auth_health": 200,
+  "live_auth_settings": 200,
+  "live_jwks": {"keys": 1, "algorithm": "ES256"},
+  "live_hosted_profiles_probe": {"http": 404, "code": "PGRST205", "rows_read": 0},
+  "current_backend_database": "local",
+  "hosted_database_credentials_present": false,
+  "hosted_database_migration": "Not performed: server-only PostgreSQL URI/password still required",
+  "hosted_storage_initialization": "Not performed: database migration credentials still required",
+  "signed_in_account_test": "Not run: confirmed account credentials were not provided",
+  "auth_dashboard_redirect_settings": "Not changed: management access was not supplied"
+}

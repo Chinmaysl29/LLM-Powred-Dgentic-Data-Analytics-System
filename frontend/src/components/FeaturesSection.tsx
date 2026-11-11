@@ -75,7 +75,7 @@ const FEATURE_CARDS: FeatureCard[] = [
     title: 'Decision\nIntelligence',
     headline: 'Go beyond insights. Get actionable decisions.',
     description:
-      'The system doesn\'t stop at showing what happened. It identifies important patterns, potential risks and opportunities, and provides data-driven recommendations to support better business decisions.',
+      "The system doesn't stop at showing what happened. It identifies important patterns, potential risks and opportunities, and provides data-driven recommendations to support better business decisions.",
     bg: '#F8F4EE',
     textColor: '#1a1a1a',
     curtainBg: '#4D4D4D',
@@ -141,7 +141,7 @@ export default function FeaturesSection() {
           obs.disconnect();
         }
       },
-      { threshold: 0.08 }
+      { threshold: 0.08 },
     );
     obs.observe(el);
     return () => obs.disconnect();
@@ -206,9 +206,7 @@ export default function FeaturesSection() {
               </CardCurtainRevealTitle>
 
               {/* Description */}
-              <CardCurtainRevealDescription>
-                {card.description}
-              </CardCurtainRevealDescription>
+              <CardCurtainRevealDescription>{card.description}</CardCurtainRevealDescription>
 
               {/* Footer */}
               <CardCurtainRevealFooter>

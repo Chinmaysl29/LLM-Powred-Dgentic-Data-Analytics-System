@@ -71,10 +71,20 @@ def main():
     from backend.app.services.document_indexing_service import DocumentIndexingService
     from backend.app.services.analysis_run_service import execute_analysis_job
     engine = create_engine(get_settings().postgres_dsn, pool_pre_ping=True)
+    from backend.app.core.database_target import bind_database_schema
+    bind_database_schema(engine, get_settings().database_schema)
     sessions = sessionmaker(engine, expire_on_commit=False)
     manager = BackgroundJobManager(session_factory=sessions)
     manager.register_durable('rag', DocumentIndexingService(sessions).execute)
     manager.register_durable('analysis_pipeline', execute_analysis_job)
+    from backend.app.services.learning_supervisor import execute_extraction_job, execute_dataset_cleanup_job
+    from backend.app.services.learning_evaluation import execute_evaluation_job
+    manager.register_durable('lesson_extract', execute_extraction_job)
+    manager.register_durable('learning_eval', execute_evaluation_job)
+    manager.register_durable('dataset_cleanup', execute_dataset_cleanup_job)
+    from backend.app.services.adaptive_jobs import execute_adaptive_job
+    for kind in ('replay','train','test','generate'):
+        manager.register_durable(f'adaptive_{kind}',execute_adaptive_job)
     try:
         asyncio.run(JobWorker(manager).run_persistent(f'{socket.gethostname()}-{uuid.uuid4()}'))
     finally:

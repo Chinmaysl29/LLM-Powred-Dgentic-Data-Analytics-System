@@ -1,0 +1,15 @@
+{
+  "dataset_id": "2abdc487-8688-4847-baaa-9379c0bafc71",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "c537e7c0-256d-4634-aba4-825ac7b31dd4",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-11-11 16:32:14.864204+00:00",
+      "author": "system",
+      "description": "Initial ingestion of audit.csv"
+    }
+  ]
+}

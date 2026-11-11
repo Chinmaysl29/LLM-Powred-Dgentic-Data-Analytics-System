@@ -1,0 +1,47 @@
+﻿[
+    {
+        "Name":  "dataanalyst-backend-1",
+        "Health":  "healthy",
+        "Restart":  "unless-stopped",
+        "Image":  "dataanalyst-backend:latest",
+        "Volumes":  [
+
+                    ]
+    },
+    {
+        "Name":  "dataanalyst-frontend-1",
+        "Health":  "healthy",
+        "Restart":  "unless-stopped",
+        "Image":  "dataanalyst-frontend:latest",
+        "Volumes":  [
+                        "dataanalyst_frontend_node_modules"
+                    ]
+    },
+    {
+        "Name":  "dataanalyst-postgres-1",
+        "Health":  "healthy",
+        "Restart":  "unless-stopped",
+        "Image":  "postgres:16",
+        "Volumes":  [
+                        "dataanalyst_postgres_data"
+                    ]
+    },
+    {
+        "Name":  "dataanalyst-redis-1",
+        "Health":  "healthy",
+        "Restart":  "unless-stopped",
+        "Image":  "redis:7",
+        "Volumes":  [
+                        "dataanalyst_redis_data"
+                    ]
+    },
+    {
+        "Name":  "dataanalyst-chromadb-1",
+        "Health":  "healthy",
+        "Restart":  "unless-stopped",
+        "Image":  "chromadb/chroma:0.6.3",
+        "Volumes":  [
+                        "dataanalyst_chroma_data"
+                    ]
+    }
+]

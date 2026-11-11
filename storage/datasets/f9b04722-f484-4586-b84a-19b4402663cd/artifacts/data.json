@@ -1,0 +1,14 @@
+{
+  "dataset_id": "f9b04722-f484-4586-b84a-19b4402663cd",
+  "dataset_name": "passwd",
+  "columns": [
+    "col1",
+    "col2"
+  ],
+  "records": [
+    {
+      "col1": "val1",
+      "col2": "val2"
+    }
+  ]
+}

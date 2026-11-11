@@ -1,0 +1,34 @@
+{
+  "compatible": true,
+  "missing_tables": [],
+  "missing_columns": {},
+  "invalid_primary_keys": [],
+  "missing_foreign_keys": {},
+  "revision_matches": true,
+  "expected_revisions": [
+    "019_dataplane"
+  ],
+  "actual_revisions": [
+    "019_dataplane"
+  ],
+  "heads": [
+    "019_dataplane"
+  ],
+  "autogenerate_diff_count": 14,
+  "diff_operation_counts": {
+    "remove_index": 8,
+    "remove_table": 4,
+    "column_changes": 1,
+    "add_index": 1
+  },
+  "unmapped_tables": [
+    "dataplane_artifacts",
+    "dataset_workspace_bindings",
+    "tenant_memberships",
+    "workspace_memberships"
+  ],
+  "active_transactions": [
+    "('active', 1)",
+    "('idle', 3)"
+  ]
+}

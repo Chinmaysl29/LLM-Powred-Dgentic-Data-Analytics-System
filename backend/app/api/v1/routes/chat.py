@@ -23,6 +23,11 @@ from backend.app.services.natural_language_analytics import NaturalLanguageAnaly
 from backend.app.services.orchestrator_service import OrchestratorService
 from backend.app.services.storage_service import StorageService, get_storage_service
 from backend.monitoring.prometheus_metrics import platform_metrics
+from backend.app.learning.evidence import observe_chat
+from backend.app.learning.routing import scoped_router
+from backend.app.learning.column_runtime import scoped_resolver
+from backend.app.learning.selection_provider import scoped_classifier
+from backend.app.learning.selection_runtime import select_chart
 
 router = APIRouter(prefix="/chat", tags=["Natural Language Analytics"])
 
@@ -99,56 +104,70 @@ async def chat(
 
     # 3. Execute analytical query or RAG
     data_retrieval = DataRetrievalService(db, storage, owner_id=str(current_user.id)) if db is not None else None
-    analytics = NaturalLanguageAnalyticsService(data_retrieval)
+    analytics = NaturalLanguageAnalyticsService(data_retrieval, resolver=scoped_resolver(str(current_user.id)))
     citations: list[dict[str, Any]] = []
 
-    # Check if dataset is an indexed document (PDF, TXT, MD)
-    is_doc = False
-    if db is not None and payload.dataset_id and data_retrieval:
-        try:
-            _, version, _, file_type, _ = data_retrieval.discover(payload.dataset_id, payload.dataset_version)
-            if file_type in ("pdf", "txt", "md"):
-                is_doc = True
-                doc_svc = DocumentIndexingService(sessionmaker(bind=db.get_bind(), expire_on_commit=False))
-                rag_out = doc_svc.query(payload.dataset_id, current_user.id, version.version_number, payload.message)
-                citations = rag_out.get("sources", [])
-                result = {
-                    "answer": rag_out.get("summary") or "Retrieved relevant evidence from document.",
-                    "data": [],
-                    "explanation": f"Retrieved {len(citations)} source citations from document index.",
-                    "actionable": [],
-                    "status": "complete",
-                    "citations": citations,
-                }
-                intent = "rag_search"
-                confidence = 0.95
-        except Exception:
-            is_doc = False
+    async with observe_chat(actor_id=str(current_user.id), dataset_id=payload.dataset_id,
+                            question=payload.message, version_number=payload.dataset_version) as observation:
+        # Check if dataset is an indexed document (PDF, TXT, MD)
+        is_doc = False
+        if db is not None and payload.dataset_id and data_retrieval:
+            try:
+                _, version, _, file_type, _ = data_retrieval.discover(payload.dataset_id, payload.dataset_version)
+                if file_type in ("pdf", "txt", "md"):
+                    is_doc = True
+                    doc_svc = DocumentIndexingService(sessionmaker(bind=db.get_bind(), expire_on_commit=False))
+                    rag_out = doc_svc.query(payload.dataset_id, current_user.id, version.version_number, payload.message)
+                    citations = rag_out.get("sources", [])
+                    result = {
+                        "answer": rag_out.get("summary") or "Retrieved relevant evidence from document.",
+                        "data": [],
+                        "explanation": f"Retrieved {len(citations)} source citations from document index.",
+                        "actionable": [],
+                        "status": "complete",
+                        "citations": citations,
+                    }
+                    intent = "rag_search"
+                    confidence = 0.95
+            except Exception:
+                is_doc = False
 
-    if not is_doc:
-        if analytics.is_analytics_query(payload.message) and payload.dataset_id:
-            result = await analytics.analyze(
-                payload.message,
-                dataset_id=payload.dataset_id,
-                dataset_version=payload.dataset_version,
-                context=context,
-            )
-            intent = "analytics"
-            confidence = 0.0 if result.get("status") == "clarification_required" else 1.0
-        elif analytics.is_analytics_query(payload.message):
-            result = await analytics.analyze(payload.message, context=context)
-            intent, confidence = "analytics", 0.0
-        else:
-            classification = await intent_service.classify(payload.message, dataset_id=payload.dataset_id)
-            orchestrator = OrchestratorService(intent_classifier=intent_service, db=db, owner_id=str(current_user.id))
-            outcome = await orchestrator.execute(payload.message, dataset_id=payload.dataset_id)
-            result = {
-                "answer": outcome.summary,
-                "data": [],
-                "explanation": "Processed through the configured analytics workflow.",
-                "actionable": [],
-            }
-            intent, confidence = outcome.intent, classification.confidence
+        if not is_doc:
+            from backend.app.dataplane.chat import route as route_dataplane
+            dataplane_result = route_dataplane(db, current_user.id, workspace_uuid,
+                payload.dataset_id, payload.dataset_version, payload.message, analytics)
+            if dataplane_result is not None:
+                result = dataplane_result
+                intent, confidence = "analytics", 1.0 if result.get("status") == "complete" else 0.0
+            elif analytics.is_analytics_query(payload.message) and payload.dataset_id:
+                result = await analytics.analyze(
+                    payload.message,
+                    dataset_id=payload.dataset_id,
+                    dataset_version=payload.dataset_version,
+                    context=context,
+                )
+                intent = "analytics"
+                confidence = 0.0 if result.get("status") == "clarification_required" else 1.0
+            elif analytics.is_analytics_query(payload.message):
+                result = await analytics.analyze(payload.message, context=context)
+                intent, confidence = "analytics", 0.0
+            else:
+                intent_service = scoped_classifier(intent_service, str(current_user.id), payload.dataset_id, payload.dataset_version)
+                intent_service = scoped_router(intent_service, str(current_user.id), payload.dataset_version)
+                classification = await intent_service.classify(payload.message, dataset_id=payload.dataset_id)
+                orchestrator = OrchestratorService(intent_classifier=intent_service, db=db, owner_id=str(current_user.id))
+                outcome = await orchestrator.execute(payload.message, dataset_id=payload.dataset_id)
+                result = {
+                    "answer": outcome.summary,
+                    "data": [],
+                    "explanation": "Processed through the configured analytics workflow.",
+                    "actionable": [],
+                }
+                intent, confidence = outcome.intent, classification.confidence
+
+        result = await select_chart(str(current_user.id), payload.message, result)
+        observation.result = result
+        observation.live_intent = intent
 
     if citations and "citations" not in result:
         result["citations"] = citations

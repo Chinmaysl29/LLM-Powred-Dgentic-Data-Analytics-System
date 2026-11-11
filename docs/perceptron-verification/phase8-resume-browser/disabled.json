@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "checks": [
+    "unauthenticated dashboard redirects to login",
+    "real disabled API hides historical evidence and renders disabled state",
+    "no page errors and dashboard requests are GET only"
+  ]
+}

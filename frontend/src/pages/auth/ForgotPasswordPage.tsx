@@ -70,7 +70,8 @@ export default function ForgotPasswordPage() {
           />
           <h2 className="cinematic-card-title">Instructions sent</h2>
           <p className="cinematic-card-subtitle" style={{ marginBottom: '1.75rem' }}>
-            If an account exists for <strong>{email}</strong>, password reset instructions have been sent. Check your inbox and spam folder.
+            If an account exists for <strong>{email}</strong>, password reset instructions have been
+            sent. Check your inbox and spam folder.
           </p>
           <Link
             to="/login"
@@ -122,9 +123,7 @@ export default function ForgotPasswordPage() {
                 if (touched) setEmailError(validateEmail(e.target.value));
               }}
               onBlur={handleBlur}
-              className={`cinematic-input ${
-                touched && emailError ? 'cinematic-input--error' : ''
-              }`}
+              className={`cinematic-input ${touched && emailError ? 'cinematic-input--error' : ''}`}
               aria-invalid={Boolean(touched && emailError)}
               aria-describedby={touched && emailError ? 'forgot-email-error' : undefined}
               disabled={isSubmitting}

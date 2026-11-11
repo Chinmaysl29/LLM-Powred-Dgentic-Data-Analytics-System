@@ -1,3 +1,21 @@
 {
-  "python.terminal.useEnvFile": true
+  "python.terminal.useEnvFile": true,
+  "python.envFile": "${workspaceFolder}/.env",
+  "python.analysis.diagnosticMode": "openFilesOnly",
+  "basedpyright.analysis.diagnosticMode": "openFilesOnly",
+  "basedpyright.analysis.typeCheckingMode": "basic",
+  "python.testing.pytestEnabled": false,
+  "eslint.workingDirectories": [{ "directory": "frontend", "changeProcessCWD": true }],
+  "prettier.requireConfig": true,
+  "[python]": { "editor.defaultFormatter": "charliermarsh.ruff", "editor.formatOnSave": false },
+  "[typescript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[typescriptreact]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[javascript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[css]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "files.watcherExclude": {
+    "**/.git/**": true, "**/node_modules/**": true, "**/.venv/**": true,
+    "**/dist/**": true, "**/__pycache__/**": true, "**/.pytest_cache/**": true,
+    "**/storage/**": true, "**/logs/**": true
+  },
+  "search.exclude": { "**/node_modules": true, "**/.venv": true, "**/dist": true, "**/storage": true }
 }

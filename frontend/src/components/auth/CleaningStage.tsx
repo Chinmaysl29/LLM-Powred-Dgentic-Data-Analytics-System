@@ -22,7 +22,13 @@ interface CleanRow {
 const CLEAN_ROWS: CleanRow[] = [
   { id: 'c1', field: 'cust_account', type: 'UUID', value: '0x84920_valid', revealCheckAtMs: 2350 },
   { id: 'c2', field: 'revenue_usd', type: 'Decimal', value: '$14,250.00', revealCheckAtMs: 2550 },
-  { id: 'c3', field: 'timestamp_utc', type: 'DateTime', value: '2026-10-12T00:00Z', revealCheckAtMs: 2750 },
+  {
+    id: 'c3',
+    field: 'timestamp_utc',
+    type: 'DateTime',
+    value: '2026-10-12T00:00Z',
+    revealCheckAtMs: 2750,
+  },
   { id: 'c4', field: 'product_sku', type: 'String', value: 'PRD-901-CLEAN', revealCheckAtMs: 2950 },
 ];
 
@@ -38,7 +44,6 @@ export const CleaningStage: React.FC<CleaningStageProps> = ({
     if (!subscribeToFrames || isReducedMotion) {
       if (containerRef.current) {
         containerRef.current.style.opacity = '0';
-        
       }
       return;
     }
@@ -58,7 +63,9 @@ export const CleaningStage: React.FC<CleaningStageProps> = ({
       }
       // 1.50–2.25s: Crossfades in (0.0 -> 1.0) while RawData fades out
       else if (t < PIPELINE_TIMING.rawToClean[1]) {
-        const p = (t - PIPELINE_TIMING.rawToClean[0]) / (PIPELINE_TIMING.rawToClean[1] - PIPELINE_TIMING.rawToClean[0]);
+        const p =
+          (t - PIPELINE_TIMING.rawToClean[0]) /
+          (PIPELINE_TIMING.rawToClean[1] - PIPELINE_TIMING.rawToClean[0]);
         layerOpacity = p;
         rowsProgress = p;
       }
@@ -69,7 +76,9 @@ export const CleaningStage: React.FC<CleaningStageProps> = ({
       }
       // 3.35–4.00s: Transition 2 (crossfades out 1.0 -> 0.0 into Chart visualization)
       else if (t < PIPELINE_TIMING.cleanToChart[1]) {
-        const exitProgress = (t - PIPELINE_TIMING.cleanToChart[0]) / (PIPELINE_TIMING.cleanToChart[1] - PIPELINE_TIMING.cleanToChart[0]);
+        const exitProgress =
+          (t - PIPELINE_TIMING.cleanToChart[0]) /
+          (PIPELINE_TIMING.cleanToChart[1] - PIPELINE_TIMING.cleanToChart[0]);
         layerOpacity = Math.max(0, 1 - exitProgress);
         rowsProgress = 1;
       }
@@ -80,7 +89,6 @@ export const CleaningStage: React.FC<CleaningStageProps> = ({
       }
 
       container.style.opacity = layerOpacity.toFixed(3);
-      
 
       if (layerOpacity > 0.001) {
         CLEAN_ROWS.forEach((row, index) => {
@@ -172,7 +180,10 @@ export const CleaningStage: React.FC<CleaningStageProps> = ({
           </div>
 
           {/* Value and animated validation checkmark */}
-          <div className="clean-value-cell" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div
+            className="clean-value-cell"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
             <span
               style={{
                 fontSize: '0.6875rem',

@@ -1,0 +1,15 @@
+{
+  "dataset_id": "30696392-085b-4d98-8533-568bc79304fc",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "8a31653c-c7db-4007-a801-6919a046acfd",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-11-11 16:43:50.773108+00:00",
+      "author": "system",
+      "description": "Initial ingestion of gdp_data.json"
+    }
+  ]
+}

@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 import enum
 import logging
 import time
-from typing import Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 import uuid
 
 from backend.connectors.base import BaseConnector, ConnectorError, SyncResult

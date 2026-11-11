@@ -1,7 +1,9 @@
 """ORM model registry — import all models so Alembic and Base.metadata discover them."""
 
 from backend.app.models.base import Base, TimestampMixin
+from backend.app.models.review_grant import DatasetReviewGrant
 from backend.app.models.user import User
+from backend.app.models.auth_token_revocation import AuthTokenRevocation
 from backend.app.models.dataset import Dataset
 from backend.app.models.dataset_metadata import DatasetMetadata
 from backend.app.models.dataset_profile import DatasetProfile
@@ -70,3 +72,12 @@ __all__ = [
     "AuditLog",
 ]
 from backend.app.models.background_job import DurableJob
+from backend.app.models.analysis_run import AnalysisRun, AnalysisStage, AnalysisArtifact, AnalysisEvent
+from backend.app.models.learning import TABLES as LEARNING_TABLES
+from backend.app.models.adaptive import TABLES as ADAPTIVE_TABLES
+from backend.app.learning.tables import learner_weights, feedback_events, mistakes
+from backend.app.learning.shadow_table import shadow_predictions
+from backend.app.learning.release_table import router_releases
+from backend.app.learning.memory_table import failure_memory_links
+from backend.app.learning.column_table import resolver_events
+from backend.app.learning.selection_table import selection_events

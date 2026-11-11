@@ -1,0 +1,31 @@
+services:
+  api:
+    environment:
+      BACKGROUND_WORKER_ENABLED: "false"
+  dataplane-worker:
+    image: dataanalyst-backend:dataplane-verify
+    working_dir: /verification
+    command: python -m backend.app.dataplane.worker
+    mem_limit: 1g
+    memswap_limit: 1g
+    cpus: 2
+    environment:
+      DATABASE_URL: postgresql+psycopg://setup:isolated-setup-only@postgres:5432/analyst_setup_test
+      ENVIRONMENT: test
+      DATAPLANE_ENABLED: "true"
+      DATAPLANE_ROOT: /verification/dataplane
+      PYTHONPATH: /repo
+      PYTHONDONTWRITEBYTECODE: "1"
+      OPENBLAS_NUM_THREADS: 1
+      OMP_NUM_THREADS: 1
+    volumes:
+      - .:/repo:ro
+      - verify_storage:/verification
+    healthcheck:
+      test: ["CMD", "python", "-c", "import pathlib,os,time; p=pathlib.Path(os.environ['DATAPLANE_ROOT'])/'worker-health'; assert p.exists() and time.time()-p.stat().st_mtime<150"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+  browser:
+    image: dataanalyst-dashboard-browser:verification

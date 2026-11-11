@@ -401,9 +401,22 @@ def test_categorical_only_dataset_truthful_rejection(client, db_session, tmp_pat
 # CHECKPOINT E: FULL POPULATION (1,187 ROWS) VS PREVIEW (100 ROWS)
 # ==============================================================================
 
+def _synthetic_cash_flow_dataset(client, token, workspace):
+    """Create 1,187 rows for this test; never take ownership of a user dataset."""
+    records = ["record,net_cash_flow"]
+    records.extend(f"{i},{float(i) if i < 1185 else ''}" for i in range(1187))
+    response = client.post(
+        f"/api/v1/datasets/upload?workspace_id={workspace.id}",
+        headers={"Authorization": f"Bearer {token}"},
+        files={"file": ("synthetic_cash_flow.csv", "\n".join(records).encode(), "text/csv")},
+    )
+    assert response.status_code == 201, response.text
+    return UUID(response.json()["dataset_id"])
+
+
 def test_full_population_histogram_1187_rows(client, db_session):
     """
-    Verify exact full-population histogram calculation over Bluestock cash flow dataset.
+    Verify exact full-population histogram calculation over synthetic cash flow data.
     Total records: 1,187.
     Valid records for net_cash_flow: 1,185 (2 nulls).
     The histogram must aggregate all 1,185 observations, NOT just the 100 preview rows.
@@ -411,8 +424,8 @@ def test_full_population_histogram_1187_rows(client, db_session):
     user, token = make_user_token(db_session, "full_pop_tester")
     ws = make_workspace(db_session, user)
 
-    dataset_id = UUID("6ac6f755-9978-4ce0-b3dc-928b70c2eeff")
-    # Bind Bluestock dataset to test workspace
+    dataset_id = _synthetic_cash_flow_dataset(client, token, ws)
+    # Bind the synthetic dataset to this test workspace.
     db_session.execute(
         text("UPDATE datasets SET owner_id = :uid WHERE dataset_id = :did"),
         {"uid": str(user.id), "did": str(dataset_id)},
@@ -473,7 +486,7 @@ def test_distribution_chart_multi_tenant_isolation(client, db_session):
     user_b, token_b = make_user_token(db_session, "intruder_b")
     ws_b = make_workspace(db_session, user_b)
 
-    dataset_id = UUID("6ac6f755-9978-4ce0-b3dc-928b70c2eeff")
+    dataset_id = _synthetic_cash_flow_dataset(client, token_a, ws_a)
     # Bind dataset exclusively to Workspace A
     db_session.execute(
         text("UPDATE datasets SET owner_id = :uid WHERE dataset_id = :did"),

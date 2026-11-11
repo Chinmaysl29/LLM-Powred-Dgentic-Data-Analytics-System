@@ -31,9 +31,7 @@ export const DataFlowTransition: React.FC<DataFlowTransitionProps> = ({
           className="connector-pulse-dot"
         />
 
-        <span className="connector-label">
-          {label ?? `Stage ${fromStage} → Stage ${toStage}`}
-        </span>
+        <span className="connector-label">{label ?? `Stage ${fromStage} → Stage ${toStage}`}</span>
 
         {/* Arrow indicator */}
         <motion.div

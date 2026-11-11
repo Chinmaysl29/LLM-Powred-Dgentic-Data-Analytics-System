@@ -1,0 +1,10 @@
+[
+  {
+    "region": "east",
+    "amount": 10
+  },
+  {
+    "region": "west",
+    "amount": 25
+  }
+]

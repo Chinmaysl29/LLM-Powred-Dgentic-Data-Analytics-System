@@ -1,0 +1,7 @@
+{
+  "pdf_parses": true,
+  "expected_value_35_present": true,
+  "formula_present": true,
+  "full_coverage_present": true,
+  "validation_passed_present": true
+}

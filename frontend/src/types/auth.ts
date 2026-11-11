@@ -57,4 +57,3 @@ export interface User {
 // yet finalized. Response types will be added once the backend auth
 // contract is established. Do not prematurely define AuthResponse,
 // token structures, or session shapes here.
-

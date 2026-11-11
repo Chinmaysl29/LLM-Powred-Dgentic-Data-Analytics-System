@@ -43,7 +43,12 @@ function smoothStep(t: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
-function computeSegmentPath(seg: ChartSegmentConfig, i: number, barGrowth: number, morphT: number): { d: string; yTop: number } {
+function computeSegmentPath(
+  seg: ChartSegmentConfig,
+  i: number,
+  barGrowth: number,
+  morphT: number,
+): { d: string; yTop: number } {
   // 1. Donut arc geometry (m = 1)
   const total = SEGMENTS.reduce((sum, item) => sum + item.value, 0);
   const preceding = SEGMENTS.slice(0, i).reduce((sum, item) => sum + item.value, 0);
@@ -87,21 +92,51 @@ function computeSegmentPath(seg: ChartSegmentConfig, i: number, barGrowth: numbe
   // Seg 1 (right) & Seg 2 (lower-right): Right edge outer
   // Seg 3 (bottom): Bottom edge reversed
   // Seg 4 (lower-left): Left edge outer
-  let Bo1: { x: number; y: number }, Bo2: { x: number; y: number }, Cbo1: { x: number; y: number }, Cbo2: { x: number; y: number };
-  let Bi2: { x: number; y: number }, Bi1: { x: number; y: number }, Cbi2: { x: number; y: number }, Cbi1: { x: number; y: number };
+  let Bo1: { x: number; y: number },
+    Bo2: { x: number; y: number },
+    Cbo1: { x: number; y: number },
+    Cbo2: { x: number; y: number };
+  let Bi2: { x: number; y: number },
+    Bi1: { x: number; y: number },
+    Cbi2: { x: number; y: number },
+    Cbi1: { x: number; y: number };
 
   if (i === 0 || i === 5) {
-    Bo1 = TL; Bo2 = TR; Cbo1 = { x: seg.barX - thirdW, y: yTop }; Cbo2 = { x: seg.barX + thirdW, y: yTop };
-    Bi2 = BR; Bi1 = BL; Cbi2 = { x: seg.barX + thirdW, y: Y_BASE }; Cbi1 = { x: seg.barX - thirdW, y: Y_BASE };
+    Bo1 = TL;
+    Bo2 = TR;
+    Cbo1 = { x: seg.barX - thirdW, y: yTop };
+    Cbo2 = { x: seg.barX + thirdW, y: yTop };
+    Bi2 = BR;
+    Bi1 = BL;
+    Cbi2 = { x: seg.barX + thirdW, y: Y_BASE };
+    Cbi1 = { x: seg.barX - thirdW, y: Y_BASE };
   } else if (i === 1 || i === 2) {
-    Bo1 = TR; Bo2 = BR; Cbo1 = { x: seg.barX + halfW, y: yTop + currentHeight / 3 }; Cbo2 = { x: seg.barX + halfW, y: Y_BASE - currentHeight / 3 };
-    Bi2 = BL; Bi1 = TL; Cbi2 = { x: seg.barX - halfW, y: Y_BASE - currentHeight / 3 }; Cbi1 = { x: seg.barX - halfW, y: yTop + currentHeight / 3 };
+    Bo1 = TR;
+    Bo2 = BR;
+    Cbo1 = { x: seg.barX + halfW, y: yTop + currentHeight / 3 };
+    Cbo2 = { x: seg.barX + halfW, y: Y_BASE - currentHeight / 3 };
+    Bi2 = BL;
+    Bi1 = TL;
+    Cbi2 = { x: seg.barX - halfW, y: Y_BASE - currentHeight / 3 };
+    Cbi1 = { x: seg.barX - halfW, y: yTop + currentHeight / 3 };
   } else if (i === 3) {
-    Bo1 = BR; Bo2 = BL; Cbo1 = { x: seg.barX + thirdW, y: Y_BASE }; Cbo2 = { x: seg.barX - thirdW, y: Y_BASE };
-    Bi2 = TL; Bi1 = TR; Cbi2 = { x: seg.barX - thirdW, y: yTop }; Cbi1 = { x: seg.barX + thirdW, y: yTop };
+    Bo1 = BR;
+    Bo2 = BL;
+    Cbo1 = { x: seg.barX + thirdW, y: Y_BASE };
+    Cbo2 = { x: seg.barX - thirdW, y: Y_BASE };
+    Bi2 = TL;
+    Bi1 = TR;
+    Cbi2 = { x: seg.barX - thirdW, y: yTop };
+    Cbi1 = { x: seg.barX + thirdW, y: yTop };
   } else {
-    Bo1 = BL; Bo2 = TL; Cbo1 = { x: seg.barX - halfW, y: Y_BASE - currentHeight / 3 }; Cbo2 = { x: seg.barX - halfW, y: yTop + currentHeight / 3 };
-    Bi2 = TR; Bi1 = BR; Cbi2 = { x: seg.barX + halfW, y: yTop + currentHeight / 3 }; Cbi1 = { x: seg.barX + halfW, y: Y_BASE - currentHeight / 3 };
+    Bo1 = BL;
+    Bo2 = TL;
+    Cbo1 = { x: seg.barX - halfW, y: Y_BASE - currentHeight / 3 };
+    Cbo2 = { x: seg.barX - halfW, y: yTop + currentHeight / 3 };
+    Bi2 = TR;
+    Bi1 = BR;
+    Cbi2 = { x: seg.barX + halfW, y: yTop + currentHeight / 3 };
+    Cbi1 = { x: seg.barX + halfW, y: Y_BASE - currentHeight / 3 };
   }
 
   // 3. Interpolate points at current morph factor
@@ -174,7 +209,9 @@ export const AnimatedChartMorph: React.FC<AnimatedChartMorphProps> = ({
       }
       // 3.35–4.00s: Transition from Structured Data into Chart Visualization
       else if (t < PIPELINE_TIMING.cleanToChart[1]) {
-        const enterProgress = (t - PIPELINE_TIMING.cleanToChart[0]) / (PIPELINE_TIMING.cleanToChart[1] - PIPELINE_TIMING.cleanToChart[0]);
+        const enterProgress =
+          (t - PIPELINE_TIMING.cleanToChart[0]) /
+          (PIPELINE_TIMING.cleanToChart[1] - PIPELINE_TIMING.cleanToChart[0]);
         layerOpacity = enterProgress;
         morphT = 0;
         labelsOpacity = enterProgress;
@@ -189,7 +226,9 @@ export const AnimatedChartMorph: React.FC<AnimatedChartMorphProps> = ({
       }
       // 4.95–5.95s: Bar to Donut Morph (Continuous shape morphing)
       else if (t < PIPELINE_TIMING.barToDonut[1]) {
-        const morphProgress = (t - PIPELINE_TIMING.barToDonut[0]) / (PIPELINE_TIMING.barToDonut[1] - PIPELINE_TIMING.barToDonut[0]);
+        const morphProgress =
+          (t - PIPELINE_TIMING.barToDonut[0]) /
+          (PIPELINE_TIMING.barToDonut[1] - PIPELINE_TIMING.barToDonut[0]);
         layerOpacity = 1;
         morphT = smoothStep(morphProgress);
         labelsOpacity = Math.max(0, 1 - morphProgress * 2.5);
@@ -204,7 +243,9 @@ export const AnimatedChartMorph: React.FC<AnimatedChartMorphProps> = ({
       }
       // 6.55–7.00s: Infinite Loop Reset (Dissolves back toward raw scene)
       else {
-        const resetProgress = (t - PIPELINE_TIMING.loopReset[0]) / (PIPELINE_TIMING.loopReset[1] - PIPELINE_TIMING.loopReset[0]);
+        const resetProgress =
+          (t - PIPELINE_TIMING.loopReset[0]) /
+          (PIPELINE_TIMING.loopReset[1] - PIPELINE_TIMING.loopReset[0]);
         layerOpacity = Math.max(0, 1 - resetProgress);
         morphT = 1;
         labelsOpacity = 0;
@@ -212,7 +253,6 @@ export const AnimatedChartMorph: React.FC<AnimatedChartMorphProps> = ({
       }
 
       container.style.opacity = layerOpacity.toFixed(3);
-      
 
       if (layerOpacity > 0.001) {
         // Calculate each bar's individual growth
@@ -252,7 +292,9 @@ export const AnimatedChartMorph: React.FC<AnimatedChartMorphProps> = ({
           gridGroupRef.current.style.opacity = labelsOpacity.toFixed(3);
         }
         if (centerBadgeRef.current) {
-          const badgeOpacity = showDonutCenter ? Math.min(1, Math.max(0, (morphT - 0.75) / 0.25)) : 0;
+          const badgeOpacity = showDonutCenter
+            ? Math.min(1, Math.max(0, (morphT - 0.75) / 0.25))
+            : 0;
           const badgeScale = 0.85 + 0.15 * badgeOpacity;
           centerBadgeRef.current.style.opacity = badgeOpacity.toFixed(2);
           centerBadgeRef.current.style.transform = `scale(${badgeScale})`;
@@ -265,7 +307,7 @@ export const AnimatedChartMorph: React.FC<AnimatedChartMorphProps> = ({
 
   // Initial path values computed for first render
   const initialPaths = SEGMENTS.map((seg, i) =>
-    computeSegmentPath(seg, i, isReducedMotion ? 1 : 0, isReducedMotion ? 1 : 0)
+    computeSegmentPath(seg, i, isReducedMotion ? 1 : 0, isReducedMotion ? 1 : 0),
   );
 
   return (
@@ -298,8 +340,24 @@ export const AnimatedChartMorph: React.FC<AnimatedChartMorphProps> = ({
         {/* Gridlines & Baseline */}
         <g ref={gridGroupRef} style={{ opacity: isReducedMotion ? 0 : 0 }}>
           <line x1="45" y1={Y_BASE} x2="355" y2={Y_BASE} stroke="#E5EBDD" strokeWidth="1.5" />
-          <line x1="45" y1="110" x2="355" y2="110" stroke="#F0F4EC" strokeWidth="1" strokeDasharray="3 3" />
-          <line x1="45" y1="72" x2="355" y2="72" stroke="#F0F4EC" strokeWidth="1" strokeDasharray="3 3" />
+          <line
+            x1="45"
+            y1="110"
+            x2="355"
+            y2="110"
+            stroke="#F0F4EC"
+            strokeWidth="1"
+            strokeDasharray="3 3"
+          />
+          <line
+            x1="45"
+            y1="72"
+            x2="355"
+            y2="72"
+            stroke="#F0F4EC"
+            strokeWidth="1"
+            strokeDasharray="3 3"
+          />
         </g>
 
         {/* Morphed Segments (Existing SVG paths are updated directly, never recreated!) */}

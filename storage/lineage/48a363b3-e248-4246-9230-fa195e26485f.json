@@ -1,0 +1,15 @@
+{
+  "dataset_id": "48a363b3-e248-4246-9230-fa195e26485f",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "f61db84b-8976-4809-ac8b-3b452a620a28",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-11-11 16:31:18.884177+00:00",
+      "author": "system",
+      "description": "Initial ingestion of synthetic_cash_flow.csv"
+    }
+  ]
+}

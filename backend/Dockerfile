@@ -10,6 +10,7 @@ RUN apt-get update \
 
 # ── Copy requirements first (cache-friendly layer) ─────────────────────────────
 COPY backend/requirements.txt backend/requirements.txt
+COPY backend/requirements.lock.txt backend/requirements.lock.txt
 
 # ── Install all dependencies in a single step ──────────────────────────────────
 #
@@ -30,11 +31,11 @@ RUN pip install --no-cache-dir \
       --timeout 300 \
       --retries 10 \
       --extra-index-url https://download.pytorch.org/whl/cpu \
-      -r backend/requirements.txt
+      -r backend/requirements.txt \
+      -c backend/requirements.lock.txt
 
-# NOTE: pip check intentionally omitted.
-# The torch+cpu wheel can trigger false-positive conflicts in pip check
-# (missing nvidia_* extras) that do not affect CPU-only runtime.
+# Reject inconsistent dependency graphs during the image build.
+RUN pip check
 
 # ── Copy source code after pip (code changes don't bust the dep layer) ─────────
 COPY . .

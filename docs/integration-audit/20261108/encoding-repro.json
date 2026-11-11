@@ -1,0 +1,1 @@
+{"case": "accepted Latin-1 CSV grouped query", "error": "TypeError", "message": "Object of type bytes is not JSON serializable"}

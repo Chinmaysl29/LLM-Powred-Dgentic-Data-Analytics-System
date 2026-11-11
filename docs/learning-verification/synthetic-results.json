@@ -1,0 +1,132 @@
+{
+  "sample_size": 2,
+  "independent_scenario_groups": 2,
+  "trusted_final_groups": 0,
+  "metrics": {
+    "baseline": {
+      "correct": 2,
+      "total": 2,
+      "correctness": 1.0,
+      "completed": 2,
+      "abstained": 0,
+      "unknown": 0,
+      "repeated_errors": 0,
+      "repeated_error_rate": 0.0,
+      "p50_latency_ms": 8.88559999930294,
+      "p95_latency_ms": 10.240499999781605,
+      "cost_usd": 0
+    },
+    "candidate": {
+      "correct": 2,
+      "total": 2,
+      "correctness": 1.0,
+      "completed": 2,
+      "abstained": 0,
+      "unknown": 0,
+      "repeated_errors": 0,
+      "repeated_error_rate": 0.0,
+      "p50_latency_ms": 8.559500000046683,
+      "p95_latency_ms": 9.533299999930023,
+      "cost_usd": 0
+    }
+  },
+  "correctness_delta": 0.0,
+  "paired_bootstrap_95_interval": [
+    0.0,
+    0.0
+  ],
+  "applications": 2,
+  "useful_applications": 0,
+  "harmful_applications": 0,
+  "gates": {
+    "mandatory_correctness_and_no_unsupported_verified_claim": true,
+    "authorization_and_isolation": true,
+    "no_forecasting_leakage": true,
+    "minimum_independent_trusted_scenarios": false,
+    "correctness_nonregression": true,
+    "harmful_applications": true,
+    "latency_tolerance": true,
+    "cost_tolerance": true,
+    "measured_benefit": false
+  },
+  "release_eligible": false,
+  "pairs": [
+    {
+      "case_id": "578c03bf-f479-42c1-88f5-9e38355bf42d",
+      "case_hash": "c3f40a8aba99368c7a97bd68619caac31af870f06f71fb368f077abf8176615f",
+      "scenario_group": "new-business-scenario",
+      "task_type": "descriptive",
+      "authorized": true,
+      "baseline": {
+        "status": "verified",
+        "correct": true,
+        "error_code": null,
+        "latency_ms": 10.240499999781605,
+        "cost_usd": 0,
+        "applied_lessons": [],
+        "result_hash": "7f90ee0cb93546f9432e7d42d9690368bddf85b78f79259461f7805a67c9aab4"
+      },
+      "candidate": {
+        "status": "verified",
+        "correct": true,
+        "error_code": null,
+        "latency_ms": 8.559500000046683,
+        "cost_usd": 0,
+        "applied_lessons": [
+          "f13d56c2-4836-4f99-8fcc-d23dd9377ad1"
+        ],
+        "result_hash": "7f90ee0cb93546f9432e7d42d9690368bddf85b78f79259461f7805a67c9aab4"
+      }
+    },
+    {
+      "case_id": "40342feb-ef75-4978-b38e-ee1229a21e5e",
+      "case_hash": "1813abcbc4ef91f407019612926ce1edabd14994ee40b9b768ed419acbae11bf",
+      "scenario_group": "another-scenario",
+      "task_type": "descriptive",
+      "authorized": true,
+      "candidate": {
+        "status": "verified",
+        "correct": true,
+        "error_code": null,
+        "latency_ms": 9.533299999930023,
+        "cost_usd": 0,
+        "applied_lessons": [
+          "f13d56c2-4836-4f99-8fcc-d23dd9377ad1"
+        ],
+        "result_hash": "434e2361a2357596e43dd2f56250beff2d0c404dff8fc7830fa4b89ecfaa8d31"
+      },
+      "baseline": {
+        "status": "verified",
+        "correct": true,
+        "error_code": null,
+        "latency_ms": 8.88559999930294,
+        "cost_usd": 0,
+        "applied_lessons": [],
+        "result_hash": "434e2361a2357596e43dd2f56250beff2d0c404dff8fc7830fa4b89ecfaa8d31"
+      }
+    }
+  ],
+  "numeric_confidence": null,
+  "calibration": {
+    "available": false,
+    "sample_size": 0,
+    "brier_score": null,
+    "reliability_bins": [],
+    "error_coverage": [],
+    "reason": "No independently labeled calibrator fitting and untouched calibration-test datasets."
+  },
+  "denominators": {
+    "correctness": "All declared paired cases, including failures and unknowns.",
+    "repeated_error_rate": "Repeated failing error-code occurrences after the first / all cases.",
+    "applications": "Cases with at least one eligible correction used.",
+    "latency": "Executor only; includes validation and repair, excludes queue delay and data load.",
+    "useful_harmful": "Paired correctness change among cases with applied memory."
+  },
+  "limitations": [
+    "Small/synthetic pilots do not establish production accuracy gains.",
+    "Both arms use identical validators, approved corrections, data, tools and code.",
+    "No provider nondeterminism in this deterministic executor; cost is zero provider usage, not infrastructure cost.",
+    "Definition and trusted-label quality remain domain assertions.",
+    "No model weights were trained."
+  ]
+}

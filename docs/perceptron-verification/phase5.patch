@@ -1,0 +1,1127 @@
+diff --git a/backend/app/learning/evidence.py b/backend/app/learning/evidence.py
+--- a/backend/app/learning/evidence.py
++++ b/backend/app/learning/evidence.py
+@@ -94,7 +94,8 @@
+                 dataset_schema_hash=schema_hash, question=None,
+                 question_hash=hashlib.sha256(question.encode()).hexdigest(),
+                 features={"source": source if source in {"chat", "analysis_job"} else "unknown",
+-                          "error_type": error_type, "schema_available": schema_hash is not None},
++                          "error_type": error_type, "schema_available": schema_hash is not None,
++                          "dataset_id": dataset_id, "dataset_version": version.version_number if version else None},
+                 predicted=predicted if predicted in OPERATIONS else None,
+                 truth=None, signal_type="hard_failure")
+             db.execute(insert(feedback_events).values(**values).on_conflict_do_nothing(index_elements=["id"]))
+diff --git a/backend/app/models/__init__.py b/backend/app/models/__init__.py
+--- a/backend/app/models/__init__.py
++++ b/backend/app/models/__init__.py
+@@ -76,3 +76,4 @@
+ from backend.app.learning.tables import learner_weights, feedback_events, mistakes
+ from backend.app.learning.shadow_table import shadow_predictions
+ from backend.app.learning.release_table import router_releases
++from backend.app.learning.memory_table import failure_memory_links
+diff --git a/backend/app/services/orchestrator_service.py b/backend/app/services/orchestrator_service.py
+--- a/backend/app/services/orchestrator_service.py
++++ b/backend/app/services/orchestrator_service.py
+@@ -32,6 +32,8 @@
+ )
+ from backend.app.services.workflow_registry import WorkflowRegistry
+ from backend.app.learning.routing import scoped_router
++from backend.app.learning import failure_memory
++from backend.app.learning.memory_contract import merge_steps
+ 
+ logger = logging.getLogger(__name__)
+ 
+@@ -63,6 +65,7 @@
+                 intent_classifier=self._intent_classifier,
+                 workflow_registry=self._workflow_registry,
+                 llm=self._llm,
++                owner_id=self._owner_id,
+             )
+ 
+         if self._db:
+@@ -250,6 +253,16 @@
+ 
+         # 3b. Dynamic Workflow Planning
+         is_dynamic = dynamic_planning or (isinstance(context, dict) and context.get("dynamic_planning", False))
++        if not is_dynamic:
++            try:
++                hints = await failure_memory.recall(self._owner_id, dataset_id, cleaned_query, intent)
++                augmented = merge_steps(workflow, hints, intent)
++                if augmented != workflow:
++                    from backend.app.services.workflow_planner_service import DependencyEngine
++                    workflow = DependencyEngine().resolve_and_order(augmented)
++                    shared_context.workflow = workflow
++            except Exception:
++                pass
+         if is_dynamic and self._planner:
+             from backend.app.schemas.planner import WorkflowPlanningRequest
+             plan_req = WorkflowPlanningRequest(
+diff --git a/backend/app/services/workflow_planner_service.py b/backend/app/services/workflow_planner_service.py
+--- a/backend/app/services/workflow_planner_service.py
++++ b/backend/app/services/workflow_planner_service.py
+@@ -12,6 +12,9 @@
+ from fastapi import Depends
+ 
+ from backend.app.core.exceptions import ValidationException
++from backend.app.core.security import get_current_user
++from backend.app.learning import failure_memory
++from backend.app.learning.memory_contract import merge_steps
+ from backend.app.llm.provider import LLMProvider, get_llm_provider
+ from backend.app.schemas.planner import (
+     PlanDependency,
+@@ -228,6 +231,7 @@
+         intent_classifier: IntentClassificationService | None = None,
+         workflow_registry: WorkflowRegistry | None = None,
+         llm: LLMProvider | None = None,
++        owner_id: str | None = None,
+     ) -> None:
+         self._intent_classifier = intent_classifier or IntentClassificationService(llm=llm)
+         self._workflow_registry = workflow_registry or WorkflowRegistry()
+@@ -235,6 +239,7 @@
+         self._rules_engine = RulesEngine()
+         self._optimization_layer = OptimizationLayer()
+         self._llm = llm
++        self._owner_id = owner_id
+ 
+     @property
+     def workflow_registry(self) -> WorkflowRegistry:
+@@ -258,6 +263,14 @@
+ 
+         # 2. Get Baseline Workflow Template
+         base_template = self._workflow_registry.get_workflow(intent)
++        memory_applied = False
++        try:
++            hints = await failure_memory.recall(self._owner_id, request.dataset_id, cleaned_query, intent)
++            augmented = merge_steps(base_template, hints, intent)
++            memory_applied = augmented != base_template
++            base_template = augmented
++        except Exception:
++            pass  # A memory failure must not change the original planner path.
+ 
+         # 3. Apply Contextual Rules Engine
+         (
+@@ -274,6 +287,8 @@
+             quality=request.quality,
+             dataset_type=request.dataset_type,
+         )
++        if memory_applied:
++            rules_triggered.append("Added analytical checks from a reviewed past failure.")
+ 
+         # 4. Resolve Prerequisites and Dependency Graph Ordering
+         ordered_steps = self._dependency_engine.resolve_and_order(modified_steps)
+@@ -314,6 +329,7 @@
+ 
+ def get_workflow_planner_service(
+     intent_service: IntentClassificationService = Depends(get_intent_classification_service),
++    current_user: Any = Depends(get_current_user),
+ ) -> WorkflowPlannerService:
+     """FastAPI dependency yielding WorkflowPlannerService instance."""
+     try:
+@@ -323,4 +339,5 @@
+     return WorkflowPlannerService(
+         intent_classifier=intent_service,
+         llm=llm,
++        owner_id=str(current_user.id) if getattr(current_user, "id", None) else None,
+     )
+diff --git a/backend/app/learning/memory_contract.py b/backend/app/learning/memory_contract.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/learning/memory_contract.py
+@@ -0,0 +1,74 @@
++"""Bounded lexical vectors and non-executable correction contracts."""
++from __future__ import annotations
++
++import hashlib
++import json
++import re
++from typing import Any
++
++import numpy as np
++from backend.app.learning.perceptron import LABELS
++
++DIMENSION = 1024
++EMBEDDING_VERSION = "perceptron-failure-lexical-v1-1024"
++MIN_SIMILARITY = 0.90
++SAFE_STEPS = frozenset({"validation", "eda", "statistics"})
++
++
++def digest(value: Any) -> str:
++    return hashlib.sha256(json.dumps(value, sort_keys=True, allow_nan=False).encode()).hexdigest()
++
++
++def correction(value: Any) -> dict:
++    if (not isinstance(value, dict) or set(value) != {"format", "intent", "add_steps"}
++            or type(value["format"]) is not int or value["format"] != 1
++            or value["intent"] not in LABELS or value["intent"] == "unknown"):
++        raise ValueError("Invalid correction contract")
++    steps = value["add_steps"]
++    if (not isinstance(steps, list) or not 1 <= len(steps) <= 3
++            or any(not isinstance(step, str) or step not in SAFE_STEPS for step in steps)
++            or len(set(steps)) != len(steps)):
++        raise ValueError("Correction may only add approved analytical checks")
++    return {"format": 1, "intent": value["intent"], "add_steps": list(steps)}
++
++
++def embedding(question: str) -> list[float]:
++    if not isinstance(question, str) or not 1 <= len(question) <= 2000:
++        raise ValueError("Unsupported question")
++    tokens = re.findall(r"[^\W_]+", question.casefold(), flags=re.UNICODE)[:256]
++    if not tokens:
++        raise ValueError("Question has no lexical features")
++    vector = np.zeros(DIMENSION, dtype=np.float64)
++    for size in (1, 2):
++        for start in range(len(tokens) - size + 1):
++            token = f"{size}:" + " ".join(tokens[start:start + size])
++            index = int.from_bytes(hashlib.sha256(token.encode()).digest()[:8], "big") % DIMENSION
++            vector[index] = 1
++    return (vector / np.linalg.norm(vector)).tolist()
++
++
++def checked_vector(value: Any) -> np.ndarray:
++    if (not isinstance(value, list) or len(value) != DIMENSION
++            or any(type(item) not in (int, float) for item in value)):
++        raise ValueError("Invalid stored vector")
++    vector = np.asarray(value, dtype=np.float64)
++    if not np.isfinite(vector).all() or np.any(vector < 0) or abs(np.linalg.norm(vector) - 1) > 1e-6:
++        raise ValueError("Invalid stored vector values")
++    return vector
++
++
++def payload_digest(row: dict) -> str:
++    return digest({key: row[key] for key in (
++        "dataset_schema_hash", "question_hash", "features", "predicted", "truth", "signal_type", "error_type", "corrected_plan")})
++
++
++def merge_steps(steps: list[str], hints: list[dict], intent: str) -> list[str]:
++    result = list(steps)
++    for hint in hints[:3]:
++        plan = correction(hint)
++        if plan["intent"] != intent:
++            continue
++        for step in plan["add_steps"]:
++            if step not in result:
++                result.append(step)
++    return result
+diff --git a/backend/app/learning/memory_table.py b/backend/app/learning/memory_table.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/learning/memory_table.py
+@@ -0,0 +1,25 @@
++"""Reviewed failure provenance and revocation; no runtime writes."""
++from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, ForeignKey, Index, Integer, String, Table, Uuid, UniqueConstraint, text
++from backend.app.models.base import Base
++
++failure_memory_links = Table(
++    "failure_memory_links", Base.metadata,
++    Column("mistake_id", Uuid, ForeignKey("mistakes.id"), primary_key=True),
++    Column("feedback_id", Uuid, ForeignKey("feedback_events.id"), nullable=False),
++    Column("tenant_id", Uuid, ForeignKey("tenants.id"), nullable=False),
++    Column("workspace_id", Uuid, ForeignKey("workspaces.id"), nullable=False, index=True),
++    Column("actor_id", Uuid, ForeignKey("users.id"), nullable=False, index=True),
++    Column("reviewer_id", Uuid, ForeignKey("users.id"), nullable=False, index=True),
++    Column("dataset_id", String(36), ForeignKey("datasets.dataset_id"), nullable=False, index=True),
++    Column("dataset_version", Integer, nullable=False),
++    Column("schema_hash", String(64), nullable=False),
++    Column("payload_digest", String(64), nullable=False),
++    Column("active", Boolean, nullable=False, server_default=text("true")),
++    Column("created_at", DateTime(timezone=True), nullable=False, server_default=text("now()")),
++    Column("revoked_at", DateTime(timezone=True)),
++    Column("revoked_by", Uuid, ForeignKey("users.id"), index=True),
++    UniqueConstraint("feedback_id", name="uq_failure_memory_feedback"),
++    CheckConstraint("dataset_version > 0", name="ck_failure_memory_version"),
++)
++Index("ix_failure_memory_scope", failure_memory_links.c.tenant_id, failure_memory_links.c.actor_id,
++      failure_memory_links.c.dataset_id, failure_memory_links.c.dataset_version)
+diff --git a/backend/app/learning/memory_chroma.py b/backend/app/learning/memory_chroma.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/learning/memory_chroma.py
+@@ -0,0 +1,68 @@
++"""Small bounded HTTP adapter for the verified local Chroma 0.6.3 v2 API.
++
++Explicit numeric embeddings only. No documents, automatic embedder or shared
++client/session changes. Existing embedding and Chroma systems remain untouched.
++"""
++from uuid import UUID
++
++import httpx
++from backend.app.core.config import get_settings
++from backend.app.learning.memory_contract import DIMENSION, EMBEDDING_VERSION, checked_vector
++
++BASE = "/api/v2/tenants/default_tenant/databases/default_database/collections"
++METADATA = {"hnsw:space": "cosine", "embedding_version": EMBEDDING_VERSION, "dimension": DIMENSION}
++
++
++class MemoryIndex:
++    def __enter__(self):
++        settings = get_settings()
++        self.client = httpx.Client(base_url=httpx.URL(scheme="http", host=settings.chroma_host,
++            port=settings.chroma_port), timeout=httpx.Timeout(1.0, pool=0.5), trust_env=False)
++        try:
++            if self.request("GET", "/api/v2/version") != "0.6.3":
++                raise ValueError("Unverified failure-memory protocol")
++        except Exception:
++            self.client.close()
++            raise
++        return self
++
++    def __exit__(self, *args):
++        self.client.close()
++
++    def request(self, method: str, path: str, body=None):
++        with self.client.stream(method, path, json=body) as response:
++            response.raise_for_status()
++            raw = bytearray()
++            for chunk in response.iter_bytes():
++                raw.extend(chunk)
++                if len(raw) > 1_000_000:
++                    raise ValueError("Oversized index response")
++        import json
++        return json.loads(raw) if raw else None
++
++    def collection(self, tenant_id, *, create=False) -> str:
++        name = "perceptron_failures_" + UUID(str(tenant_id)).hex
++        result = self.request("POST", BASE, {"name": name, "metadata": METADATA,
++            "configuration": None, "get_or_create": True}) if create else self.request("GET", f"{BASE}/{name}")
++        if result.get("metadata") != METADATA:
++            raise ValueError("Incompatible failure-memory collection")
++        return str(UUID(result["id"]))
++
++    def upsert(self, tenant_id, mistake_id, vector: list[float], metadata: dict) -> None:
++        checked_vector(vector)
++        collection = self.collection(tenant_id, create=True)
++        self.request("POST", f"{BASE}/{collection}/upsert", {"ids": [str(mistake_id)],
++            "embeddings": [vector], "metadatas": [metadata], "documents": None, "uris": None})
++
++    def query(self, tenant_id, vector: list[float], filters: dict) -> list[str]:
++        checked_vector(vector)
++        collection = self.collection(tenant_id)
++        result = self.request("POST", f"{BASE}/{collection}/query", {"query_embeddings": [vector],
++            "n_results": 20, "where": {"$and": [{key: {"$eq": value}} for key, value in filters.items()]},
++            "where_document": None, "include": ["distances"]})
++        # IDs only. Distances, metadata and instructions from Chroma are never trusted.
++        return list(dict.fromkeys(str(UUID(value)) for value in result["ids"][0][:20]))
++
++    def remove(self, tenant_id, mistake_id) -> None:
++        collection = self.collection(tenant_id)
++        self.request("POST", f"{BASE}/{collection}/delete", {"ids": [str(mistake_id)]})
+diff --git a/backend/app/learning/failure_memory.py b/backend/app/learning/failure_memory.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/learning/failure_memory.py
+@@ -0,0 +1,156 @@
++"""Fail-open recall. Postgres is authoritative; Chroma supplies candidate IDs only."""
++from __future__ import annotations
++
++import asyncio
++from dataclasses import dataclass
++from threading import BoundedSemaphore
++from uuid import UUID
++
++from sqlalchemy import create_engine, select, text, func, cast, Text
++from sqlalchemy.orm import Session
++from sqlalchemy.pool import NullPool
++
++from backend.app.core.config import get_settings
++from backend.app.core.database_target import bind_database_schema
++from backend.app.core.workspace_authorization import authorize_workspace, authorize_bound_dataset, dataset_workspace_bindings, workspace_memberships
++from backend.app.models import DatasetVersion
++from backend.app.learning.evidence import enabled
++from backend.app.learning.memory_chroma import MemoryIndex
++from backend.app.learning.memory_contract import correction, embedding, checked_vector, digest, payload_digest, EMBEDDING_VERSION, MIN_SIMILARITY
++from backend.app.learning.memory_table import failure_memory_links as links
++from backend.app.learning.tables import mistakes
++from backend.app.learning.perceptron import LABELS
++
++_read_slots = BoundedSemaphore(2)
++
++
++@dataclass(frozen=True)
++class MemoryScope:
++    tenant_id: UUID
++    workspace_id: UUID
++    actor_id: UUID
++    dataset_id: str
++    dataset_version: int
++    schema_hash: str
++
++    def filters(self, intent: str) -> dict:
++        return {"tenant_id": str(self.tenant_id), "workspace_id": str(self.workspace_id),
++            "actor_id": str(self.actor_id), "dataset_id": self.dataset_id,
++            "dataset_version": self.dataset_version, "schema_hash": self.schema_hash,
++            "intent": intent, "embedding_version": EMBEDDING_VERSION}
++
++
++def scope(db: Session, actor_id: str | UUID, dataset_id: str, version_number: int | None = None) -> MemoryScope:
++    workspace = db.scalar(select(dataset_workspace_bindings.c.workspace_id).where(
++        dataset_workspace_bindings.c.dataset_id == dataset_id))
++    if workspace is None:
++        raise ValueError("Dataset is unbound")
++    access = authorize_workspace(db, actor_id, workspace)
++    authorize_bound_dataset(db, access, dataset_id)
++    # Match the memory table's stricter policy even with an operator connection:
++    # tenant administrators also need a current workspace membership for recall.
++    if db.scalar(select(workspace_memberships.c.user_id).where(
++            workspace_memberships.c.user_id == access.actor_id,
++            workspace_memberships.c.workspace_id == access.workspace_id,
++            workspace_memberships.c.active.is_(True))) is None:
++        raise ValueError("Failure memory workspace membership unavailable")
++    query = select(DatasetVersion).where(DatasetVersion.dataset_id == dataset_id)
++    query = query.where(DatasetVersion.version_number == version_number) if version_number is not None else query.where(DatasetVersion.is_active.is_(True))
++    version = db.scalar(query)
++    if version is None:
++        raise ValueError("Dataset version unavailable")
++    snapshot = version.metadata_snapshot or {}
++    schema = {key: snapshot[key] for key in ("columns", "dtypes") if key in snapshot}
++    columns, dtypes = schema.get("columns"), schema.get("dtypes")
++    if (not isinstance(columns, list) or not 1 <= len(columns) <= 200 or not isinstance(dtypes, dict)
++            or any(not isinstance(c, str) or len(c) > 256 or c not in dtypes for c in columns)
++            or any(not isinstance(dtypes[c], str) for c in columns)):
++        raise ValueError("Reliable schema unavailable")
++    for key, value in (("tenant_id", access.tenant_id), ("workspace_id", access.workspace_id), ("actor_id", access.actor_id)):
++        db.execute(text("SELECT set_config(:key,:value,true)"), {"key": f"app.{key}", "value": str(value)})
++    return MemoryScope(access.tenant_id, access.workspace_id, access.actor_id,
++                       dataset_id, version.version_number, digest(schema))
++
++
++def verified_rows(db: Session, current: MemoryScope, ids: list[UUID]):
++    return db.execute(select(mistakes, links.c.payload_digest.label("review_digest"), links.c.feedback_id)
++        .join(links, links.c.mistake_id == mistakes.c.id).where(
++            links.c.mistake_id.in_(ids[:20]), links.c.active.is_(True),
++            links.c.tenant_id == current.tenant_id, links.c.workspace_id == current.workspace_id,
++            links.c.actor_id == current.actor_id, links.c.dataset_id == current.dataset_id,
++            links.c.dataset_version == current.dataset_version, links.c.schema_hash == current.schema_hash,
++            mistakes.c.tenant_id == links.c.tenant_id, mistakes.c.workspace_id == links.c.workspace_id,
++            mistakes.c.actor_id == links.c.actor_id, mistakes.c.dataset_schema_hash == links.c.schema_hash,
++            func.octet_length(cast(mistakes.c.features, Text)) <= 100_000,
++            func.octet_length(cast(mistakes.c.corrected_plan, Text)) <= 4096)).mappings().all()
++
++
++def validate_record(row) -> tuple[dict, list[float]]:
++    plan = correction(row["corrected_plan"])
++    features = row["features"]
++    if (row["question"] is not None or row["signal_type"] != "reviewed_hard_failure"
++            or row["truth"] != plan["intent"] or not isinstance(features, dict)
++            or set(features) != {"embedding_version", "embedding"}
++            or features["embedding_version"] != EMBEDDING_VERSION
++            or payload_digest(row) != row["review_digest"]):
++        raise ValueError("Unverified correction payload")
++    checked_vector(features["embedding"])
++    return plan, features["embedding"]
++
++
++def retrieve_sync(actor_id: str | UUID, dataset_id: str, question: str, intent: str) -> list[dict]:
++    if not enabled() or not actor_id or not dataset_id or intent not in LABELS or intent == "unknown":
++        return []
++    if not _read_slots.acquire(blocking=False):
++        return []
++    engine = None
++    try:
++        vector = embedding(question)
++        settings = get_settings()
++        engine = create_engine(settings.postgres_dsn, poolclass=NullPool, hide_parameters=True,
++                               connect_args={"connect_timeout": 2})
++        bind_database_schema(engine, settings.database_schema)
++        with Session(engine) as db, db.begin():
++            db.execute(text("SET LOCAL statement_timeout='300ms'"))
++            db.execute(text("SET LOCAL lock_timeout='100ms'"))
++            current = scope(db, actor_id, dataset_id)
++        # No database transaction is held across the network call.
++        with MemoryIndex() as index:
++            ids = index.query(current.tenant_id, vector, current.filters(intent))
++        if not ids:
++            return []
++        with Session(engine) as db, db.begin():
++            db.execute(text("SET LOCAL statement_timeout='300ms'"))
++            db.execute(text("SET LOCAL lock_timeout='100ms'"))
++            if scope(db, actor_id, dataset_id) != current:
++                return []
++            rows = verified_rows(db, current, [UUID(value) for value in ids[:20]])
++            matches = []
++            for row in rows:
++                try:
++                    plan, stored = validate_record(row)
++                    score = float(checked_vector(vector) @ checked_vector(stored))
++                    if plan["intent"] == intent and score >= MIN_SIMILARITY:
++                        matches.append((score, str(row["id"]), plan))
++                except (ValueError, TypeError, KeyError):
++                    continue
++        matches.sort(key=lambda match: (-match[0], match[1]))
++        return [match[2] for match in matches[:3]]
++    except Exception:
++        return []
++    finally:
++        if engine is not None:
++            try:
++                engine.dispose()
++            except Exception:
++                pass
++        _read_slots.release()
++
++
++async def recall(actor_id: str | UUID | None, dataset_id: str | None, question: str, intent: str) -> list[dict]:
++    if not enabled() or not actor_id or not dataset_id:
++        return []
++    try:
++        return await asyncio.wait_for(asyncio.to_thread(retrieve_sync, actor_id, dataset_id, question, intent), timeout=2.5)
++    except Exception:
++        return []
+diff --git a/backend/app/learning/memory_review.py b/backend/app/learning/memory_review.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/learning/memory_review.py
+@@ -0,0 +1,103 @@
++"""Explicit human-reviewed corrections; SQL authority and retryable Chroma projection."""
++from __future__ import annotations
++
++from datetime import datetime, timezone
++import hashlib
++from typing import Callable
++from uuid import UUID, uuid4
++
++from sqlalchemy import select, text
++from sqlalchemy.orm import Session
++from backend.app.learning.evidence import ERROR_TYPES
++from backend.app.learning.lifecycle import operator
++from backend.app.learning.failure_memory import scope, verified_rows, validate_record
++from backend.app.learning.memory_chroma import MemoryIndex
++from backend.app.learning.memory_contract import correction, embedding, payload_digest, EMBEDDING_VERSION
++from backend.app.learning.memory_table import failure_memory_links as links
++from backend.app.learning.tables import feedback_events, mistakes
++
++SessionFactory = Callable[[], Session]
++
++
++def approve(factory: SessionFactory, reviewer_id: str | UUID, feedback_id: str | UUID,
++            dataset_id: str, version_number: int, question: str, corrected_plan: dict) -> dict:
++    plan, vector = correction(corrected_plan), embedding(question)
++    with factory() as db, db.begin():
++        db.execute(text("SET LOCAL lock_timeout='2s'"))
++        db.execute(text("SET LOCAL statement_timeout='5s'"))
++        feedback = db.execute(select(feedback_events).where(feedback_events.c.id == UUID(str(feedback_id))).with_for_update()).mappings().first()
++        if not feedback:
++            raise ValueError("Failure evidence unavailable")
++        reviewer, _ = operator(db, reviewer_id, feedback["tenant_id"])
++        current = scope(db, feedback["actor_id"], dataset_id, version_number)
++        features = feedback["features"]
++        if (feedback["signal_type"] != "hard_failure" or feedback["truth"] is not None
++                or not isinstance(features, dict) or features.get("error_type") not in ERROR_TYPES
++                or features.get("dataset_id") != dataset_id or features.get("dataset_version") != version_number
++                or feedback["tenant_id"] != current.tenant_id or feedback["workspace_id"] != current.workspace_id
++                or feedback["dataset_schema_hash"] != current.schema_hash
++                or feedback["question_hash"] != hashlib.sha256(question.encode()).hexdigest()):
++            raise ValueError("Failure provenance does not match reviewed correction")
++        existing = db.execute(select(links).where(links.c.feedback_id == feedback["id"])).mappings().first()
++        if existing:
++            rows = verified_rows(db, current, [existing["mistake_id"]])
++            if not existing["active"] or not rows or validate_record(rows[0])[0] != plan:
++                raise ValueError("Correction already reviewed differently or revoked")
++            mistake_id = existing["mistake_id"]
++        else:
++            mistake_id = uuid4()
++            value = dict(id=mistake_id, tenant_id=current.tenant_id, workspace_id=current.workspace_id,
++                actor_id=current.actor_id, dataset_schema_hash=current.schema_hash, question=None,
++                question_hash=feedback["question_hash"], features={"embedding_version": EMBEDDING_VERSION, "embedding": vector},
++                predicted=feedback["predicted"], truth=plan["intent"], signal_type="reviewed_hard_failure",
++                error_type=features["error_type"], corrected_plan=plan)
++            db.execute(mistakes.insert().values(**value))
++            db.execute(links.insert().values(mistake_id=mistake_id, feedback_id=feedback["id"],
++                tenant_id=current.tenant_id, workspace_id=current.workspace_id, actor_id=current.actor_id,
++                reviewer_id=reviewer, dataset_id=dataset_id, dataset_version=version_number,
++                schema_hash=current.schema_hash, payload_digest=payload_digest(value), active=True))
++    # A failed projection leaves an approved SQL record that can be safely retried.
++    try:
++        indexed = reindex(factory, reviewer_id, mistake_id)
++    except Exception:
++        indexed = False  # SQL approval committed; report projection separately.
++    return {"mistake_id": str(mistake_id), "approved": True, "indexed": indexed}
++
++
++def reindex(factory: SessionFactory, reviewer_id: str | UUID, mistake_id: str | UUID) -> bool:
++    with factory() as db, db.begin():
++        link = db.execute(select(links).where(links.c.mistake_id == UUID(str(mistake_id)))).mappings().first()
++        if not link:
++            raise ValueError("Correction unavailable")
++        operator(db, reviewer_id, link["tenant_id"])
++        current = scope(db, link["actor_id"], link["dataset_id"], link["dataset_version"])
++        rows = verified_rows(db, current, [link["mistake_id"]])
++        if not rows:
++            raise ValueError("Correction inactive or incompatible")
++        plan, vector = validate_record(rows[0])
++    try:
++        with MemoryIndex() as index:
++            index.upsert(current.tenant_id, link["mistake_id"], vector, current.filters(plan["intent"]))
++        return True
++    except Exception:
++        return False
++
++
++def revoke(factory: SessionFactory, reviewer_id: str | UUID, mistake_id: str | UUID) -> dict:
++    with factory() as db, db.begin():
++        db.execute(text("SET LOCAL lock_timeout='2s'"))
++        link = db.execute(select(links).where(links.c.mistake_id == UUID(str(mistake_id))).with_for_update()).mappings().first()
++        if not link:
++            raise ValueError("Correction unavailable")
++        reviewer, tenant = operator(db, reviewer_id, link["tenant_id"])
++        if link["active"]:
++            db.execute(links.update().where(links.c.mistake_id == link["mistake_id"]).values(
++                active=False, revoked_at=datetime.now(timezone.utc), revoked_by=reviewer))
++    removed = False
++    try:
++        with MemoryIndex() as index:
++            index.remove(tenant, link["mistake_id"])
++        removed = True
++    except Exception:
++        pass
++    return {"mistake_id": str(link["mistake_id"]), "revoked": True, "index_removed": removed}
+diff --git a/migrations/versions/016_failure_memory.py b/migrations/versions/016_failure_memory.py
+new file mode 100644
+--- /dev/null
++++ b/migrations/versions/016_failure_memory.py
+@@ -0,0 +1,56 @@
++"""Review and revocation links; only a new table, existing policies unchanged."""
++from alembic import op
++import sqlalchemy as sa
++
++revision = "016_failure_memory"
++down_revision = "015_router_releases"
++branch_labels = None
++depends_on = None
++
++
++def upgrade():
++    op.create_table("failure_memory_links",
++        sa.Column("mistake_id", sa.Uuid, sa.ForeignKey("mistakes.id"), primary_key=True),
++        sa.Column("feedback_id", sa.Uuid, sa.ForeignKey("feedback_events.id"), nullable=False),
++        sa.Column("tenant_id", sa.Uuid, sa.ForeignKey("tenants.id"), nullable=False),
++        sa.Column("workspace_id", sa.Uuid, sa.ForeignKey("workspaces.id"), nullable=False),
++        sa.Column("actor_id", sa.Uuid, sa.ForeignKey("users.id"), nullable=False),
++        sa.Column("reviewer_id", sa.Uuid, sa.ForeignKey("users.id"), nullable=False),
++        sa.Column("dataset_id", sa.String(36), sa.ForeignKey("datasets.dataset_id"), nullable=False),
++        sa.Column("dataset_version", sa.Integer, nullable=False),
++        sa.Column("schema_hash", sa.String(64), nullable=False),
++        sa.Column("payload_digest", sa.String(64), nullable=False),
++        sa.Column("active", sa.Boolean, nullable=False, server_default=sa.text("true")),
++        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
++        sa.Column("revoked_at", sa.DateTime(timezone=True)),
++        sa.Column("revoked_by", sa.Uuid, sa.ForeignKey("users.id")),
++        sa.UniqueConstraint("feedback_id", name="uq_failure_memory_feedback"),
++        sa.CheckConstraint("dataset_version > 0", name="ck_failure_memory_version"))
++    for column in ("workspace_id", "actor_id", "reviewer_id", "dataset_id", "revoked_by"):
++        op.create_index(f"ix_failure_memory_links_{column}", "failure_memory_links", [column])
++    op.create_index("ix_failure_memory_scope", "failure_memory_links", ["tenant_id", "actor_id", "dataset_id", "dataset_version"])
++    op.execute("ALTER TABLE failure_memory_links ENABLE ROW LEVEL SECURITY")
++    op.execute("ALTER TABLE failure_memory_links FORCE ROW LEVEL SECURITY")
++    op.execute("""CREATE POLICY failure_memory_read ON failure_memory_links FOR SELECT USING (
++      tenant_id::text=current_setting('app.tenant_id',true)
++      AND workspace_id::text=current_setting('app.workspace_id',true)
++      AND actor_id::text=current_setting('app.actor_id',true)
++      AND EXISTS (
++        SELECT 1 FROM workspaces w JOIN tenants t ON t.id=w.tenant_id AND t.tenant_status='active'
++        JOIN tenant_memberships tm ON tm.tenant_id=t.id AND tm.active
++        JOIN users u ON u.id=tm.user_id AND u.is_active
++        LEFT JOIN workspace_memberships wm ON wm.workspace_id=w.id AND wm.user_id=u.id AND wm.active
++        WHERE w.id=failure_memory_links.workspace_id AND w.tenant_id=failure_memory_links.tenant_id
++        AND w.status='active' AND u.id=failure_memory_links.actor_id
++        AND tm.role IN ('viewer','analyst','admin','owner')
++        AND (tm.role IN ('owner','admin') OR wm.role IN ('viewer','analyst','admin','owner')))
++      AND EXISTS (
++        SELECT 1 FROM datasets d JOIN dataset_workspace_bindings b ON b.dataset_id=d.dataset_id
++        WHERE d.dataset_id=failure_memory_links.dataset_id AND b.workspace_id=failure_memory_links.workspace_id
++        AND d.owner_id=current_setting('app.actor_id',true) AND d.status NOT IN ('deleted','archived','purged')))
++    """)
++    # Reviewed corrections are managed only by the privileged operator CLI.
++
++
++def downgrade():
++    op.drop_table("failure_memory_links")
+diff --git a/backend/tests/test_perceptron_memory.py b/backend/tests/test_perceptron_memory.py
+new file mode 100644
+--- /dev/null
++++ b/backend/tests/test_perceptron_memory.py
+@@ -0,0 +1,296 @@
++"""Failure memory against isolated PostgreSQL and Chroma; synthetic data only."""
++import asyncio
++import json
++import subprocess
++import sys
++from uuid import UUID, uuid4
++
++import numpy as np
++import pytest
++from sqlalchemy import select, update, text
++
++from backend.tests.test_verified_learning_integration import environment, identity, dataset
++from backend.app.core.config import get_settings
++from backend.app.models import DatasetVersion
++from backend.app.learning import evidence, failure_memory as memory, memory_review as review
++from backend.app.learning.memory_contract import embedding, checked_vector, correction, merge_steps
++from backend.app.learning.memory_chroma import MemoryIndex, BASE
++from backend.app.learning.memory_table import failure_memory_links as links
++from backend.app.learning.tables import feedback_events, mistakes
++from backend.app.schemas.planner import WorkflowPlanningRequest
++from backend.app.services.workflow_planner_service import WorkflowPlannerService
++
++QUESTION = 'Explore the dataset schema and inspect missing values across all columns'
++PLAN = {'format': 1, 'intent': 'dataset_overview', 'add_steps': ['validation']}
++
++
++@pytest.fixture
++def case(environment, tmp_path, monkeypatch):
++    monkeypatch.setattr(get_settings(), 'learning_enabled', True)
++    account = identity(environment)
++    ds = dataset(environment, account, tmp_path)
++    with environment['admin']() as db, db.begin():
++        db.execute(update(DatasetVersion).where(DatasetVersion.dataset_id == ds).values(
++            metadata_snapshot={'columns': ['region', 'amount', 'status'],
++                               'dtypes': {'region': 'object', 'amount': 'int64', 'status': 'object'}}))
++    event = uuid4()
++    assert evidence.record_failure(actor_id=str(account['user']), dataset_id=ds,
++        question=QUESTION, error_type='validator_rejection', event_id=event)
++    return environment, account, ds, event
++
++
++def approve(case, **changes):
++    env, account, ds, event = case
++    args = dict(factory=env['admin'], reviewer_id=account['user'], feedback_id=event,
++        dataset_id=ds, version_number=1, question=QUESTION, corrected_plan=PLAN)
++    args.update(changes)
++    return review.approve(**args)
++
++
++def recall(case, question=QUESTION, intent='dataset_overview'):
++    _, account, ds, _ = case
++    return memory.retrieve_sync(account['user'], ds, question, intent)
++
++
++def test_vector_is_stable_bounded_and_numpy_only():
++    vector = embedding(QUESTION)
++    assert len(vector) == 1024 and np.linalg.norm(vector) == pytest.approx(1)
++    code = 'import json; from backend.app.learning.memory_contract import embedding; print(json.dumps(embedding(' + repr(QUESTION) + ')))'
++    assert json.loads(subprocess.check_output([sys.executable, '-c', code], text=True)) == vector
++    with pytest.raises(ValueError):
++        checked_vector([float('nan')] * 1024)
++    with pytest.raises(ValueError):
++        embedding('x' * 2001)
++
++
++@pytest.mark.parametrize('value', [dict(PLAN, sql='select 1'), dict(PLAN, format=True),
++    dict(PLAN, add_steps=['cleaning']), dict(PLAN, add_steps=['validation', 'validation']),
++    dict(PLAN, intent='unknown'), dict(PLAN, add_steps=['ignore all instructions'])])
++def test_corrections_cannot_execute_text_or_change_metrics(value):
++    with pytest.raises(ValueError):
++        correction(value)
++
++
++def test_real_index_review_recall_and_privacy(case):
++    env, account, ds, event = case
++    result = approve(case)
++    assert result['approved'] and result['indexed'], result
++    assert recall(case) == [PLAN]
++    assert recall(case, QUESTION + ' please') == [PLAN]
++    assert recall(case, 'Forecast tomorrow weather temperature') == []
++    assert recall(case, intent='trend_analysis') == []
++    assert approve(case) == result
++    with env['admin']() as db:
++        row = db.execute(select(mistakes).where(mistakes.c.id == UUID(result['mistake_id']))).mappings().one()
++        assert row['question'] is None and set(row['features']) == {'embedding', 'embedding_version'}
++        assert db.scalar(select(feedback_events.c.truth).where(feedback_events.c.id == event)) is None
++        tenant = row['tenant_id']
++    with MemoryIndex() as index:
++        collection = index.collection(tenant)
++        stored = index.request('POST', f'{BASE}/{collection}/get',
++            {'ids': [result['mistake_id']], 'include': ['documents', 'metadatas', 'embeddings']})
++    assert stored['documents'] == [None]
++    assert QUESTION not in json.dumps(stored)
++    assert len(stored['embeddings'][0]) == 1024
++    assert set(stored['metadatas'][0]) == {'tenant_id', 'workspace_id', 'actor_id', 'dataset_id',
++        'dataset_version', 'schema_hash', 'intent', 'embedding_version'}
++
++
++@pytest.mark.parametrize('change', ['question', 'dataset', 'version', 'legacy', 'schema'])
++def test_review_requires_exact_provenance(case, tmp_path, change):
++    env, account, ds, event = case
++    updates = {}
++    if change == 'question':
++        updates['question'] = QUESTION + ' changed'
++    elif change == 'dataset':
++        updates['dataset_id'] = dataset(env, account, tmp_path)
++    elif change == 'version':
++        updates['version_number'] = 99
++    elif change == 'legacy':
++        with env['admin']() as db, db.begin():
++            db.execute(feedback_events.update().where(feedback_events.c.id == event).values(
++                features={'error_type': 'validator_rejection'}))
++    else:
++        with env['admin']() as db, db.begin():
++            db.execute(update(DatasetVersion).where(DatasetVersion.dataset_id == ds).values(metadata_snapshot={}))
++    with pytest.raises(ValueError):
++        approve(case, **updates)
++
++
++def test_review_requires_authorized_operator(case):
++    env, account, _, _ = case
++    outsider = identity(env)
++    with pytest.raises(Exception):
++        approve(case, reviewer_id=outsider['user'])
++    with pytest.raises(Exception):
++        approve(case, factory=env['api'])
++    from backend.app.core.workspace_authorization import tenant_memberships
++    with env['admin']() as db, db.begin():
++        db.execute(tenant_memberships.update().where(tenant_memberships.c.user_id == account['user']).values(role='viewer'))
++    with pytest.raises(Exception):
++        approve(case)
++
++
++def test_sql_rechecks_scope_even_if_index_returns_forged_candidates(case, tmp_path, monkeypatch):
++    env, account, ds, _ = case
++    result = approve(case)
++    monkeypatch.setattr(MemoryIndex, 'query', lambda *args: [result['mistake_id']])
++    outsider = identity(env)
++    other_ds = dataset(env, outsider, tmp_path)
++    assert memory.retrieve_sync(outsider['user'], ds, QUESTION, PLAN['intent']) == []
++    assert memory.retrieve_sync(account['user'], other_ds, QUESTION, PLAN['intent']) == []
++    assert recall(case, intent='trend_analysis') == []
++    assert recall(case, question='Weather forecast') == []
++    with env['admin']() as db, db.begin():
++        db.execute(update(DatasetVersion).where(DatasetVersion.dataset_id == ds).values(version_number=2))
++    assert recall(case) == []
++
++
++def test_tampered_sql_payload_is_not_replayed(case, monkeypatch):
++    env, _, _, _ = case
++    result = approve(case)
++    monkeypatch.setattr(MemoryIndex, 'query', lambda *args: [result['mistake_id']])
++    with env['admin']() as db, db.begin():
++        db.execute(mistakes.update().where(mistakes.c.id == UUID(result['mistake_id'])).values(
++            corrected_plan=dict(PLAN, add_steps=['statistics'])))
++    assert recall(case) == []
++
++
++def test_revocation_blocks_stale_vectors_and_cannot_be_reapproved(case, monkeypatch):
++    env, account, _, _ = case
++    result = approve(case)
++    monkeypatch.setattr(MemoryIndex, 'remove', lambda *args: (_ for _ in ()).throw(OSError('offline')))
++    revoked = review.revoke(env['admin'], account['user'], result['mistake_id'])
++    assert revoked['revoked'] and not revoked['index_removed']
++    monkeypatch.setattr(MemoryIndex, 'query', lambda *args: [result['mistake_id']])
++    assert recall(case) == []
++    with pytest.raises(ValueError):
++        review.reindex(env['admin'], account['user'], result['mistake_id'])
++    with pytest.raises(ValueError):
++        approve(case)
++
++
++def test_partial_index_failure_is_retryable(case, monkeypatch):
++    env, account, _, _ = case
++    with monkeypatch.context() as patch:
++        patch.setattr(MemoryIndex, 'upsert', lambda *args: (_ for _ in ()).throw(OSError('offline')))
++        result = approve(case)
++    assert result['approved'] and not result['indexed']
++    assert review.reindex(env['admin'], account['user'], result['mistake_id'])
++    assert recall(case) == [PLAN]
++
++
++def test_flag_disabled_and_outages_preserve_planner(case, monkeypatch):
++    _, account, ds, _ = case
++    assert approve(case)['indexed']
++    planner = WorkflowPlannerService(owner_id=str(account['user']))
++    request = WorkflowPlanningRequest(query=QUESTION, dataset_id=ds, intent=PLAN['intent'])
++    monkeypatch.setattr(get_settings(), 'learning_enabled', False)
++    baseline = asyncio.run(planner.plan(request)).model_dump(exclude={'workflow_id'})
++    with monkeypatch.context() as patch:
++        patch.setattr(memory, 'create_engine', lambda *a, **k: pytest.fail('Flag off touched DB'))
++        assert recall(case) == []
++    monkeypatch.setattr(get_settings(), 'learning_enabled', True)
++    enhanced = asyncio.run(planner.plan(request))
++    assert 'validation' in enhanced.steps and set(baseline['steps']).issubset(enhanced.steps)
++    assert enhanced.intent == baseline['intent'] and enhanced.use_sampling == baseline['use_sampling']
++    with monkeypatch.context() as patch:
++        patch.setattr(MemoryIndex, '__enter__', lambda *args: (_ for _ in ()).throw(OSError('offline')))
++        assert asyncio.run(planner.plan(request)).model_dump(exclude={'workflow_id'}) == baseline
++    with monkeypatch.context() as patch:
++        patch.setattr(memory, 'create_engine', lambda *a, **k: (_ for _ in ()).throw(OSError('offline')))
++        assert recall(case) == []
++    assert merge_steps(['summary'], [PLAN], 'trend_analysis') == ['summary']
++
++
++def test_rls_reads_only_bound_actor_and_disallows_runtime_writes(case):
++    env, account, ds, _ = case
++    result = approve(case)
++    mid = UUID(result['mistake_id'])
++    with env['api']() as db, db.begin():
++        assert db.scalar(select(links.c.mistake_id).where(links.c.mistake_id == mid)) is None
++        memory.scope(db, account['user'], ds)
++        assert db.scalar(select(links.c.mistake_id).where(links.c.mistake_id == mid)) == mid
++        assert db.execute(links.update().where(links.c.mistake_id == mid).values(active=False)).rowcount == 0
++        assert db.execute(links.delete().where(links.c.mistake_id == mid)).rowcount == 0
++        db.execute(text("SELECT set_config('app.actor_id',:actor,true)"), {'actor': str(uuid4())})
++        assert db.scalar(select(links.c.mistake_id).where(links.c.mistake_id == mid)) is None
++
++
++def test_cli_reindex_and_revoke(case):
++    env, account, _, _ = case
++    result = approve(case)
++    from pathlib import Path
++    script = Path(__file__).resolve().parents[2] / 'scripts' / 'perceptron_memory.py'
++    for action in ('reindex', 'revoke'):
++        command = [sys.executable, str(script), action, '--reviewer-id', str(account['user']),
++                   '--mistake-id', result['mistake_id']]
++        output = subprocess.run(command, capture_output=True, text=True)
++        assert output.returncode == 0, output.stderr
++        assert json.loads(output.stdout)['indexed' if action == 'reindex' else 'revoked']
++    assert recall(case) == []
++
++
++def test_authenticated_planner_uses_only_owners_memory(case):
++    env, account, ds, _ = case
++    assert approve(case)['indexed']
++    body = dict(query=QUESTION, dataset_id=ds, intent=PLAN['intent'])
++    own = env['client'].post('/api/v1/planner/plan', headers=account['headers'], json=body)
++    assert own.status_code == 200, own.text
++    assert 'Added analytical checks from a reviewed past failure.' in own.json()['rules_triggered']
++    outsider = identity(env)
++    other = env['client'].post('/api/v1/planner/plan', headers=outsider['headers'], json=body)
++    assert other.status_code == 200
++    assert 'Added analytical checks from a reviewed past failure.' not in other.json()['rules_triggered']
++
++
++@pytest.mark.parametrize('dynamic', [False, True])
++def test_orchestrator_executes_added_validation(case, dynamic):
++    from backend.app.services.orchestrator_service import OrchestratorService
++    env, account, ds, _ = case
++    assert approve(case)['indexed']
++    with env['admin']() as db:
++        service = OrchestratorService(db=db, owner_id=str(account['user']))
++        response = asyncio.run(service.execute(QUESTION, dataset_id=ds,
++            context={'intent': PLAN['intent']}, dynamic_planning=dynamic, max_retries=0))
++    assert 'validation' in response.workflow
++    assert 'validation' in response.executed_agents
++
++
++def test_memory_never_changes_chat_arithmetic_or_trains(case, monkeypatch):
++    from backend.app.learning.perceptron import AveragedPerceptron
++    env, account, ds, _ = case
++    question = 'total amount by region'
++    event = uuid4()
++    assert evidence.record_failure(actor_id=str(account['user']), dataset_id=ds,
++        question=question, error_type='execution_error', event_id=event)
++    assert approve(case, feedback_id=event, question=question)['indexed']
++    monkeypatch.setattr(AveragedPerceptron, 'update', lambda *a, **k: pytest.fail('Request trained model'))
++    outputs = []
++    for flag in (False, True):
++        monkeypatch.setattr(get_settings(), 'learning_enabled', flag)
++        response = env['client'].post('/api/v1/chat', headers=account['headers'], json={
++            'message': question, 'dataset_id': ds, 'workspace_id': str(account['workspace'])})
++        assert response.status_code == 200, response.text
++        outputs.append({key: response.json()[key] for key in ('data', 'plan', 'kpis', 'answer', 'intent', 'confidence')})
++    assert outputs[0] == outputs[1]
++    assert outputs[1]['data'] == [{'region': 'a', 'amount': 1180}]
++
++
++def test_access_revocation_overrides_index(case):
++    from backend.app.core.workspace_authorization import workspace_memberships
++    env, account, _, _ = case
++    assert approve(case)['indexed']
++    with env['admin']() as db, db.begin():
++        db.execute(workspace_memberships.update().where(workspace_memberships.c.user_id == account['user']).values(active=False))
++    assert recall(case) == []
++
++
++def test_full_read_slots_skip_memory(case):
++    assert memory._read_slots.acquire(blocking=False)
++    assert memory._read_slots.acquire(blocking=False)
++    try:
++        assert recall(case) == []
++    finally:
++        memory._read_slots.release()
++        memory._read_slots.release()
+diff --git a/scripts/perceptron_memory.py b/scripts/perceptron_memory.py
+new file mode 100644
+--- /dev/null
++++ b/scripts/perceptron_memory.py
+@@ -0,0 +1,63 @@
++"""Operator review/reindex/revoke commands for tenant-local failure memory."""
++import argparse
++import json
++from pathlib import Path
++import sys
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT))
++
++
++def main() -> int:
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("command", choices=("approve", "reindex", "revoke"))
++    parser.add_argument("--reviewer-id", required=True)
++    parser.add_argument("--feedback-id")
++    parser.add_argument("--mistake-id")
++    parser.add_argument("--dataset-id")
++    parser.add_argument("--dataset-version", type=int)
++    parser.add_argument("--question-file", type=Path)
++    parser.add_argument("--correction-file", type=Path)
++    parser.add_argument("--reviewed", action="store_true", help="Attest that the supplied correction has been reviewed")
++    args = parser.parse_args()
++    if args.command == "approve" and not all((args.feedback_id, args.dataset_id, args.dataset_version,
++            args.question_file, args.correction_file, args.reviewed)):
++        parser.error("approve requires reviewed failure, dataset/version, exact question file and correction JSON")
++    if args.command != "approve" and not args.mistake_id:
++        parser.error("reindex/revoke require --mistake-id")
++    engine = None
++    try:
++        from sqlalchemy import create_engine
++        from sqlalchemy.orm import sessionmaker
++        from sqlalchemy.pool import NullPool
++        from backend.app.core.config import get_settings
++        from backend.app.core.database_target import bind_database_schema
++        from backend.app.learning import memory_review
++        settings = get_settings()
++        engine = create_engine(settings.postgres_dsn, poolclass=NullPool, hide_parameters=True,
++                               connect_args={"connect_timeout": 2})
++        bind_database_schema(engine, settings.database_schema)
++        factory = sessionmaker(engine)
++        if args.command == "approve":
++            if args.question_file.stat().st_size > 8000 or args.correction_file.stat().st_size > 4096:
++                raise ValueError("Review input too large")
++            result = memory_review.approve(factory, args.reviewer_id, args.feedback_id, args.dataset_id,
++                args.dataset_version, args.question_file.read_text(encoding="utf-8"),
++                json.loads(args.correction_file.read_bytes()))
++        elif args.command == "reindex":
++            result = {"mistake_id": args.mistake_id,
++                      "indexed": memory_review.reindex(factory, args.reviewer_id, args.mistake_id)}
++        else:
++            result = memory_review.revoke(factory, args.reviewer_id, args.mistake_id)
++        print(json.dumps(result))
++        return 1 if result.get("indexed") is False else 0
++    except Exception:
++        print("Memory command refused: check operator authorization, failure provenance and correction contract.", file=sys.stderr)
++        return 2
++    finally:
++        if engine is not None:
++            engine.dispose()
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/scripts/verify_failure_memory_migration.py b/scripts/verify_failure_memory_migration.py
+new file mode 100644
+--- /dev/null
++++ b/scripts/verify_failure_memory_migration.py
+@@ -0,0 +1,58 @@
++"""Verify Phase 5 upgrade/downgrade/upgrade in the isolated database only."""
++from pathlib import Path
++import os
++import sys
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT))
++
++
++def main():
++    from sqlalchemy import create_engine, inspect, text
++    from sqlalchemy.engine import make_url
++    from alembic import command
++    from alembic.config import Config
++    from backend.app.core.config import Settings, get_settings
++    Settings.model_config = {**Settings.model_config, "env_file": None}
++    get_settings.cache_clear()
++    target = make_url(os.environ["DATABASE_URL"])
++    if (target.database != "analyst_setup_test" or target.username != "setup"
++            or target.host != "postgres" or os.environ.get("ENVIRONMENT") != "test"):
++        raise SystemExit("Refusing migration roundtrip outside isolated setup database")
++    engine = create_engine(target)
++    config = Config(str(ROOT / "alembic.ini"))
++    config.set_main_option("script_location", str(ROOT / "migrations"))
++
++    def snapshot():
++        with engine.connect() as db:
++            inspector = inspect(db)
++            result = {}
++            for name in inspector.get_table_names():
++                if name in {"failure_memory_links", "alembic_version"}:
++                    continue
++                quoted = engine.dialect.identifier_preparer.quote(name)
++                result[name] = {
++                    "columns": [(col["name"], str(col["type"]), col["nullable"]) for col in inspector.get_columns(name)],
++                    "pk": inspector.get_pk_constraint(name), "fk": inspector.get_foreign_keys(name),
++                    "indexes": inspector.get_indexes(name),
++                    "count": db.scalar(text(f"SELECT count(*) FROM {quoted}")),
++                    "policies": db.execute(text("SELECT policyname, cmd, qual, with_check FROM pg_policies WHERE schemaname=current_schema() AND tablename=:name ORDER BY policyname"), {"name": name}).all(),
++                }
++            return result
++
++    before = snapshot()
++    command.upgrade(config, "016_failure_memory")
++    assert "failure_memory_links" in inspect(engine).get_table_names()
++    assert snapshot() == before
++    command.downgrade(config, "015_router_releases")
++    assert "failure_memory_links" not in inspect(engine).get_table_names()
++    assert snapshot() == before
++    command.upgrade(config, "016_failure_memory")
++    assert "failure_memory_links" in inspect(engine).get_table_names()
++    assert snapshot() == before
++    engine.dispose()
++    print(f"PASS: upgrade / downgrade / upgrade; {len(before)} existing tables unchanged, including policies and row counts")
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/scripts/verify_failure_memory_persistence.py b/scripts/verify_failure_memory_persistence.py
+new file mode 100644
+--- /dev/null
++++ b/scripts/verify_failure_memory_persistence.py
+@@ -0,0 +1,53 @@
++"""Seed/check synthetic memory across a separate verification Chroma restart."""
++import json
++import os
++from pathlib import Path
++import sys
++from uuid import uuid4
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT))
++
++
++def main():
++    from sqlalchemy import create_engine, update
++    from sqlalchemy.engine import make_url
++    from sqlalchemy.orm import sessionmaker
++    target = make_url(os.environ['DATABASE_URL'])
++    assert target.database == 'analyst_setup_test' and target.username == 'setup' and target.host == 'postgres'
++    assert os.environ.get('ENVIRONMENT') == 'test'
++    from backend.app.core.config import Settings, get_settings
++    Settings.model_config = {**Settings.model_config, 'env_file': None}
++    get_settings.cache_clear()
++    get_settings().learning_enabled = True
++    from backend.app.learning import evidence, failure_memory, memory_review
++    from backend.app.models import DatasetVersion
++    from backend.tests.test_verified_learning_integration import identity, dataset
++    engine = create_engine(str(target.render_as_string(hide_password=False)))
++    env = {'admin': sessionmaker(engine, expire_on_commit=False), 'actors': set()}
++    state_path = Path('/verification/phase5-persistence.json')
++    question = 'Explore the dataset schema and inspect missing values across all columns'
++    plan = {'format': 1, 'intent': 'dataset_overview', 'add_steps': ['validation']}
++    if sys.argv[1] == 'seed':
++        account = identity(env)
++        ds = dataset(env, account, Path('/verification'))
++        with env['admin']() as db, db.begin():
++            db.execute(update(DatasetVersion).where(DatasetVersion.dataset_id == ds).values(
++                metadata_snapshot={'columns': ['region', 'amount', 'status'],
++                    'dtypes': {'region': 'object', 'amount': 'int64', 'status': 'object'}}))
++        event = uuid4()
++        assert evidence.record_failure(actor_id=str(account['user']), dataset_id=ds,
++            question=question, error_type='validator_rejection', event_id=event)
++        result = memory_review.approve(env['admin'], account['user'], event, ds, 1, question, plan)
++        assert result['indexed'], result
++        state_path.write_text(json.dumps({'actor': str(account['user']), 'dataset': ds}))
++    else:
++        assert sys.argv[1] == 'check'
++    state = json.loads(state_path.read_text())
++    assert failure_memory.retrieve_sync(state['actor'], state['dataset'], question, plan['intent']) == [plan]
++    engine.dispose()
++    print('PASS: synthetic reviewed memory retrieved in a fresh process (' + sys.argv[1] + ')')
++
++
++if __name__ == '__main__':
++    main()

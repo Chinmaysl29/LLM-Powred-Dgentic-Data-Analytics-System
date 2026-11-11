@@ -1,46 +1,66 @@
 """Best-effort audit middleware for externally visible platform actions."""
 
-from fastapi import Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from fastapi import Request
+from starlette.concurrency import run_in_threadpool
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from backend.app.services.audit_trail_service import audit_trail_service
 
 
-class AuditTrailMiddleware(BaseHTTPMiddleware):
-    """Record successful user actions without adding a second database setup."""
+class AuditTrailMiddleware:
+    """Await best-effort persistence after response and dependency cleanup.
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        response = await call_next(request)
-        if response.status_code < 400 and not request.url.path.startswith(("/metrics", "/api/v1/audit")):
-            action, resource_type, resource_id = self._describe(request)
-            postgres = getattr(request.app.state, "postgres", None)
-            session_factory = getattr(postgres, "_session_factory", None)
-            try:
+    No detached queue or task is introduced. The ASGI invocation remains alive
+    until the write finishes, while the response body can reach the client first.
+    """
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope['type'] != 'http' or scope['path'].startswith(('/metrics', '/api/v1/audit')):
+            await self.app(scope, receive, send)
+            return
+        status = None
+
+        async def capture(message: Message) -> None:
+            nonlocal status
+            if message['type'] == 'http.response.start':
+                status = message['status']
+            await send(message)
+
+        try:
+            await self.app(scope, receive, capture)
+        finally:
+            # Waiting for the inner ASGI application also releases yield-based
+            # request sessions. Opening the audit session earlier can exhaust
+            # the very pool whose connections those requests are still holding.
+            if status is not None and status < 400:
+                request = Request(scope)
+                action, resource_type, resource_id = self._describe(request)
+                postgres = getattr(request.app.state, 'postgres', None)
+                session_factory = getattr(postgres, '_session_factory', None)
+                values = dict(actor=getattr(request.state, 'actor_id', 'anonymous'),
+                    action=action, resource_type=resource_type, resource_id=resource_id,
+                    details={'method': request.method, 'path': request.url.path, 'status_code': status})
                 if session_factory is not None:
-                    with session_factory() as session:
-                        audit_trail_service.record(
-                            actor=getattr(request.state, "actor_id", "anonymous"),
-                            action=action,
-                            resource_type=resource_type,
-                            resource_id=resource_id,
-                            request_id=request.headers.get("X-Request-ID"),
-                            ip_address=request.client.host if request.client else None,
-                            user_agent=request.headers.get("User-Agent"),
-                            details={"method": request.method, "path": request.url.path, "status_code": response.status_code},
-                            session=session,
-                        )
-                else:
-                    audit_trail_service.record(
-                        actor=getattr(request.state, "actor_id", "anonymous"),
-                        action=action,
-                        resource_type=resource_type,
-                        resource_id=resource_id,
-                        details={"method": request.method, "path": request.url.path, "status_code": response.status_code},
-                    )
-            except Exception:
-                # Audit failure must not turn a completed user operation into an API failure.
-                pass
-        return response
+                    values.update(request_id=request.headers.get('X-Request-ID'),
+                        ip_address=request.client.host if request.client else None,
+                        user_agent=request.headers.get('User-Agent'))
+                await run_in_threadpool(self._record, session_factory, values)
+
+    @staticmethod
+    def _record(session_factory, values) -> None:
+        try:
+            if session_factory is not None:
+                # The session is created, used and closed on this one worker.
+                with session_factory() as session:
+                    audit_trail_service.record(**values, session=session)
+            else:
+                audit_trail_service.record(**values)
+        except Exception:
+            # Preserve the existing best-effort contract and original response.
+            pass
 
     @staticmethod
     def _describe(request: Request) -> tuple[str, str, str | None]:

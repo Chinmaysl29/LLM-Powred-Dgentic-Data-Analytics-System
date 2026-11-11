@@ -1,0 +1,26 @@
+{
+  "dataset_id": "b0e4964c-3fee-4344-985e-56f06eb88444",
+  "dataset_name": "Customers CSV Test",
+  "columns": [
+    "id",
+    "customer",
+    "revenue"
+  ],
+  "records": [
+    {
+      "id": 1,
+      "customer": "Alice",
+      "revenue": 1200
+    },
+    {
+      "id": 2,
+      "customer": "Bob",
+      "revenue": 2400
+    },
+    {
+      "id": 3,
+      "customer": "Charlie",
+      "revenue": 3100
+    }
+  ]
+}

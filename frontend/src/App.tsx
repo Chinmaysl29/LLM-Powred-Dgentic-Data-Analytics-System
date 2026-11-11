@@ -28,6 +28,9 @@ const ReportBuilderPage = lazy(() => import('./pages/app/ReportBuilderPage'));
 const SettingsPage = lazy(() => import('./pages/app/SettingsPage'));
 const ForecastingWorkbenchPage = lazy(() => import('./pages/app/ForecastingWorkbenchPage'));
 const AIMemoryExplorerPage = lazy(() => import('./pages/app/AIMemoryExplorerPage'));
+const VerifiedLearningPage = lazy(() => import('./pages/app/VerifiedLearningPage'));
+const LearningDashboardPage = lazy(() => import('./pages/app/LearningDashboardPage'));
+const DataHealthPage = lazy(() => import('./pages/app/DataHealthPage'));
 const DashboardStudioPage = lazy(() => import('./pages/app/DashboardStudioPage'));
 const EDAStudioPage = lazy(() => import('./pages/app/EDAStudioPage'));
 
@@ -46,8 +49,20 @@ const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 function RequireAuth() {
   const { isAuthenticated, isLoading, sessionError, retrySession } = useAuth();
   const location = useLocation();
-  if (isLoading) return <p role="status" className="page-container">Checking your session…</p>;
-  if (sessionError) return <div className="page-container" role="alert"><h1>Unable to check your session</h1><p>{sessionError}</p><button onClick={retrySession}>Retry</button></div>;
+  if (isLoading)
+    return (
+      <p role="status" className="page-container">
+        Checking your session…
+      </p>
+    );
+  if (sessionError)
+    return (
+      <div className="page-container" role="alert">
+        <h1>Unable to check your session</h1>
+        <p>{sessionError}</p>
+        <button onClick={retrySession}>Retry</button>
+      </div>
+    );
   if (!isAuthenticated) {
     // Redirect to login, preserving the intended URL for post-login redirect.
     return <Navigate to="/login" state={{ from: location.pathname + location.search }} replace />;
@@ -61,60 +76,73 @@ function RequireAuth() {
 
 function App() {
   return (
-    <AppErrorBoundary><Suspense fallback={<p role="status" className="page-container">Loading page…</p>}><Routes>
-      <Route path="/privacy" element={<LegalPage kind="privacy" />} />
-      <Route path="/terms" element={<LegalPage kind="terms" />} />
-      {/* Public Routes (Approved Cinematic Experience) */}
-      <Route element={<AuthLayout />}>
-        <Route path="/" element={<LoginPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      </Route>
+    <AppErrorBoundary>
+      <Suspense
+        fallback={
+          <p role="status" className="page-container">
+            Loading page…
+          </p>
+        }
+      >
+        <Routes>
+          <Route path="/privacy" element={<LegalPage kind="privacy" />} />
+          <Route path="/terms" element={<LegalPage kind="terms" />} />
+          {/* Public Routes (Approved Cinematic Experience) */}
+          <Route element={<AuthLayout />}>
+            <Route path="/" element={<LoginPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          </Route>
 
-      {/* Protected Routes (App) — guarded by RequireAuth */}
-      <Route element={<RequireAuth />}>
-        <Route element={<AppLayout />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
+          {/* Protected Routes (App) — guarded by RequireAuth */}
+          <Route element={<RequireAuth />}>
+            <Route element={<AppLayout />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
 
-          {/* Dataset Management */}
-          <Route path="/datasets" element={<DatasetsPage />} />
-          {/*
+              {/* Dataset Management */}
+              <Route path="/datasets" element={<DatasetsPage />} />
+              {/*
             Phase 2F: Upload must come before /:datasetId so the literal
             string "upload" is not treated as a dataset ID.
           */}
-          <Route path="/datasets/upload" element={<DatasetUploadPage />} />
-          <Route path="/datasets/:datasetId" element={<DatasetDetailPage />} />
-          <Route path="/connections" element={<ConnectionsPage />} />
-          <Route path="/data-warehouse" element={<DataWarehousePage />} />
+              <Route path="/datasets/upload" element={<DatasetUploadPage />} />
+              <Route path="/datasets/:datasetId" element={<DatasetDetailPage />} />
+              <Route path="/connections" element={<ConnectionsPage />} />
+              <Route path="/data-warehouse" element={<DataWarehousePage />} />
 
-          {/* Analytics */}
-          <Route path="/analysis" element={<AnalysisPage />} />
-          <Route path="/visualizations" element={<VisualizationsPage />} />
-          <Route path="/eda" element={<EDAStudioPage />} />
-          <Route path="/insights" element={<InsightsPage />} />
-          <Route path="/insights/what-if" element={<InsightsPage subView="what-if" />} />
+              {/* Analytics */}
+              <Route path="/analysis" element={<AnalysisPage />} />
+              <Route path="/visualizations" element={<VisualizationsPage />} />
+              <Route path="/eda" element={<EDAStudioPage />} />
+              <Route path="/insights" element={<InsightsPage />} />
+              <Route path="/insights/what-if" element={<InsightsPage subView="what-if" />} />
 
-          {/* Output */}
-          <Route path="/reports" element={<ReportsPage />} />
-          <Route path="/reports/create" element={<CreateReportPage />} />
-          <Route path="/reports/:reportId" element={<ReportDetailPage />} />
-          <Route path="/reports/:reportId/edit" element={<ReportBuilderPage />} />
+              {/* Output */}
+              <Route path="/reports" element={<ReportsPage />} />
+              <Route path="/reports/create" element={<CreateReportPage />} />
+              <Route path="/reports/:reportId" element={<ReportDetailPage />} />
+              <Route path="/reports/:reportId/edit" element={<ReportBuilderPage />} />
 
-          {/* Phase 23 — New Pages */}
-          <Route path="/forecasting" element={<ForecastingWorkbenchPage />} />
-          <Route path="/memory" element={<AIMemoryExplorerPage />} />
-          <Route path="/dashboard-studio" element={<DashboardStudioPage />} />
+              {/* Phase 23 — New Pages */}
+              <Route path="/forecasting" element={<ForecastingWorkbenchPage />} />
+              <Route path="/memory" element={<AIMemoryExplorerPage />} />
+              <Route path="/verified-learning" element={<VerifiedLearningPage />} />
+              <Route path="/learning-dashboard" element={<LearningDashboardPage />} />
+              <Route path="/data-health" element={<DataHealthPage />} />
+              <Route path="/dashboard-studio" element={<DashboardStudioPage />} />
 
-          {/* Account */}
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-        </Route>
-      </Route>
+              {/* Account */}
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+            </Route>
+          </Route>
 
-      {/* Fallback for unknown routes */}
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes></Suspense></AppErrorBoundary>
+          {/* Fallback for unknown routes */}
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
+    </AppErrorBoundary>
   );
 }
 

@@ -1,0 +1,15 @@
+{
+  "dataset_id": "997f8082-accb-44bb-b7d5-5809d69c72ad",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "eaad8cf7-6e1a-472e-a61b-3955175522c8",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-11-11 16:38:52.898688+00:00",
+      "author": "system",
+      "description": "Initial ingestion of revenue_metrics.csv"
+    }
+  ]
+}

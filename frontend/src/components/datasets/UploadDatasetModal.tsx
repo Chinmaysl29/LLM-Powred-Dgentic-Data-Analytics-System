@@ -54,13 +54,13 @@ export function UploadDatasetModal({ isOpen, onClose, onSuccess }: UploadDataset
     const ext = '.' + (file.name.split('.').pop()?.toLowerCase() ?? '');
     if (ext === '.docx' || ext === '.doc') {
       setError(
-        'Microsoft Word (.docx) files are explicitly unsupported. Please upload structured datasets (CSV, TSV, XLS, XLSX, JSON, JSONL, Parquet) or document files (PDF, TXT, Markdown).'
+        'Microsoft Word (.docx) files are explicitly unsupported. Please upload structured datasets (CSV, TSV, XLS, XLSX, JSON, JSONL, Parquet) or document files (PDF, TXT, Markdown).',
       );
       return;
     }
     if (!ALLOWED_EXTENSIONS.includes(ext)) {
       setError(
-        `Unsupported file type '${ext}'. Accepted types: CSV, TSV, XLS, XLSX, JSON, JSONL, Parquet, PDF, TXT, Markdown.`
+        `Unsupported file type '${ext}'. Accepted types: CSV, TSV, XLS, XLSX, JSON, JSONL, Parquet, PDF, TXT, Markdown.`,
       );
       return;
     }
@@ -137,7 +137,9 @@ export function UploadDatasetModal({ isOpen, onClose, onSuccess }: UploadDataset
     } catch (err: unknown) {
       clearInterval(interval);
       setIsUploading(false);
-      setError(err instanceof Error ? err.message : 'Upload failed. Please verify the file and try again.');
+      setError(
+        err instanceof Error ? err.message : 'Upload failed. Please verify the file and try again.',
+      );
     }
   }
 
@@ -153,7 +155,8 @@ export function UploadDatasetModal({ isOpen, onClose, onSuccess }: UploadDataset
 
   function getFileIcon(name: string) {
     const ext = name.split('.').pop()?.toLowerCase();
-    if (ext === 'xlsx' || ext === 'xls') return <FileSpreadsheet className="w-8 h-8 text-emerald-400" />;
+    if (ext === 'xlsx' || ext === 'xls')
+      return <FileSpreadsheet className="w-8 h-8 text-emerald-400" />;
     if (ext === 'pdf') return <FileText className="w-8 h-8 text-rose-400" />;
     if (ext === 'json') return <FileCode className="w-8 h-8 text-amber-400" />;
     return <FileCheck className="w-8 h-8 text-sky-400" />;
@@ -170,7 +173,9 @@ export function UploadDatasetModal({ isOpen, onClose, onSuccess }: UploadDataset
             </div>
             <div>
               <h3 className="text-lg font-semibold text-zinc-100">Upload Dataset</h3>
-              <p className="text-xs text-zinc-400">Add files to Enterprise Dataset Management Center</p>
+              <p className="text-xs text-zinc-400">
+                Add files to Enterprise Dataset Management Center
+              </p>
             </div>
           </div>
           <button
@@ -209,8 +214,8 @@ export function UploadDatasetModal({ isOpen, onClose, onSuccess }: UploadDataset
               isDragging
                 ? 'border-sky-500 bg-sky-500/10 scale-[1.01]'
                 : selectedFile
-                ? 'border-emerald-500/50 bg-emerald-500/5'
-                : 'border-zinc-700/80 hover:border-zinc-500 bg-zinc-950/40 hover:bg-zinc-950/70'
+                  ? 'border-emerald-500/50 bg-emerald-500/5'
+                  : 'border-zinc-700/80 hover:border-zinc-500 bg-zinc-950/40 hover:bg-zinc-950/70'
             }`}
           >
             <input
@@ -232,7 +237,9 @@ export function UploadDatasetModal({ isOpen, onClose, onSuccess }: UploadDataset
                     {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • Ready for ingestion
                   </p>
                 </div>
-                <span className="text-xs text-sky-400 hover:underline">Click or drop to replace file</span>
+                <span className="text-xs text-sky-400 hover:underline">
+                  Click or drop to replace file
+                </span>
               </div>
             ) : (
               <div className="flex flex-col items-center text-center space-y-3">

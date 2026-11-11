@@ -1,7 +1,10 @@
+name: dataanalyst
+
 services:
 
   backend:
-    build:
+    image: dataanalyst-backend:latest
+    build: &backend_build
       context: .
       dockerfile: backend/Dockerfile
 
@@ -18,6 +21,7 @@ services:
       - .env
 
     environment:
+      DATABASE_TARGET: local
       DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/ai_analyst
       REDIS_URL: redis://redis:6379/0
       CHROMA_HOST: chromadb
@@ -26,23 +30,107 @@ services:
       FRONTEND_URL: http://localhost:5173
       UPLOAD_DIR: storage
       ALLOWED_FILE_TYPES: csv,xlsx,xls,json,parquet,pdf
+      # Limit numerical-library thread pools on memory-constrained laptops.
+      OMP_NUM_THREADS: 1
+      OPENBLAS_NUM_THREADS: 1
+      MKL_NUM_THREADS: 1
+      HF_HOME: /app/storage/model-cache
+      BACKGROUND_WORKER_CONCURRENCY: 1
+      DATAPLANE_ENABLED: ${DATAPLANE_ENABLED:-false}
+      DATAPLANE_ROOT: /app/storage/dataplane
 
     depends_on:
-      - postgres
-      - redis
-      - chromadb
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      chromadb:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/ready', timeout=10)"]
+      interval: 15s
+      timeout: 15s
+      retries: 10
+      start_period: 120s
 
     volumes:
       - ./backend:/app/backend
+      - ./scripts:/app/scripts:ro
       - ./migrations:/app/migrations
       - ./alembic.ini:/app/alembic.ini:ro
       - ./logs:/app/logs
       - ./storage:/app/storage
 
+  dataplane-worker:
+    profiles: [dataplane]
+    image: dataanalyst-backend:latest
+    build: *backend_build
+    command: ["python", "-m", "backend.app.dataplane.worker"]
+    restart: unless-stopped
+    mem_limit: 1g
+    memswap_limit: 1g
+    cpus: 2
+    pids_limit: 128
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/ai_analyst
+      DATAPLANE_ENABLED: "true"
+      DATAPLANE_ROOT: /app/storage/dataplane
+      DATAPLANE_MEMORY_MB: 512
+      DATAPLANE_WORKER_MEMORY_MB: 1024
+      DATAPLANE_THREADS: 2
+      DATAPLANE_POSTGRES_HOSTS: ${DATAPLANE_POSTGRES_HOSTS:-}
+      PYTHONPATH: /app
+      OMP_NUM_THREADS: 1
+      OPENBLAS_NUM_THREADS: 1
+    volumes:
+      - ./backend:/app/backend:ro
+      - ./storage:/app/storage
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import pathlib,time; p=pathlib.Path('/app/storage/dataplane/worker-health'); assert p.exists() and time.time()-p.stat().st_mtime<150"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # Apply the checked-in migrations before serving requests, including on a
+  # fresh Docker installation. Existing volumes are upgraded, never reset.
+  migrate:
+    image: dataanalyst-backend:latest
+    build: *backend_build
+    command: ["python", "scripts/migrate.py", "upgrade", "head"]
+    restart: "no"
+    env_file:
+      - .env
+    environment:
+      DATABASE_TARGET: local
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/ai_analyst
+      PYTHONPATH: /app
+    volumes:
+      - ./backend:/app/backend:ro
+      - ./scripts:/app/scripts:ro
+      - ./migrations:/app/migrations:ro
+      - ./alembic.ini:/app/alembic.ini:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   frontend:
+    image: dataanalyst-frontend:latest
     build:
       context: ./frontend
       target: development
+
+    environment:
+      # The browser runs on Windows and reaches the published API port.
+      VITE_API_BASE_URL: http://localhost:8000
 
     ports:
       - "5173:5173"
@@ -52,7 +140,15 @@ services:
       - frontend_node_modules:/app/node_modules
 
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5173').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
     restart: unless-stopped
 
@@ -82,6 +178,11 @@ services:
   redis:
     image: redis:7
 
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]
+
+    volumes:
+      - redis_data:/data
+
     ports:
       - "6379:6379"
 
@@ -109,6 +210,13 @@ services:
     volumes:
       - chroma_data:/chroma/chroma
 
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/heartbeat', timeout=5)"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
     restart: unless-stopped
 
 networks:
@@ -119,3 +227,4 @@ volumes:
   postgres_data:
   frontend_node_modules:
   chroma_data:
+  redis_data:

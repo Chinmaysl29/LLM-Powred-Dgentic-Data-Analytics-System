@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "checks": [
+    "authentication required and local login succeeds",
+    "real streamed upload processed by the separate worker",
+    "registered metric yields independently expected grouped totals",
+    "authenticated evidence PDF downloads",
+    "health missingness, sample review, approval and new cleaned snapshot work",
+    "workspace change and outage clear stale results; retry recovers",
+    "mobile layout fits viewport; no browser errors"
+  ]
+}

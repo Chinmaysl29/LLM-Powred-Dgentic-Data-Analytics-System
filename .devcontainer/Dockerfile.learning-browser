@@ -1,0 +1,5 @@
+FROM dataanalyst-devtools:latest
+COPY frontend/package.json frontend/package-lock.json /tmp/learning-browser/
+RUN npm ci --prefix /tmp/learning-browser --no-audit --no-fund
+RUN /tmp/learning-browser/node_modules/.bin/playwright install-deps chromium
+WORKDIR /app

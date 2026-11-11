@@ -1,0 +1,10 @@
+{
+  "rows": 2000000,
+  "source_bytes": 91666940,
+  "seconds": 4.803777040011482,
+  "peak_rss_bytes": 161456128,
+  "source_unchanged": true,
+  "parts": 88,
+  "parquet_bytes": 15077122,
+  "container_limit_bytes": 1073741824
+}

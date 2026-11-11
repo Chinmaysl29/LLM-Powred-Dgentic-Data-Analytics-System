@@ -1,0 +1,8 @@
+{
+  "pytest_exit_code": 0,
+  "pre_change_baseline": "75 passed in 37.70s",
+  "main_llm_and_embeddings": "frozen",
+  "selector_weights": "real CPU logistic/MLP candidates when evidence thresholds pass",
+  "production_activation": "not performed; baseline retained unless declared gates pass",
+  "production_improvement": "not established"
+}

@@ -1,0 +1,24 @@
+{
+  "checks": [
+    "Unauthenticated navigation redirects to login",
+    "Real local password login",
+    "Two original CSVs uploaded through the real upload UI and API",
+    "Uploaded inputs explicitly bound using authorized workspace API",
+    "Seven-stage live worker reconciles refunds per order, verifies 285, and renders the computed chart",
+    "UI download contains exact verified 285 result and report lineage",
+    "Pinned run, original task form and result restore after browser refresh",
+    "Persisted context exposes join-grain observation, evidence and distinguishing checks",
+    "Tested executable skill contract, preconditions and lifecycle visible",
+    "Refund-event task preserves both events; net-revenue preaggregation excluded",
+    "Actual trained JSON weights, three-policy metrics and blocked release visible/downloadable",
+    "Activation gated; authorized shadow mode enabled through UI",
+    "Shadow run executes one rules-selected action and displays learned scores for eligible alternatives",
+    "Authorized rollback restores rules and increments control generation",
+    "390px viewport has no horizontal document overflow",
+    "No uncaught browser runtime errors"
+  ],
+  "errors": [],
+  "responsesMocked": false,
+  "authentication": "Real local password identity. Hosted Supabase and live LLM not exercised.",
+  "fixture": "Synthetic orders 100+200, refunds 10+5. Demonstrates mechanism, not production improvement."
+}

@@ -63,7 +63,7 @@ export function getSupabaseClient(): SupabaseClient<any> {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
-        storageKey: 'ai_data_analyst_os_auth_token',
+        storageKey: `ai_data_analyst_os_auth_${new URL(url).hostname}`,
       },
       db: {
         schema: 'public',
@@ -86,6 +86,14 @@ export function getSupabaseClient(): SupabaseClient<any> {
 }
 
 /**
- * Default Supabase client instance for application services.
+ * Lazy hosted client. Importing a service must not prevent the documented
+ * local FastAPI authentication path from starting without hosted credentials.
+ * Accessing a hosted operation still validates its actual configuration.
  */
-export const supabase = getSupabaseClient();
+export const supabase = new Proxy({} as ReturnType<typeof getSupabaseClient>, {
+  get(_target, property) {
+    const client = getSupabaseClient();
+    const value = Reflect.get(client, property, client);
+    return typeof value === 'function' ? value.bind(client) : value;
+  },
+});

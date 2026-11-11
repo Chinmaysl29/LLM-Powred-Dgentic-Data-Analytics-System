@@ -32,7 +32,10 @@ export const ReportStatusBadge: React.FC<ReportStatusBadgeProps> = ({ status }) 
   const config = STATUS_CONFIG[status] || STATUS_CONFIG.draft;
 
   return (
-    <span className={`reports-status-badge ${config.className}`} aria-label={`Status: ${config.label}`}>
+    <span
+      className={`reports-status-badge ${config.className}`}
+      aria-label={`Status: ${config.label}`}
+    >
       <span className="reports-status-dot" aria-hidden="true" />
       <span>{config.label}</span>
     </span>

@@ -59,7 +59,7 @@ class ContinuousImprovementOrchestrator:
         quality: AIQualityMonitor = ai_quality_monitor,
         ab_testing: ABTestingPlatform = ab_testing_platform,
         feature_flags: FeatureFlagSystem = feature_flag_system,
-        cost_optimizer: CostOptimizationEngine = cost_optimizer_engine if "cost_optimizer_engine" in locals() else cost_optimization_engine,
+        cost_optimizer: CostOptimizationEngine = cost_optimization_engine,
         learning: ContinuousLearningPipeline = continuous_learning_pipeline,
     ) -> None:
         self.feedback = feedback

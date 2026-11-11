@@ -1,0 +1,15 @@
+{
+  "dataset_id": "77086af2-77d7-4e07-a32b-27952931fe9d",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "f7ef52a3-95c5-4c35-a553-e72e670bceff",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-11-11 16:35:16.160770+00:00",
+      "author": "system",
+      "description": "Initial ingestion of synthetic_recovery.xlsx"
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   downloadReportFile,
@@ -7,8 +7,8 @@ import {
   getReportsAnalysisHistory,
   getStoredReports,
   type GeneratedReportResponse,
-  type StoredReport,
 } from '../../services/reportsService';
+import { useAsyncResource } from '../../hooks/useAsyncResource';
 import type { AnalysisHistoryReportItem } from '../../types/analysis';
 
 export default function ReportsPage() {
@@ -23,17 +23,15 @@ export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState<'history' | 'generated'>('history');
 
   // Analysis History from persistent database
-  const [analysisHistory, setAnalysisHistory] = useState<AnalysisHistoryReportItem[]>([]);
-  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [historyRevision, setHistoryRevision] = useState(0);
   const [historySearch, setHistorySearch] = useState('');
 
   // Stored / Generated Reports list
-  const [storedReports, setStoredReports] = useState<StoredReport[]>([]);
-  const [loadingStored, setLoadingStored] = useState(true);
+  const [storedRevision, setStoredRevision] = useState(0);
   const [reportSearch, setReportSearch] = useState('');
 
   // General error and status
-  const [error, setError] = useState('');
+  const [actionError, setError] = useState('');
 
   // Report Generation Modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -44,47 +42,35 @@ export default function ReportsPage() {
   const [generating, setGenerating] = useState(false);
   const [latestGenerated, setLatestGenerated] = useState<GeneratedReportResponse | null>(null);
 
-  // 1. Load Analysis History (Single source of truth)
-  const loadHistory = useCallback(async () => {
-    setLoadingHistory(true);
-    setError('');
-    try {
+  const selectedRunId = initial?.selectedRunId;
+  const initialTitle = initial?.title;
+  const fetchHistory = useCallback(
+    async (signal: AbortSignal) => {
       const items = await getReportsAnalysisHistory();
-      setAnalysisHistory(items);
-
-      // If pre-selected from Analysis Page, auto-open modal
-      if (initial?.selectedRunId) {
-        const match = items.find((h) => h.run_id === initial.selectedRunId);
+      if (!signal.aborted && selectedRunId) {
+        const match = items.find((item) => item.run_id === selectedRunId);
         if (match) {
           setSelectedAnalysis(match);
-          setReportTitle(initial.title || match.title);
+          setReportTitle(initialTitle || match.title);
           setModalOpen(true);
         }
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to load analysis history.');
-    } finally {
-      setLoadingHistory(false);
-    }
-  }, [initial]);
-
-  // 2. Load Generated Reports
-  const loadStored = useCallback(async () => {
-    setLoadingStored(true);
-    try {
-      const items = await getStoredReports();
-      setStoredReports(items);
-    } catch {
-      // Non-blocking
-    } finally {
-      setLoadingStored(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadHistory();
-    void loadStored();
-  }, [loadHistory, loadStored]);
+      return items;
+    },
+    [selectedRunId, initialTitle],
+  );
+  const history = useAsyncResource(fetchHistory, historyRevision);
+  const stored = useAsyncResource(getStoredReports, storedRevision);
+  const analysisHistory = history.data ?? [];
+  const storedReports = stored.data ?? [];
+  const loadingHistory = history.loading;
+  const loadingStored = stored.loading;
+  const error = actionError || history.error || stored.error;
+  const loadHistory = () => {
+    setError('');
+    setHistoryRevision((value) => value + 1);
+  };
+  const loadStored = () => setStoredRevision((value) => value + 1);
 
   // Open generation dialog for a specific analysis run
   function handleInitiateReport(item: AnalysisHistoryReportItem) {
@@ -130,21 +116,30 @@ export default function ReportsPage() {
   }
 
   // Filtered views
-  const filteredHistory = analysisHistory.filter((item) =>
-    item.title.toLowerCase().includes(historySearch.toLowerCase()) ||
-    item.dataset_name.toLowerCase().includes(historySearch.toLowerCase()) ||
-    item.question.toLowerCase().includes(historySearch.toLowerCase())
+  const filteredHistory = analysisHistory.filter(
+    (item) =>
+      item.title.toLowerCase().includes(historySearch.toLowerCase()) ||
+      item.dataset_name.toLowerCase().includes(historySearch.toLowerCase()) ||
+      item.question.toLowerCase().includes(historySearch.toLowerCase()),
   );
 
   const filteredStored = storedReports.filter((r) =>
-    r.title.toLowerCase().includes(reportSearch.toLowerCase())
+    r.title.toLowerCase().includes(reportSearch.toLowerCase()),
   );
 
   return (
     <div className="ws-page reports-workspace" style={{ padding: '24px 32px', maxWidth: 1600 }}>
       {/* Page Header */}
       <header className="reports-header editorial-heading" style={{ marginBottom: 24 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            flexWrap: 'wrap',
+            gap: 16,
+          }}
+        >
           <div>
             <p className="eyebrow">REPORTS STUDIO / ONE SOURCE OF TRUTH</p>
             <h1 className="ws-page-heading" style={{ margin: '8px 0' }}>
@@ -168,14 +163,25 @@ export default function ReportsPage() {
             >
               Refresh
             </button>
-            <Link to="/analysis" className="btn btn--primary" style={{ minHeight: 40, fontWeight: 600 }}>
+            <Link
+              to="/analysis"
+              className="btn btn--primary"
+              style={{ minHeight: 40, fontWeight: 600 }}
+            >
               + Open AI Analysis
             </Link>
           </div>
         </div>
 
         {/* Tab Navigation */}
-        <div style={{ display: 'flex', gap: 12, borderBottom: '1px solid var(--border)', marginTop: 24 }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: 12,
+            borderBottom: '1px solid var(--border)',
+            marginTop: 24,
+          }}
+        >
           <button
             type="button"
             onClick={() => setActiveTab('history')}
@@ -185,7 +191,8 @@ export default function ReportsPage() {
               fontWeight: 600,
               background: 'transparent',
               border: 'none',
-              borderBottom: activeTab === 'history' ? '3px solid var(--brand-lime)' : '3px solid transparent',
+              borderBottom:
+                activeTab === 'history' ? '3px solid var(--brand-lime)' : '3px solid transparent',
               color: activeTab === 'history' ? 'var(--text-h)' : 'var(--text-muted)',
               cursor: 'pointer',
             }}
@@ -201,7 +208,8 @@ export default function ReportsPage() {
               fontWeight: 600,
               background: 'transparent',
               border: 'none',
-              borderBottom: activeTab === 'generated' ? '3px solid var(--brand-lime)' : '3px solid transparent',
+              borderBottom:
+                activeTab === 'generated' ? '3px solid var(--brand-lime)' : '3px solid transparent',
               color: activeTab === 'generated' ? 'var(--text-h)' : 'var(--text-muted)',
               cursor: 'pointer',
             }}
@@ -227,7 +235,11 @@ export default function ReportsPage() {
           }}
         >
           <span>{error}</span>
-          <button className="btn btn--ghost btn--sm" onClick={() => setError('')} style={{ color: '#f87171' }}>
+          <button
+            className="btn btn--ghost btn--sm"
+            onClick={() => setError('')}
+            style={{ color: '#f87171' }}
+          >
             Dismiss
           </button>
         </div>
@@ -238,7 +250,16 @@ export default function ReportsPage() {
       {/* ==================================================================== */}
       {activeTab === 'history' && (
         <section>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, flexWrap: 'wrap', gap: 12 }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 18,
+              flexWrap: 'wrap',
+              gap: 12,
+            }}
+          >
             <input
               type="search"
               placeholder="Filter by question, dataset, or title…"
@@ -261,19 +282,35 @@ export default function ReportsPage() {
           </div>
 
           {loadingHistory ? (
-            <p style={{ color: 'var(--text-muted)', padding: '32px 0' }}>Loading analysis history from database…</p>
+            <p style={{ color: 'var(--text-muted)', padding: '32px 0' }}>
+              Loading analysis history from database…
+            </p>
           ) : filteredHistory.length === 0 ? (
             <div className="surface-panel" style={{ textAlign: 'center', padding: '48px 24px' }}>
               <h2 style={{ fontSize: 18, margin: '0 0 8px' }}>No completed analyses found</h2>
-              <p style={{ color: 'var(--text-muted)', margin: '0 0 16px', maxWidth: 480, marginInline: 'auto' }}>
-                Run an analytical question in AI Analysis first. Completed results, KPIs, and charts will appear here automatically.
+              <p
+                style={{
+                  color: 'var(--text-muted)',
+                  margin: '0 0 16px',
+                  maxWidth: 480,
+                  marginInline: 'auto',
+                }}
+              >
+                Run an analytical question in AI Analysis first. Completed results, KPIs, and charts
+                will appear here automatically.
               </p>
               <Link to="/analysis" className="btn btn--primary">
                 Open AI Analysis
               </Link>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 20 }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
+                gap: 20,
+              }}
+            >
               {filteredHistory.map((item) => (
                 <article
                   key={item.run_id || item.session_id}
@@ -288,7 +325,13 @@ export default function ReportsPage() {
                   }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                      }}
+                    >
                       <span
                         style={{
                           fontSize: 11,
@@ -308,7 +351,15 @@ export default function ReportsPage() {
                       )}
                     </div>
 
-                    <h2 style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-h)', margin: 0, lineHeight: 1.35 }}>
+                    <h2
+                      style={{
+                        fontSize: 17,
+                        fontWeight: 600,
+                        color: 'var(--text-h)',
+                        margin: 0,
+                        lineHeight: 1.35,
+                      }}
+                    >
                       {item.title}
                     </h2>
 
@@ -317,23 +368,54 @@ export default function ReportsPage() {
                     </p>
 
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
-                      <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 4, background: 'var(--surface-raised)', color: 'var(--text-muted)' }}>
+                      <span
+                        style={{
+                          fontSize: 11,
+                          padding: '3px 8px',
+                          borderRadius: 4,
+                          background: 'var(--surface-raised)',
+                          color: 'var(--text-muted)',
+                        }}
+                      >
                         📊 {item.dataset_name}
                       </span>
                       {item.has_chart && (
-                        <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 4, background: 'rgba(200, 253, 57, 0.15)', color: 'var(--brand-lime)' }}>
+                        <span
+                          style={{
+                            fontSize: 11,
+                            padding: '3px 8px',
+                            borderRadius: 4,
+                            background: 'rgba(200, 253, 57, 0.15)',
+                            color: 'var(--brand-lime)',
+                          }}
+                        >
                           📈 Chart Verified
                         </span>
                       )}
                       {item.has_citations && (
-                        <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 4, background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa' }}>
+                        <span
+                          style={{
+                            fontSize: 11,
+                            padding: '3px 8px',
+                            borderRadius: 4,
+                            background: 'rgba(59, 130, 246, 0.15)',
+                            color: '#60a5fa',
+                          }}
+                        >
                           📄 RAG Evidence
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: 10, borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: 10,
+                      borderTop: '1px solid var(--border)',
+                      paddingTop: 14,
+                    }}
+                  >
                     <Link
                       to={`/analysis?session_id=${encodeURIComponent(item.session_id)}`}
                       className="btn btn--ghost btn--sm"
@@ -362,7 +444,16 @@ export default function ReportsPage() {
       {/* ==================================================================== */}
       {activeTab === 'generated' && (
         <section>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, flexWrap: 'wrap', gap: 12 }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 18,
+              flexWrap: 'wrap',
+              gap: 12,
+            }}
+          >
             <input
               type="search"
               placeholder="Search saved reports by title…"
@@ -401,7 +492,13 @@ export default function ReportsPage() {
               </button>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 20 }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
+                gap: 20,
+              }}
+            >
               {filteredStored.map((r) => (
                 <article
                   key={r.id}
@@ -415,7 +512,14 @@ export default function ReportsPage() {
                   }}
                 >
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: 8,
+                      }}
+                    >
                       <span
                         style={{
                           fontSize: 11,
@@ -434,7 +538,14 @@ export default function ReportsPage() {
                       </span>
                     </div>
 
-                    <h2 style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-h)', margin: '0 0 6px' }}>
+                    <h2
+                      style={{
+                        fontSize: 17,
+                        fontWeight: 600,
+                        color: 'var(--text-h)',
+                        margin: '0 0 6px',
+                      }}
+                    >
                       {r.title}
                     </h2>
 
@@ -443,11 +554,20 @@ export default function ReportsPage() {
                     </p>
                   </div>
 
-                  <div style={{ display: 'flex', gap: 10, borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: 10,
+                      borderTop: '1px solid var(--border)',
+                      paddingTop: 14,
+                    }}
+                  >
                     <button
                       type="button"
                       className="btn btn--primary btn--sm"
-                      onClick={() => handleDownload(r.id, `${r.title.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`)}
+                      onClick={() =>
+                        handleDownload(r.id, `${r.title.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`)
+                      }
                       style={{ flex: 1, justifyContent: 'center', fontWeight: 600 }}
                     >
                       Download Document ⬇
@@ -539,9 +659,16 @@ export default function ReportsPage() {
                 </div>
 
                 <div style={{ fontSize: 13, color: 'var(--text)' }}>
-                  <div><strong>Document:</strong> {latestGenerated.title}</div>
-                  <div><strong>Format:</strong> {latestGenerated.format.toUpperCase()}</div>
-                  <div><strong>Source Dataset:</strong> {latestGenerated.dataset_name || selectedAnalysis.dataset_name}</div>
+                  <div>
+                    <strong>Document:</strong> {latestGenerated.title}
+                  </div>
+                  <div>
+                    <strong>Format:</strong> {latestGenerated.format.toUpperCase()}
+                  </div>
+                  <div>
+                    <strong>Source Dataset:</strong>{' '}
+                    {latestGenerated.dataset_name || selectedAnalysis.dataset_name}
+                  </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
@@ -564,9 +691,20 @@ export default function ReportsPage() {
               </div>
             ) : (
               /* Configuration Form */
-              <form onSubmit={handleGenerateReport} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <form
+                onSubmit={handleGenerateReport}
+                style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+              >
                 <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: 'var(--text-muted)',
+                      marginBottom: 6,
+                    }}
+                  >
                     Report Title
                   </label>
                   <input
@@ -590,7 +728,15 @@ export default function ReportsPage() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: 'var(--text-muted)',
+                        marginBottom: 6,
+                      }}
+                    >
                       Report Type
                     </label>
                     <select
@@ -614,12 +760,22 @@ export default function ReportsPage() {
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: 'var(--text-muted)',
+                        marginBottom: 6,
+                      }}
+                    >
                       Export Format
                     </label>
                     <select
                       value={formatType}
-                      onChange={(e) => setFormatType(e.target.value as 'pdf' | 'docx' | 'xlsx' | 'pptx')}
+                      onChange={(e) =>
+                        setFormatType(e.target.value as 'pdf' | 'docx' | 'xlsx' | 'pptx')
+                      }
                       style={{
                         width: '100%',
                         padding: '10px 12px',
@@ -652,9 +808,12 @@ export default function ReportsPage() {
                   <strong style={{ color: 'var(--text-h)', display: 'block', marginBottom: 4 }}>
                     Verified Provenance Binding:
                   </strong>
-                  Analysis Run: <code>{selectedAnalysis.run_id}</code><br />
-                  Dataset: {selectedAnalysis.dataset_name} (Version {selectedAnalysis.dataset_version || 1})<br />
-                  Calculations and chart series will be derived strictly from the saved analytical artifacts.
+                  Analysis Run: <code>{selectedAnalysis.run_id}</code>
+                  <br />
+                  Dataset: {selectedAnalysis.dataset_name} (Version{' '}
+                  {selectedAnalysis.dataset_version || 1})<br />
+                  Calculations and chart series will be derived strictly from the saved analytical
+                  artifacts.
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 8 }}>

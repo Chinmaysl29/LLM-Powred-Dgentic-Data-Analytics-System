@@ -1,0 +1,34 @@
+services:
+  devtools:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    working_dir: /workspace
+    command: sleep infinity
+    init: true
+    healthcheck:
+      disable: true
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/ai_analyst
+      REDIS_URL: redis://redis:6379/0
+      CHROMA_HOST: chromadb
+      CHROMA_PORT: 8000
+      UPLOAD_DIR: storage
+      OMP_NUM_THREADS: 1
+      OPENBLAS_NUM_THREADS: 1
+      HF_HOME: /workspace/storage/model-cache
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:8001:8001"
+      - "127.0.0.1:5678:5678"
+    volumes:
+      - .:/workspace
+      - frontend_node_modules:/workspace/frontend/node_modules
+      - dev_browser_cache:/root/.cache/ms-playwright
+    depends_on:
+      - postgres
+      - redis
+      - chromadb
+volumes:
+  dev_browser_cache:

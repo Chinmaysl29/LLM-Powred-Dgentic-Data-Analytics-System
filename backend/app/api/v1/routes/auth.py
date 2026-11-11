@@ -5,11 +5,13 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 
 from backend.app.core.config import get_settings
 from backend.app.core.security import (
     get_current_user,
     hash_password,
+    verify_token,
     verify_password,
 )
 from backend.app.database.postgres import get_db_session
@@ -96,20 +98,27 @@ async def login(
 @router.post("/refresh", response_model=AuthResponse)
 async def refresh_token(
     payload: RefreshTokenRequest,
+    db: Session = Depends(get_db_session),
 ) -> AuthResponse:
     """Rotate an expired access token using a valid refresh token."""
+    if db is None:
+        raise HTTPException(503, 'Authentication storage is unavailable')
     try:
-        new_tokens = auth_service.refresh_token(payload.refresh_token)
+        new_tokens = auth_service.refresh_token(payload.refresh_token, db=db)
         return AuthResponse(
             access_token=new_tokens["access_token"],
             refresh_token=new_tokens["refresh_token"],
             token_type=new_tokens["token_type"],
             expires_in=new_tokens["expires_in"],
         )
-    except Exception as exc:
+    except HTTPException:
+        raise
+    except SQLAlchemyError:
+        raise HTTPException(503, 'Authentication storage is unavailable') from None
+    except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(exc),
+            detail='Invalid or expired refresh token',
         ) from exc
 
 
@@ -117,22 +126,38 @@ async def refresh_token(
 async def logout(
     payload: LogoutRequest | None = None,
     authorization: str | None = Header(None),
+    db: Session = Depends(get_db_session),
 ) -> dict[str, Any]:
     """Revoke tokens and terminate the user session."""
-    revoked = False
+    from jose import jwt, JWTError
+    from sqlalchemy.exc import SQLAlchemyError
+    from backend.security.token_revocations import consume
+    tokens = []
     if payload and payload.refresh_token:
-        auth_service.revoke_token(payload.refresh_token)
-        revoked = True
-
+        tokens.append(payload.refresh_token)
     if authorization and authorization.startswith("Bearer "):
-        token = authorization.split(" ")[1]
+        tokens.append(authorization.split(" ", 1)[1])
+    try:
+        for token in tokens:
+            try:
+                secret, algorithm = auth_service._get_secret_and_algo()
+                claims = jwt.decode(token, secret, algorithms=[algorithm], options={
+                    'verify_exp': False, 'require_exp': True, 'require_sub': True})
+            except (JWTError, RuntimeError):
+                # Preserve externally signed Supabase access-token verification.
+                claims = verify_token(token)
+            consume(db, token, claims)
+        if tokens:
+            db.commit()
+    except SQLAlchemyError:
+        raise HTTPException(503, 'Authentication storage is unavailable') from None
+    for token in tokens:
         auth_service.revoke_token(token)
-        revoked = True
 
     return {
         "status": "success",
         "message": "Logged out successfully",
-        "revoked": revoked,
+        "revoked": bool(tokens),
     }
 
 

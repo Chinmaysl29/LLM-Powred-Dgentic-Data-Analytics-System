@@ -1,0 +1,1426 @@
+diff --git a/backend/app/api/v1/routes/chat.py b/backend/app/api/v1/routes/chat.py
+--- a/backend/app/api/v1/routes/chat.py
++++ b/backend/app/api/v1/routes/chat.py
+@@ -26,6 +26,8 @@
+ from backend.app.learning.evidence import observe_chat
+ from backend.app.learning.routing import scoped_router
+ from backend.app.learning.column_runtime import scoped_resolver
++from backend.app.learning.selection_provider import scoped_classifier
++from backend.app.learning.selection_runtime import select_chart
+ 
+ router = APIRouter(prefix="/chat", tags=["Natural Language Analytics"])
+ 
+@@ -144,6 +146,7 @@
+                 result = await analytics.analyze(payload.message, context=context)
+                 intent, confidence = "analytics", 0.0
+             else:
++                intent_service = scoped_classifier(intent_service, str(current_user.id), payload.dataset_id, payload.dataset_version)
+                 intent_service = scoped_router(intent_service, str(current_user.id), payload.dataset_version)
+                 classification = await intent_service.classify(payload.message, dataset_id=payload.dataset_id)
+                 orchestrator = OrchestratorService(intent_classifier=intent_service, db=db, owner_id=str(current_user.id))
+@@ -156,6 +159,7 @@
+                 }
+                 intent, confidence = outcome.intent, classification.confidence
+ 
++        result = await select_chart(str(current_user.id), payload.message, result)
+         observation.result = result
+         observation.live_intent = intent
+ 
+diff --git a/backend/app/api/v1/routes/intent.py b/backend/app/api/v1/routes/intent.py
+--- a/backend/app/api/v1/routes/intent.py
++++ b/backend/app/api/v1/routes/intent.py
+@@ -4,6 +4,7 @@
+ from typing import Any
+ from fastapi import APIRouter, Depends, status
+ from backend.app.core.security import get_current_user
++from backend.app.learning.selection_provider import scoped_classifier
+ from backend.app.learning.shadow import observe_shadow
+ from backend.app.learning.routing import scoped_router
+ 
+@@ -34,6 +35,7 @@
+ ) -> IntentClassificationResponse:
+     """Analyze incoming user query and return classified intent with confidence and required agents."""
+     logger.info("Received intent classification request: %s", request.query[:50])
++    service = scoped_classifier(service, str(current_user.id), request.dataset_id)
+     result = await scoped_router(service, str(current_user.id)).classify(
+         query=request.query,
+         context=request.context,
+diff --git a/backend/app/models/__init__.py b/backend/app/models/__init__.py
+--- a/backend/app/models/__init__.py
++++ b/backend/app/models/__init__.py
+@@ -78,3 +78,4 @@
+ from backend.app.learning.release_table import router_releases
+ from backend.app.learning.memory_table import failure_memory_links
+ from backend.app.learning.column_table import resolver_events
++from backend.app.learning.selection_table import selection_events
+diff --git a/frontend/src/pages/app/AnalysisPage.tsx b/frontend/src/pages/app/AnalysisPage.tsx
+--- a/frontend/src/pages/app/AnalysisPage.tsx
++++ b/frontend/src/pages/app/AnalysisPage.tsx
+@@ -2,6 +2,7 @@
+ import { Link, useLocation, useNavigate } from 'react-router-dom';
+ import { datasetService } from '../../services/datasetService';
+ import { analysisService } from '../../services/analysisService';
++import VerifiedTrendChart from '../../components/analytics/VerifiedTrendChart';
+ import type { Dataset } from '../../types/datasets';
+ import type {
+   AnalysisSessionDetail,
+@@ -790,7 +791,7 @@
+ 
+         {/* Chart Visualization */}
+         {turn.chart && turn.chart.points && turn.chart.points.length > 0 && (
+-          <BarChartRenderer chart={turn.chart} />
++          turn.chart.chart_type === 'line' ? <VerifiedTrendChart chart={turn.chart} /> : <BarChartRenderer chart={turn.chart} />
+         )}
+ 
+         {/* Data Table */}
+diff --git a/backend/app/learning/selection_models.py b/backend/app/learning/selection_models.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/learning/selection_models.py
+@@ -0,0 +1,119 @@
++"""NumPy presentation/provider policies. No business calculations or API calls."""
++import math
++import numpy as np
++
++KINDS = ('chart', 'provider')
++PROVIDERS = ('groq', 'gemini', 'openai')
++CHARTS = ('bar', 'line')
++EPSILON = 0.05
++
++
++def chart_features(context):
++    if (not isinstance(context, dict) or set(context) != {'temporal', 'points', 'dimensions', 'ranking', 'explicit'}
++            or any(type(context[key]) is not bool for key in ('temporal', 'ranking', 'explicit'))
++            or type(context['points']) is not int or not 1 <= context['points'] <= 50
++            or type(context['dimensions']) is not int or not 1 <= context['dimensions'] <= 4):
++        raise ValueError('Invalid chart context')
++    return np.array([1, context['temporal'], context['points'] / 50,
++        context['dimensions'] / 4, context['ranking'], context['explicit']], dtype=float)
++
++
++def chart_options(context):
++    chart_features(context)
++    return CHARTS if (context['temporal'] and context['points'] >= 2 and context['dimensions'] == 1
++        and not context['ranking'] and not context['explicit']) else ('bar',)
++
++
++class ChartPolicy:
++    def __init__(self, payload=None):
++        rows = [[0.0] * 6 for _ in CHARTS] if payload is None else payload
++        if (not isinstance(rows, list) or len(rows) != 2 or any(not isinstance(r, list) or len(r) != 6 for r in rows)
++                or any(type(v) not in (int, float) for r in rows for v in r)):
++            raise ValueError('Invalid chart weights')
++        self.weights = np.asarray(rows, dtype=float).copy()
++        if not np.isfinite(self.weights).all() or np.any(np.abs(self.weights) > 1000):
++            raise ValueError('Invalid chart weight values')
++        self.total = np.zeros((2, 6)); self.steps = 0
++
++    def predict(self, context):
++        options = chart_options(context)
++        if len(options) == 1:
++            return options[0]
++        scores = (self.total / self.steps if self.steps else self.weights) @ chart_features(context)
++        return CHARTS[int(np.argmax(scores))] if abs(scores[0] - scores[1]) > 0.5 else 'bar'
++
++    def update(self, context, truth):
++        if truth not in chart_options(context):
++            raise ValueError('Unsafe reviewed chart')
++        vector = chart_features(context)
++        predicted = int(np.argmax(self.weights @ vector))
++        target = CHARTS.index(truth)
++        self.weights *= 0.999
++        if target != predicted:
++            self.weights[target] += vector
++            self.weights[predicted] -= vector
++        self.total += self.weights; self.steps += 1
++
++    def snapshot(self):
++        return (self.total / self.steps if self.steps else self.weights).tolist()
++
++
++def outcome(value):
++    if not isinstance(value, dict) or set(value) != {'correct', 'latency_ms', 'cost_usd'} or type(value['correct']) is not bool:
++        raise ValueError('A reviewed correctness label and measured latency/cost are required')
++    for key, maximum in (('latency_ms', 120000), ('cost_usd', 10)):
++        if type(value[key]) not in (int, float) or not math.isfinite(value[key]) or not 0 <= value[key] <= maximum:
++            raise ValueError('Invalid measured outcome')
++    return float(value['correct']) - .1 * min(value['latency_ms'] / 30000, 1) - .1 * min(value['cost_usd'] / .01, 1)
++
++
++class ProviderBandit:
++    """Reviewed empirical arm means; exploration only among fully correct warm arms."""
++    def __init__(self, payload):
++        if not isinstance(payload, dict) or set(payload) != {'models', 'arms'}:
++            raise ValueError('Invalid bandit snapshot')
++        models, arms = payload['models'], payload['arms']
++        if (not isinstance(models, dict) or not 2 <= len(models) <= 3 or not set(models) <= set(PROVIDERS)
++                or any(not isinstance(v, str) or not 1 <= len(v) <= 120 for v in models.values())
++                or not isinstance(arms, dict) or set(arms) != set(models)):
++            raise ValueError('Invalid pinned providers')
++        for arm in arms.values():
++            if (not isinstance(arm, dict) or set(arm) != {'count', 'correct', 'reward'}
++                    or type(arm['count']) is not int or not 0 <= arm['count'] <= 500
++                    or type(arm['correct']) is not int or not 0 <= arm['correct'] <= arm['count']
++                    or type(arm['reward']) not in (float, int) or not math.isfinite(arm['reward'])
++                    or not -.2 * arm['count'] - 1e-6 <= arm['reward'] <= arm['count'] + 1e-6):
++                raise ValueError('Invalid reviewed arm evidence')
++        self.models = dict(models)
++        self.arms = {key: dict(value) for key, value in arms.items()}
++
++    def update(self, provider, measured):
++        reward = outcome(measured)
++        arm = self.arms[provider]
++        arm['count'] += 1; arm['correct'] += int(measured['correct']); arm['reward'] += reward
++
++    def probabilities(self):
++        safe = [p for p in PROVIDERS if p in self.arms and self.arms[p]['count'] >= 5
++            and self.arms[p]['correct'] == self.arms[p]['count']]
++        if not safe:
++            return {}
++        best = max(safe, key=lambda p: self.arms[p]['reward'] / self.arms[p]['count'])
++        return {p: EPSILON / len(safe) + (1 - EPSILON if p == best else 0) for p in safe}
++
++    def choose(self, rng=None):
++        probabilities = self.probabilities()
++        if not probabilities:
++            return None
++        rng = np.random.default_rng() if rng is None else rng
++        return str(rng.choice(list(probabilities), p=list(probabilities.values())))
++
++    def snapshot(self):
++        return {'models': dict(self.models), 'arms': {k: dict(v) for k, v in self.arms.items()}}
++
++
++def load_model(kind, payload):
++    if kind == 'chart':
++        return ChartPolicy(payload)
++    if kind == 'provider':
++        return ProviderBandit(payload)
++    raise ValueError('Unknown selection learner')
+diff --git a/backend/app/learning/selection_contract.py b/backend/app/learning/selection_contract.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/learning/selection_contract.py
+@@ -0,0 +1,80 @@
++"""Reviewed, frozen, scenario-disjoint selection evaluation; no provider requests."""
++from backend.app.learning.memory_contract import digest
++from backend.app.learning.selection_models import ChartPolicy, ProviderBandit, PROVIDERS, chart_options, outcome, load_model
++
++
++def manifest(value):
++    if (not isinstance(value, dict) or set(value) != {'format', 'kind', 'models', 'cases'}
++            or type(value['format']) is not int or value['format'] != 1 or value['kind'] not in ('chart', 'provider')
++            or not isinstance(value['cases'], list) or not 40 <= len(value['cases']) <= 500):
++        raise ValueError('Invalid reviewed selection manifest')
++    if value['kind'] == 'chart':
++        if value['models'] != {}:
++            raise ValueError('Chart manifest has no external models')
++    else:
++        ProviderBandit({'models': value['models'], 'arms': {p: {'count': 0, 'correct': 0, 'reward': 0} for p in value['models']}})
++    groups = {'train': set(), 'golden': set()}; counts = {'train': 0, 'golden': 0}; ids = set()
++    for row in value['cases']:
++        fields = {'id', 'group', 'split', 'context', 'expected'} if value['kind'] == 'chart' else {'id', 'group', 'split', 'outcomes'}
++        if (not isinstance(row, dict) or set(row) != fields or row['split'] not in counts
++                or any(not isinstance(row[k], str) or not 1 <= len(row[k]) <= 100 for k in ('id', 'group'))
++                or row['id'] in ids):
++            raise ValueError('Invalid or duplicated reviewed case')
++        ids.add(row['id']); groups[row['split']].add(row['group']); counts[row['split']] += 1
++        if value['kind'] == 'chart':
++            if row['expected'] not in chart_options(row['context']):
++                raise ValueError('Unsafe chart label')
++        else:
++            if not isinstance(row['outcomes'], dict) or set(row['outcomes']) != set(value['models']):
++                raise ValueError('Require paired outcomes for every pinned provider')
++            for measured in row['outcomes'].values():
++                outcome(measured)
++    if counts['train'] < 10 or counts['golden'] < 30 or groups['train'] & groups['golden']:
++        raise ValueError('Insufficient or leaking reviewed splits')
++    return value
++
++
++def train(value):
++    value = manifest(value)
++    if value['kind'] == 'chart':
++        model = ChartPolicy()
++        for _ in range(20):
++            for row in value['cases']:
++                if row['split'] == 'train':
++                    model.update(row['context'], row['expected'])
++    else:
++        model = ProviderBandit({'models': value['models'], 'arms': {p: {'count': 0, 'correct': 0, 'reward': 0} for p in value['models']}})
++        for row in value['cases']:
++            if row['split'] == 'train':
++                for p, measured in row['outcomes'].items():
++                    model.update(p, measured)
++    return model.snapshot()
++
++
++def evaluate(value, payload, current=None):
++    value = manifest(value); kind = value['kind']
++    model = load_model(kind, payload); live = load_model(kind, current) if current is not None else None
++    candidate_score = baseline_score = live_score = 0.0; all_correct = True; count = 0
++    if kind == 'provider' and (model.models != value['models'] or (live and live.models != model.models)):
++        raise ValueError('Provider/model benchmark changed')
++    for row in value['cases']:
++        if row['split'] != 'golden':
++            continue
++        count += 1
++        if kind == 'chart':
++            predicted = model.predict(row['context'])
++            candidate_score += predicted == row['expected']
++            baseline_score += row['expected'] == 'bar'
++            live_score += (live.predict(row['context']) if live else 'bar') == row['expected']
++            all_correct = all_correct and predicted == row['expected']
++        else:
++            baseline = next(p for p in PROVIDERS if p in value['models'])
++            probabilities = model.probabilities()
++            all_correct = all_correct and bool(probabilities) and all(row['outcomes'][p]['correct'] for p in probabilities)
++            candidate_score += sum(probability * outcome(row['outcomes'][p]) for p, probability in probabilities.items())
++            baseline_score += outcome(row['outcomes'][baseline])
++            current_probabilities = live.probabilities() if live else {baseline: 1.0}
++            live_score += sum(probability * outcome(row['outcomes'][p]) for p, probability in current_probabilities.items())
++    return {'manifest_digest': digest(value), 'kind': kind, 'cases': count,
++        'candidate_score': candidate_score, 'baseline_score': baseline_score, 'live_score': live_score,
++        'all_correct': bool(all_correct), 'passed': bool(all_correct and candidate_score > max(baseline_score, live_score) + 1e-9)}
+diff --git a/backend/app/learning/selection_table.py b/backend/app/learning/selection_table.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/learning/selection_table.py
+@@ -0,0 +1,26 @@
++"""Append-only selection shadow observations and privileged lifecycle audit."""
++from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Identity, Index, Integer, String, Table, Uuid, CheckConstraint, text
++from sqlalchemy.dialects.postgresql import JSONB
++from backend.app.models.base import Base
++
++selection_events = Table('selection_events', Base.metadata,
++    Column('id', BigInteger, Identity(), primary_key=True),
++    Column('tenant_id', Uuid, ForeignKey('tenants.id'), nullable=False),
++    Column('workspace_id', Uuid, ForeignKey('workspaces.id'), nullable=False, index=True),
++    Column('actor_id', Uuid, ForeignKey('users.id'), nullable=False, index=True),
++    Column('reviewer_id', Uuid, ForeignKey('users.id'), index=True),
++    Column('dataset_id', String(36), ForeignKey('datasets.dataset_id'), nullable=False, index=True),
++    Column('dataset_version', Integer, nullable=False),
++    Column('schema_hash', String(64), nullable=False),
++    Column('kind', String(20), nullable=False),
++    Column('action', String(20), nullable=False),
++    Column('version', Integer, nullable=False),
++    Column('previous_version', Integer, nullable=False),
++    Column('model_digest', String(64)),
++    Column('runtime_digest', String(64), nullable=False),
++    Column('detail', JSONB, nullable=False),
++    Column('created_at', DateTime(timezone=True), server_default=text('now()'), nullable=False),
++    CheckConstraint("kind IN ('chart','provider')", name='ck_selection_kind'),
++    CheckConstraint('version >= 0 AND previous_version >= 0 AND dataset_version > 0', name='ck_selection_versions'),
++    CheckConstraint("action IN ('stage','shadow','promote','rollback','disable')", name='ck_selection_action'))
++Index('ix_selection_events_tenant_version', selection_events.c.tenant_id, selection_events.c.kind, selection_events.c.version, selection_events.c.action)
+diff --git a/backend/app/learning/selection_store.py b/backend/app/learning/selection_store.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/learning/selection_store.py
+@@ -0,0 +1,67 @@
++"""Selection snapshots and scoped, source-bound release evidence."""
++from dataclasses import asdict
++from pathlib import Path
++import hashlib
++from sqlalchemy import select, func, cast, Text
++from backend.app.learning.tables import learner_weights as weights
++from backend.app.learning.selection_table import selection_events as events
++from backend.app.learning.selection_models import KINDS, load_model
++from backend.app.learning.column_store import scope_dict
++from backend.app.learning.memory_contract import digest
++
++
++def learner(kind):
++    if kind not in KINDS:
++        raise ValueError('Unsupported selection learner')
++    return 'chart_selector' if kind == 'chart' else 'provider_bandit'
++
++
++def fingerprint():
++    directory = Path(__file__).parent
++    names = ('selection_models.py', 'selection_contract.py', 'selection_store.py', 'selection_lifecycle.py',
++        'selection_runtime.py', 'selection_provider.py', 'failure_memory.py')
++    paths = [directory / name for name in names]
++    paths += [directory.parent / 'llm/provider.py', directory.parent / 'services/intent_classification_service.py',
++        directory.parent / 'services/natural_language_analytics.py', directory.parent / 'api/v1/routes/chat.py',
++        directory.parent / 'api/v1/routes/intent.py']
++    return hashlib.sha256(b''.join(path.read_bytes() for path in paths)).hexdigest()
++
++
++def condition(tenant, kind):
++    return (weights.c.tenant_id == tenant) & (weights.c.learner == learner(kind))
++
++
++def validate(payload, kind):
++    if (not isinstance(payload, dict) or set(payload) != {'format', 'kind', 'scope', 'manifest_digest', 'model'}
++            or type(payload['format']) is not int or payload['format'] != 1 or payload['kind'] != kind
++            or not isinstance(payload['scope'], dict) or set(payload['scope']) != {'tenant_id', 'workspace_id', 'actor_id', 'dataset_id', 'dataset_version', 'schema_hash'}
++            or not isinstance(payload['manifest_digest'], str) or len(payload['manifest_digest']) != 64):
++        raise ValueError('Invalid selection snapshot')
++    load_model(kind, payload['model'])
++    return payload
++
++
++def read(db, tenant, kind, version):
++    where = condition(tenant, kind) & (weights.c.version == version)
++    size = db.scalar(select(func.octet_length(cast(weights.c.weights, Text))).where(where))
++    if size is None or size > 100_000:
++        raise ValueError('Missing/oversized selection snapshot')
++    return validate(db.scalar(select(weights.c.weights).where(where)), kind)
++
++
++def active(db, tenant, kind):
++    return db.scalar(select(weights.c.version).where(condition(tenant, kind), weights.c.is_active.is_(True))) or 0
++
++
++def attested(db, current, kind, version, payload, action):
++    return db.scalar(select(events.c.id).where(events.c.tenant_id == current.tenant_id,
++        events.c.workspace_id == current.workspace_id, events.c.actor_id == current.actor_id,
++        events.c.dataset_id == current.dataset_id, events.c.dataset_version == current.dataset_version,
++        events.c.schema_hash == current.schema_hash, events.c.kind == kind, events.c.version == version,
++        events.c.action == action, events.c.model_digest == digest(payload), events.c.runtime_digest == fingerprint()).limit(1)) is not None
++
++
++def event(db, current, kind, action, version, previous=0, payload=None, reviewer=None, detail=None):
++    db.execute(events.insert().values(**asdict(current), kind=kind, action=action, version=version,
++        previous_version=previous, model_digest=digest(payload) if payload else None,
++        runtime_digest=fingerprint(), reviewer_id=reviewer, detail=detail or {}))
+diff --git a/backend/app/learning/selection_lifecycle.py b/backend/app/learning/selection_lifecycle.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/learning/selection_lifecycle.py
+@@ -0,0 +1,101 @@
++"""Reviewed policy fitting and gated, atomic release/rollback per tenant and kind."""
++import copy
++import hashlib
++from uuid import UUID, uuid4
++from sqlalchemy import select, func, text
++from backend.app.learning.column_lifecycle import access
++from backend.app.learning.selection_contract import manifest, train, evaluate
++from backend.app.learning import selection_store as store
++from backend.app.learning.memory_contract import digest
++
++
++def reviewed(value, expected_digest, kind):
++    value = copy.deepcopy(manifest(value))
++    if value['kind'] != kind or digest(value) != expected_digest:
++        raise ValueError('Reviewed manifest changed')
++    return value
++
++
++def lock(db, tenant, kind):
++    db.execute(text("SET LOCAL lock_timeout='2s'")); db.execute(text("SET LOCAL statement_timeout='5s'"))
++    key = int.from_bytes(hashlib.sha256(f'{tenant}:{store.learner(kind)}'.encode()).digest()[:8], 'big', signed=True)
++    db.execute(text('SELECT pg_advisory_xact_lock(:key)'), {'key': key})
++    db.execute(select(store.weights.c.id).where(store.condition(tenant, kind)).with_for_update()).all()
++
++
++def state(db, tenant, kind):
++    return store.active(db, tenant, kind), db.scalar(select(func.max(store.events.c.id)).where(
++        store.events.c.tenant_id == tenant, store.events.c.kind == kind, store.events.c.action != 'shadow')) or 0
++
++
++def stage(factory, reviewer, dataset_id, dataset_version, kind, value, expected_digest):
++    value = reviewed(value, expected_digest, kind)
++    with factory() as db, db.begin():
++        current = access(db, reviewer, dataset_id, dataset_version)
++    source = store.fingerprint()
++    payload = {'format': 1, 'kind': kind, 'scope': store.scope_dict(current),
++        'manifest_digest': expected_digest, 'model': train(value)}
++    store.validate(payload, kind)
++    with factory() as db, db.begin():
++        if access(db, reviewer, dataset_id, dataset_version) != current or store.fingerprint() != source:
++            raise ValueError('Scope/source changed during training')
++        lock(db, current.tenant_id, kind)
++        version = (db.scalar(select(func.max(store.weights.c.version)).where(store.condition(current.tenant_id, kind))) or 0) + 1
++        db.execute(store.weights.insert().values(id=uuid4(), tenant_id=current.tenant_id, learner=store.learner(kind),
++            version=version, weights=payload, is_active=False))
++        store.event(db, current, kind, 'stage', version, store.active(db, current.tenant_id, kind), payload,
++            UUID(str(reviewer)), {'manifest_digest': expected_digest})
++    return {'kind': kind, 'version': version, 'active': False, 'model_digest': digest(payload)}
++
++
++def promote(factory, reviewer, dataset_id, dataset_version, kind, version, expected_version, value, expected_digest):
++    value = reviewed(value, expected_digest, kind); source = store.fingerprint()
++    with factory() as db, db.begin():
++        current = access(db, reviewer, dataset_id, dataset_version)
++        before = state(db, current.tenant_id, kind)
++        if before[0] != expected_version or version == expected_version:
++            raise ValueError('Active selection policy changed or already active')
++        payload = store.read(db, current.tenant_id, kind, version)
++        if (payload['scope'] != store.scope_dict(current) or payload['manifest_digest'] != expected_digest
++                or not store.attested(db, current, kind, version, payload, 'stage')
++                or not store.attested(db, current, kind, version, payload, 'shadow')):
++            raise ValueError('Missing compatible review/shadow evidence')
++        live = store.read(db, current.tenant_id, kind, before[0]) if before[0] else None
++        if live and (live['scope'] != store.scope_dict(current) or not store.attested(db, current, kind, before[0], live, 'promote')):
++            raise ValueError('Disable incompatible policy first')
++    report = evaluate(value, payload['model'], live['model'] if live else None)
++    if not report['passed']:
++        return {'promoted': False, 'kind': kind, 'version': version, 'evaluation': report}
++    with factory() as db, db.begin():
++        if access(db, reviewer, dataset_id, dataset_version) != current:
++            raise ValueError('Authorization/schema changed during evaluation')
++        lock(db, current.tenant_id, kind)
++        if (state(db, current.tenant_id, kind) != before or store.fingerprint() != source
++                or store.read(db, current.tenant_id, kind, version) != payload
++                or (live and store.read(db, current.tenant_id, kind, before[0]) != live)
++                or not store.attested(db, current, kind, version, payload, 'stage')
++                or not store.attested(db, current, kind, version, payload, 'shadow')):
++            raise ValueError('Policy/evidence changed during evaluation')
++        db.execute(store.weights.update().where(store.condition(current.tenant_id, kind)).values(is_active=False))
++        db.execute(store.weights.update().where(store.condition(current.tenant_id, kind), store.weights.c.version == version).values(is_active=True))
++        store.event(db, current, kind, 'promote', version, before[0], payload, UUID(str(reviewer)), report)
++    return {'promoted': True, 'kind': kind, 'version': version, 'evaluation': report}
++
++
++def rollback(factory, reviewer, dataset_id, dataset_version, kind, version, expected_version):
++    if type(version) is not int or version < 0:
++        raise ValueError('Invalid rollback version')
++    with factory() as db, db.begin():
++        current = access(db, reviewer, dataset_id, dataset_version)
++        lock(db, current.tenant_id, kind)
++        previous = store.active(db, current.tenant_id, kind)
++        if previous != expected_version:
++            raise ValueError('Active policy changed')
++        payload = store.read(db, current.tenant_id, kind, version) if version else None
++        if payload and (payload['scope'] != store.scope_dict(current) or not store.attested(db, current, kind, version, payload, 'promote')):
++            raise ValueError('Rollback target was never compatibly approved')
++        db.execute(store.weights.update().where(store.condition(current.tenant_id, kind)).values(is_active=False))
++        if version:
++            db.execute(store.weights.update().where(store.condition(current.tenant_id, kind), store.weights.c.version == version).values(is_active=True))
++        store.event(db, current, kind, 'rollback' if version else 'disable', version, previous, payload, UUID(str(reviewer)))
++    return {'kind': kind, 'version': version, 'previous_version': previous, 'rolled_back': True}
+diff --git a/backend/app/learning/selection_runtime.py b/backend/app/learning/selection_runtime.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/learning/selection_runtime.py
+@@ -0,0 +1,111 @@
++"""Authorized fail-open policy reads; charts preserve every original point/value."""
++import asyncio
++from datetime import datetime
++import math
++import re
++from threading import BoundedSemaphore
++from sqlalchemy import create_engine, select, func, text
++from sqlalchemy.orm import Session
++from sqlalchemy.pool import NullPool
++from backend.app.core.config import get_settings
++from backend.app.core.database_target import bind_database_schema
++from backend.app.learning.evidence import enabled
++from backend.app.learning.failure_memory import scope
++from backend.app.learning import selection_store as store
++from backend.app.learning.selection_models import PROVIDERS, load_model
++
++_slots = BoundedSemaphore(2)
++
++
++def decide(actor, dataset_id, dataset_version, kind, context):
++    if not enabled() or not actor or not dataset_id or not _slots.acquire(blocking=False):
++        return None
++    engine = None
++    try:
++        settings = get_settings()
++        engine = create_engine(settings.postgres_dsn, poolclass=NullPool, hide_parameters=True, connect_args={'connect_timeout': 2})
++        bind_database_schema(engine, settings.database_schema)
++        with Session(engine) as db, db.begin():
++            db.execute(text("SET LOCAL statement_timeout='300ms'")); db.execute(text("SET LOCAL lock_timeout='100ms'"))
++            current = scope(db, actor, dataset_id, dataset_version)
++            active = store.active(db, current.tenant_id, kind)
++            candidate = db.scalar(select(func.max(store.weights.c.version)).where(store.condition(current.tenant_id, kind), store.weights.c.is_active.is_(False)))
++            selected = None
++            for version in dict.fromkeys(v for v in (candidate, active) if v):
++                payload = store.read(db, current.tenant_id, kind, version)
++                if payload['scope'] != store.scope_dict(current) or not store.attested(db, current, kind, version, payload, 'stage'):
++                    continue
++                model = load_model(kind, payload['model'])
++                if kind == 'chart':
++                    choice = model.predict(context)
++                else:
++                    if [p for p in PROVIDERS if p in model.models] != context:
++                        continue  # Changed configured arm set requires reevaluation.
++                    choice = model.choose()
++                store.event(db, current, kind, 'shadow', version, active, payload, detail={'choice': choice})
++                if version == active and store.attested(db, current, kind, version, payload, 'promote'):
++                    selected = {'choice': choice, 'model': payload['model']}
++            return selected
++    except Exception:
++        return None
++    finally:
++        if engine is not None:
++            try:
++                engine.dispose()
++            except Exception:
++                pass
++        _slots.release()
++
++
++async def decision(actor, dataset_id, dataset_version, kind, context):
++    if not enabled() or not actor or not dataset_id:
++        return None
++    try:
++        return await asyncio.wait_for(asyncio.to_thread(decide, actor, dataset_id, dataset_version, kind, context), timeout=2.5)
++    except Exception:
++        return None
++
++
++def chart_context(question, result):
++    chart, plan = result.get('chart'), result.get('plan')
++    if result.get('status') != 'complete' or not isinstance(chart, dict) or not isinstance(plan, dict) or chart.get('chart_type') != 'bar':
++        return None
++    points, rows = chart.get('points'), result.get('data')
++    if not isinstance(points, list) or not 1 <= len(points) <= 50 or not isinstance(rows, list) or len(rows) != len(points):
++        return None
++    x, y = chart.get('x_field'), chart.get('y_field')
++    for point, row in zip(points, rows):
++        if (not isinstance(point, dict) or not isinstance(row, dict) or type(point.get('value')) not in (int, float)
++                or not math.isfinite(point['value']) or str(row.get(x)) != point.get('label') or row.get(y) != point['value']):
++            return None
++    temporal = plan.get('operation') == 'trend' and x == plan.get('date_field') and not plan.get('dimensions')
++    if temporal:
++        labels = [point['label'] for point in points]
++        try:
++            dates = [datetime.strptime(label, '%Y-%m') for label in labels]
++        except (ValueError, TypeError):
++            return None
++        if dates != sorted(set(dates)):
++            return None
++    dimensions = len(plan.get('dimensions') or []) + int(plan.get('operation') == 'trend')
++    if not 1 <= dimensions <= 4:
++        return None
++    return {'temporal': bool(temporal), 'points': len(points), 'dimensions': dimensions,
++        'ranking': plan.get('operation') in ('top', 'bottom'),
++        'explicit': bool(re.search(r'\b(bar|line|area|pie|scatter|heatmap|waterfall|funnel|treemap)\b', question, re.I))}
++
++
++async def select_chart(actor, question, result):
++    if not enabled():
++        return result
++    try:
++        context = chart_context(question, result)
++        if context is None or context['explicit']:
++            return result
++        plan = result['plan']
++        answer = await decision(actor, plan.get('dataset_id'), plan.get('dataset_version'), 'chart', context)
++        if answer and answer['choice'] == 'line' and context['temporal'] and context['points'] >= 2:
++            return {**result, 'chart': {**result['chart'], 'chart_type': 'line'}}
++    except Exception:
++        pass
++    return result
+diff --git a/backend/app/learning/selection_provider.py b/backend/app/learning/selection_provider.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/learning/selection_provider.py
+@@ -0,0 +1,87 @@
++"""Request-local provider ordering for intent classification; no shared mutation."""
++import asyncio
++from copy import copy
++from threading import BoundedSemaphore
++from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
++from backend.app.llm.provider import LLMProvider
++from backend.app.learning.evidence import enabled
++from backend.app.learning.selection_models import PROVIDERS
++from backend.app.learning.selection_runtime import decision
++
++_preflight_slots = BoundedSemaphore(2)
++
++
++class ScopedProvider:
++    def __init__(self, base, actor, dataset_id, dataset_version):
++        self.base, self.actor, self.dataset_id, self.dataset_version = base, actor, dataset_id, dataset_version
++
++    def prepare(self, pinned, available):
++        if not _preflight_slots.acquire(blocking=False):
++            return None
++        try:
++            local = copy(self.base)
++            local._chat_model = None; local._provider_name = 'none'
++            ready = {}
++            for name in available:
++                model = getattr(local, '_init_' + name)()
++                identity = getattr(model, 'model', None) if name == 'gemini' else getattr(model, 'model_name', None)
++                if model is None or identity != pinned[name]:
++                    return None
++                ready[name] = model
++            return ready
++        except Exception:
++            return None
++        finally:
++            _preflight_slots.release()
++
++    async def chat(self, message, system_prompt=None, history=None):
++        if not message or not str(message).strip():
++            raise ValueError('Message content cannot be empty.')
++        available = [p for p in PROVIDERS if getattr(self.base._settings, p + '_api_key', None)]
++        selected = await decision(self.actor, self.dataset_id, self.dataset_version, 'provider', available)
++        if not selected or selected['choice'] not in available:
++            return await self.base.chat(message, system_prompt=system_prompt, history=history)
++        try:
++            ready = await asyncio.wait_for(asyncio.to_thread(self.prepare, selected['model']['models'], available), timeout=5)
++        except Exception:
++            ready = None
++        if not ready:
++            return await self.base.chat(message, system_prompt=system_prompt, history=history)
++        messages = []
++        if system_prompt:
++            messages.append(SystemMessage(content=system_prompt))
++        for item in history or []:
++            if item['role'] == 'user':
++                messages.append(HumanMessage(content=item['content']))
++            elif item['role'] == 'assistant':
++                messages.append(AIMessage(content=item['content']))
++        messages.append(HumanMessage(content=message))
++        order = [selected['choice'], *(p for p in available if p != selected['choice'])]
++        error = None
++        for name in order:
++            try:
++                response = await ready[name].ainvoke(messages)
++                return str(response.content)
++            except (ValueError, TypeError):
++                raise  # Preserve the existing invalid-input retry policy.
++            except Exception as exc:
++                error = exc
++        if error:
++            raise error
++        raise RuntimeError('No LLM provider available.')
++
++    async def chat_with_json(self, message, system_prompt=None):
++        # Reuse the exact existing JSON instruction without changing any prompt.
++        return await LLMProvider.chat_with_json(self, message, system_prompt)
++
++
++def scoped_classifier(service, actor, dataset_id, dataset_version=None):
++    if not enabled() or not actor or not dataset_id:
++        return service
++    from backend.app.services.intent_classification_service import IntentClassificationService
++    if type(service) is not IntentClassificationService or type(service._llm) is not LLMProvider:
++        return service
++    available = [p for p in PROVIDERS if getattr(service._llm._settings, p + '_api_key', None)]
++    if len(available) < 2:
++        return service
++    return IntentClassificationService(llm=ScopedProvider(service._llm, actor, dataset_id, dataset_version), registry=service.registry)
+diff --git a/migrations/versions/018_selection_policies.py b/migrations/versions/018_selection_policies.py
+new file mode 100644
+--- /dev/null
++++ b/migrations/versions/018_selection_policies.py
+@@ -0,0 +1,59 @@
++"""Add selection-policy audit only; existing tables and policies remain unchanged."""
++from alembic import op
++import sqlalchemy as sa
++from sqlalchemy.dialects.postgresql import JSONB
++
++revision = '018_selection_policies'
++down_revision = '017_column_resolver'
++branch_labels = None
++depends_on = None
++
++
++def upgrade():
++    op.create_table('selection_events',
++        sa.Column('id', sa.BigInteger, sa.Identity(), primary_key=True),
++        sa.Column('tenant_id', sa.Uuid, sa.ForeignKey('tenants.id'), nullable=False),
++        sa.Column('workspace_id', sa.Uuid, sa.ForeignKey('workspaces.id'), nullable=False),
++        sa.Column('actor_id', sa.Uuid, sa.ForeignKey('users.id'), nullable=False),
++        sa.Column('reviewer_id', sa.Uuid, sa.ForeignKey('users.id')),
++        sa.Column('dataset_id', sa.String(36), sa.ForeignKey('datasets.dataset_id'), nullable=False),
++        sa.Column('dataset_version', sa.Integer, nullable=False),
++        sa.Column('schema_hash', sa.String(64), nullable=False),
++        sa.Column('kind', sa.String(20), nullable=False),
++        sa.Column('action', sa.String(20), nullable=False),
++        sa.Column('version', sa.Integer, nullable=False),
++        sa.Column('previous_version', sa.Integer, nullable=False),
++        sa.Column('model_digest', sa.String(64)),
++        sa.Column('runtime_digest', sa.String(64), nullable=False),
++        sa.Column('detail', JSONB, nullable=False),
++        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
++        sa.CheckConstraint("kind IN ('chart','provider')", name='ck_selection_kind'),
++        sa.CheckConstraint('version >= 0 AND previous_version >= 0 AND dataset_version > 0', name='ck_selection_versions'),
++        sa.CheckConstraint("action IN ('stage','shadow','promote','rollback','disable')", name='ck_selection_action'))
++    for column in ('workspace_id', 'actor_id', 'reviewer_id', 'dataset_id'):
++        op.create_index(f'ix_selection_events_{column}', 'selection_events', [column])
++    op.create_index('ix_selection_events_tenant_version', 'selection_events', ['tenant_id', 'kind', 'version', 'action'])
++    op.execute('ALTER TABLE selection_events ENABLE ROW LEVEL SECURITY')
++    op.execute('ALTER TABLE selection_events FORCE ROW LEVEL SECURITY')
++    predicate = """tenant_id::text=current_setting('app.tenant_id',true)
++        AND workspace_id::text=current_setting('app.workspace_id',true)
++        AND actor_id::text=current_setting('app.actor_id',true)
++        AND EXISTS (
++          SELECT 1 FROM workspaces w JOIN tenants t ON t.id=w.tenant_id AND t.tenant_status='active'
++          JOIN tenant_memberships tm ON tm.tenant_id=t.id AND tm.active
++          JOIN users u ON u.id=tm.user_id AND u.is_active
++          JOIN workspace_memberships wm ON wm.workspace_id=w.id AND wm.user_id=u.id AND wm.active
++          WHERE w.id=selection_events.workspace_id AND w.tenant_id=selection_events.tenant_id
++          AND w.status='active' AND u.id=selection_events.actor_id
++          AND tm.role IN ('viewer','analyst','admin','owner')
++          AND (tm.role IN ('owner','admin') OR wm.role IN ('viewer','analyst','admin','owner')))
++        AND EXISTS (
++          SELECT 1 FROM datasets d JOIN dataset_workspace_bindings b ON b.dataset_id=d.dataset_id
++          WHERE d.dataset_id=selection_events.dataset_id AND b.workspace_id=selection_events.workspace_id
++          AND d.owner_id=current_setting('app.actor_id',true) AND d.status NOT IN ('deleted','archived','purged'))"""
++    op.execute(f'CREATE POLICY selection_read ON selection_events FOR SELECT USING ({predicate})')
++    op.execute(f"CREATE POLICY selection_shadow_insert ON selection_events FOR INSERT WITH CHECK ({predicate} AND action='shadow' AND reviewer_id IS NULL)")
++
++
++def downgrade():
++    op.drop_table('selection_events')
+diff --git a/backend/tests/test_perceptron_selection.py b/backend/tests/test_perceptron_selection.py
+new file mode 100644
+--- /dev/null
++++ b/backend/tests/test_perceptron_selection.py
+@@ -0,0 +1,367 @@
++"""Real isolated SQL, deterministic chart execution, and mocked provider transports."""
++import asyncio
++from copy import deepcopy
++import json
++from pathlib import Path
++import subprocess
++import sys
++from types import SimpleNamespace
++
++import numpy as np
++import pytest
++from pydantic import SecretStr
++from sqlalchemy import select, update
++from backend.tests.test_verified_learning_integration import environment, identity, dataset
++from backend.app.core.config import get_settings
++from backend.app.models import DatasetVersion
++from backend.app.learning import selection_lifecycle as lifecycle, selection_runtime as runtime, selection_store as store
++from backend.app.learning.selection_contract import manifest, train, evaluate
++from backend.app.learning.selection_models import ChartPolicy, ProviderBandit, chart_options, outcome
++from backend.app.learning.selection_provider import scoped_classifier
++from backend.app.learning.memory_contract import digest
++from backend.app.services.natural_language_analytics import NaturalLanguageAnalyticsService
++from backend.app.services.intent_classification_service import IntentClassificationService
++from backend.app.llm.provider import LLMProvider
++
++SCHEMA = {'columns': ['date', 'amount'], 'dtypes': {'date': 'object', 'amount': 'int64'}}
++CONTEXT = {'temporal': True, 'points': 3, 'dimensions': 1, 'ranking': False, 'explicit': False}
++MODELS = {'groq': 'groq-reviewed-v1', 'gemini': 'gemini-reviewed-v1'}
++
++
++def reviewed_cases(kind):
++    cases = []
++    for split, count in (('train', 10), ('golden', 30)):
++        for i in range(count):
++            row = {'id': f'{split}-{i}', 'group': f'{split}-scenario-{i}', 'split': split}
++            if kind == 'chart':
++                context = {**CONTEXT, 'temporal': i % 2 == 0, 'points': i + 2,
++                    'ranking': i % 7 == 6, 'explicit': i % 7 == 5}
++                row.update(context=context, expected='line' if len(chart_options(context)) == 2 else 'bar')
++            else:
++                row['outcomes'] = {'groq': {'correct': True, 'latency_ms': 9000 + i, 'cost_usd': .008},
++                    'gemini': {'correct': True, 'latency_ms': 1000 + i, 'cost_usd': .001}}
++            cases.append(row)
++    return {'format': 1, 'kind': kind, 'models': MODELS if kind == 'provider' else {}, 'cases': cases}
++
++
++def fixture_case(environment, tmp_path, monkeypatch, kind):
++    monkeypatch.setattr(get_settings(), 'learning_enabled', True)
++    account = identity(environment)
++    ds = dataset(environment, account, tmp_path, 'date,amount\n2025-01-01,10\n2025-02-01,-5\n2025-04-01,20\n')
++    with environment['admin']() as db, db.begin():
++        db.execute(update(DatasetVersion).where(DatasetVersion.dataset_id == ds).values(metadata_snapshot=SCHEMA))
++    return environment, account, ds, reviewed_cases(kind)
++
++
++@pytest.fixture
++def case(environment, tmp_path, monkeypatch):
++    return fixture_case(environment, tmp_path, monkeypatch, 'chart')
++
++
++@pytest.fixture
++def provider_case(environment, tmp_path, monkeypatch):
++    return fixture_case(environment, tmp_path, monkeypatch, 'provider')
++
++
++def stage(case):
++    env, account, ds, value = case
++    return lifecycle.stage(env['admin'], account['user'], ds, 1, value['kind'], value, digest(value))['version']
++
++
++def decide(case):
++    _, account, ds, value = case
++    return runtime.decide(account['user'], ds, 1, value['kind'], CONTEXT if value['kind'] == 'chart' else list(MODELS))
++
++
++def promote(case, version, expected=0):
++    env, account, ds, value = case
++    return lifecycle.promote(env['admin'], account['user'], ds, 1, value['kind'], version, expected, value, digest(value))
++
++
++def activate(case):
++    version = stage(case)
++    assert decide(case) is None
++    result = promote(case, version)
++    assert result['promoted'], result
++    return version
++
++
++@pytest.mark.parametrize('kind', ['chart', 'provider'])
++def test_real_reviewed_evaluator_and_no_tie_promotion(kind):
++    value = reviewed_cases(kind); model = train(value)
++    report = evaluate(value, model)
++    assert report['passed'] and report['all_correct'] and report['cases'] == 30, report
++    assert not evaluate(value, model, model)['passed']
++    if kind == 'provider':
++        bandit = ProviderBandit(model)
++        assert bandit.probabilities() == pytest.approx({'groq': .025, 'gemini': .975})
++        assert bandit.choose(np.random.default_rng(42)) in MODELS
++    else:
++        assert ChartPolicy(model).predict(CONTEXT) == 'line'
++
++
++@pytest.mark.parametrize('change', ['leak', 'duplicate', 'unsafe_chart', 'unknown_arm', 'missing_cost', 'nonfinite'])
++def test_review_contract_rejects_unsafe_or_unpaired_evidence(change):
++    value = reviewed_cases('chart' if change in ('leak', 'duplicate', 'unsafe_chart') else 'provider')
++    if change == 'leak':
++        value['cases'][-1]['group'] = value['cases'][0]['group']
++    elif change == 'duplicate':
++        value['cases'][-1]['id'] = value['cases'][0]['id']
++    elif change == 'unsafe_chart':
++        value['cases'][1]['expected'] = 'line'
++    elif change == 'unknown_arm':
++        value['models'] = {'unknown': 'x', 'gemini': 'y'}
++    elif change == 'missing_cost':
++        value['cases'][0]['outcomes']['groq']['cost_usd'] = None
++    else:
++        value['cases'][0]['outcomes']['groq']['latency_ms'] = float('inf')
++    with pytest.raises(ValueError):
++        manifest(value)
++
++
++def test_exploration_excludes_failed_and_untried_arms():
++    model = train(reviewed_cases('provider'))
++    model['arms']['gemini']['correct'] -= 1
++    assert ProviderBandit(model).probabilities() == {'groq': 1.0}
++    model['arms']['groq'] = {'count': 0, 'correct': 0, 'reward': 0}
++    assert ProviderBandit(model).choose() is None
++    with pytest.raises(ValueError):
++        ChartPolicy([[float('nan')] * 6] * 2)
++    with pytest.raises(ValueError):
++        outcome({'correct': 1, 'latency_ms': 0, 'cost_usd': 0})
++
++
++def test_shadow_required_and_chart_rollback(case):
++    env, account, ds, _ = case
++    version = stage(case)
++    with pytest.raises(ValueError):
++        promote(case, version)
++    assert decide(case) is None
++    assert promote(case, version)['promoted']
++    assert decide(case)['choice'] == 'line'
++    lifecycle.rollback(env['admin'], account['user'], ds, 1, 'chart', 0, version)
++    assert decide(case) is None
++    lifecycle.rollback(env['admin'], account['user'], ds, 1, 'chart', version, 0)
++    assert decide(case)['choice'] == 'line'
++
++
++def test_chart_chat_changes_only_type_and_never_trains(case, monkeypatch):
++    env, account, ds, _ = case
++    activate(case)
++    monkeypatch.setattr(ChartPolicy, 'update', lambda *a, **k: pytest.fail('Request trained policy'))
++    outputs = []
++    for flag in (False, True):
++        monkeypatch.setattr(get_settings(), 'learning_enabled', flag)
++        response = env['client'].post('/api/v1/chat', headers=account['headers'], json={
++            'message': 'monthly amount', 'dataset_id': ds, 'workspace_id': str(account['workspace'])})
++        assert response.status_code == 200, response.text
++        outputs.append({key: response.json()[key] for key in ('data', 'plan', 'kpis', 'answer', 'chart')})
++    assert outputs[0]['chart']['chart_type'] == 'bar' and outputs[1]['chart']['chart_type'] == 'line'
++    outputs[1]['chart']['chart_type'] = 'bar'
++    assert outputs[0] == outputs[1]
++    assert outputs[1]['chart']['points'] == [{'label': '2025-01', 'value': 10.0}, {'label': '2025-02', 'value': -5.0}, {'label': '2025-04', 'value': 20.0}]
++
++
++def test_chart_rejects_inconsistent_or_unordered_series(case):
++    import pandas as pd
++    frame = pd.DataFrame({'date': ['2025-01-01', '2025-02-01'], 'amount': [10, -5]})
++    result = asyncio.run(NaturalLanguageAnalyticsService().analyze('monthly amount', dataframe=frame,
++        dataset_id=case[2], dataset_version=1))
++    assert runtime.chart_context('monthly amount', result)['temporal']
++    assert runtime.chart_context('monthly amount line chart', result)['explicit']
++    for change in ('value', 'order', 'label', 'multigroup'):
++        modified = deepcopy(result)
++        if change == 'value':
++            modified['chart']['points'][0]['value'] = 999
++        elif change == 'order':
++            modified['chart']['points'].reverse(); modified['data'].reverse()
++        elif change == 'label':
++            modified['chart']['points'][0]['label'] = '2025-99'; modified['data'][0]['date'] = '2025-99'
++        else:
++            modified['plan']['dimensions'] = ['category']
++        context = runtime.chart_context('monthly amount', modified)
++        assert context is None or not context['temporal']
++
++
++def test_disabled_missing_scope_and_outage_fallback(case, monkeypatch):
++    monkeypatch.setattr(get_settings(), 'learning_enabled', False)
++    monkeypatch.setattr(runtime, 'create_engine', lambda *a, **k: pytest.fail('Flag off touched DB'))
++    assert decide(case) is None
++    monkeypatch.setattr(get_settings(), 'learning_enabled', True)
++    monkeypatch.setattr(runtime, 'create_engine', lambda *a, **k: (_ for _ in ()).throw(OSError('offline')))
++    assert decide(case) is None
++
++
++def test_scope_revocation_and_integrity(case, monkeypatch):
++    from backend.app.core.workspace_authorization import workspace_memberships
++    env, account, ds, _ = case
++    version = activate(case)
++    outsider = identity(env)
++    assert runtime.decide(outsider['user'], ds, 1, 'chart', CONTEXT) is None
++    assert runtime.decide(account['user'], ds, 99, 'chart', CONTEXT) is None
++    with monkeypatch.context() as patch:
++        patch.setattr(store, 'fingerprint', lambda: '0' * 64)
++        assert decide(case) is None
++    with env['admin']() as db, db.begin():
++        db.execute(workspace_memberships.update().where(workspace_memberships.c.user_id == account['user']).values(active=False))
++    assert decide(case) is None
++
++
++def test_runtime_roles_cannot_release_or_modify_audit(case):
++    env, account, ds, value = case
++    with pytest.raises(Exception):
++        lifecycle.stage(env['api'], account['user'], ds, 1, 'chart', value, digest(value))
++    outsider = identity(env)
++    with pytest.raises(Exception):
++        lifecycle.stage(env['admin'], outsider['user'], ds, 1, 'chart', value, digest(value))
++    stage(case)
++    with env['api']() as db, db.begin():
++        current = runtime.scope(db, account['user'], ds, 1)
++        assert db.execute(store.events.update().where(store.events.c.dataset_id == ds).values(action='promote')).rowcount == 0
++        assert db.execute(store.events.delete().where(store.events.c.dataset_id == ds)).rowcount == 0
++    with pytest.raises(Exception):
++        with env['api']() as db, db.begin():
++            current = runtime.scope(db, account['user'], ds, 1)
++            store.event(db, current, 'chart', 'promote', 1, reviewer=account['user'])
++
++
++def fake_provider(case, monkeypatch, failures=(), mismatch=False):
++    settings = get_settings()
++    monkeypatch.setattr(settings, 'groq_api_key', SecretStr('synthetic-not-a-key'))
++    monkeypatch.setattr(settings, 'gemini_api_key', SecretStr('synthetic-not-a-key'))
++    monkeypatch.setattr(settings, 'openai_api_key', None)
++    monkeypatch.setattr(ProviderBandit, 'choose', lambda self, rng=None: 'gemini')
++    calls = []
++    class Model:
++        def __init__(self, name):
++            self.name = name; self.model_name = MODELS[name]; self.model = 'changed-model' if mismatch else MODELS[name]
++        async def ainvoke(self, messages):
++            calls.append((self.name, [(type(m).__name__, m.content) for m in messages]))
++            if self.name in failures:
++                if 'invalid' in failures:
++                    raise ValueError('Synthetic invalid input')
++                raise RuntimeError('Synthetic transport unavailable')
++            return SimpleNamespace(content='{"intent":"eda_analysis","confidence":0.9,"reasoning":"Synthetic validated response"}')
++    monkeypatch.setattr(LLMProvider, '_init_groq', lambda self: Model('groq'))
++    monkeypatch.setattr(LLMProvider, '_init_gemini', lambda self: Model('gemini'))
++    monkeypatch.setattr(LLMProvider, '_init_openai', lambda self: pytest.fail('Unconfigured provider attempted'))
++    base = LLMProvider(settings)
++    service = IntentClassificationService(llm=base)
++    scoped = scoped_classifier(service, str(case[1]['user']), case[2], 1)
++    return base, scoped, calls
++
++
++def test_provider_order_fallback_prompts_and_no_shared_mutation(provider_case, monkeypatch):
++    activate(provider_case)
++    base, service, calls = fake_provider(provider_case, monkeypatch, failures=('gemini',))
++    answer = asyncio.run(service.classify('perform exploratory analysis', dataset_id=provider_case[2]))
++    assert answer.intent == 'eda_analysis'
++    assert [name for name, _ in calls] == ['gemini', 'groq']
++    assert calls[0][1] == calls[1][1]
++    assert base._chat_model is None and base._provider_name == 'none'
++    monkeypatch.setattr(ProviderBandit, 'update', lambda *a, **k: pytest.fail('Unreviewed success trained bandit'))
++    asyncio.run(service.classify('perform exploratory analysis', dataset_id=provider_case[2]))
++
++
++def test_model_identity_drift_retains_original_provider_order(provider_case, monkeypatch):
++    activate(provider_case)
++    _, service, calls = fake_provider(provider_case, monkeypatch, mismatch=True)
++    asyncio.run(service.classify('perform exploratory analysis', dataset_id=provider_case[2]))
++    assert [name for name, _ in calls] == ['groq']
++    assert runtime.decide(provider_case[1]['user'], provider_case[2], 1, 'provider', ['groq']) is None
++
++
++def test_provider_flag_off_and_single_configured_arm_keep_service(provider_case, monkeypatch):
++    base, service, _ = fake_provider(provider_case, monkeypatch)
++    original = IntentClassificationService(llm=base)
++    monkeypatch.setattr(get_settings(), 'learning_enabled', False)
++    assert scoped_classifier(original, provider_case[1]['user'], provider_case[2]) is original
++    monkeypatch.setattr(get_settings(), 'learning_enabled', True)
++    monkeypatch.setattr(get_settings(), 'gemini_api_key', None)
++    assert scoped_classifier(original, provider_case[1]['user'], provider_case[2]) is original
++
++
++def test_quality_regression_in_any_exploration_arm_blocks_promotion(provider_case):
++    provider_case[3]['cases'][-1]['outcomes']['groq']['correct'] = False
++    version = stage(provider_case); decide(provider_case)
++    result = promote(provider_case, version)
++    assert not result['promoted'] and not result['evaluation']['all_correct']
++
++
++def test_cli_status_and_disable(case):
++    _, account, ds, _ = case
++    version = activate(case)
++    script = Path(__file__).resolve().parents[2] / 'scripts/perceptron_selection.py'
++    common = ['--kind', 'chart', '--reviewer-id', str(account['user']), '--dataset-id', ds, '--dataset-version', '1']
++    for command, extra in [('status', []), ('rollback', ['--version', '0', '--expected-version', str(version)])]:
++        result = subprocess.run([sys.executable, str(script), command, *common, *extra], capture_output=True, text=True)
++        assert result.returncode == 0, result.stderr
++        assert json.loads(result.stdout)['active_version' if command == 'status' else 'rolled_back']
++    assert decide(case) is None
++
++
++def test_authenticated_intent_endpoint_uses_scoped_provider(provider_case, monkeypatch):
++    env, account, ds, _ = provider_case
++    activate(provider_case)
++    _, _, calls = fake_provider(provider_case, monkeypatch)
++    response = env['client'].post('/api/v1/intent/classify', headers=account['headers'], json={
++        'query': 'perform exploratory analysis', 'dataset_id': ds})
++    assert response.status_code == 200, response.text
++    assert response.json()['intent'] == 'eda_analysis'
++    assert [name for name, _ in calls] == ['gemini']
++
++
++def test_invalid_provider_input_is_not_retried(provider_case, monkeypatch):
++    activate(provider_case)
++    _, service, calls = fake_provider(provider_case, monkeypatch, failures=('gemini', 'invalid'))
++    with pytest.raises(ValueError):
++        asyncio.run(service._llm.chat('invalid synthetic input'))
++    assert [name for name, _ in calls] == ['gemini']
++
++
++def test_concurrent_stages_are_versioned_independently(case):
++    from concurrent.futures import ThreadPoolExecutor
++    with ThreadPoolExecutor(max_workers=2) as executor:
++        versions = list(executor.map(lambda _: stage(case), range(2)))
++    assert sorted(versions) == [1, 2]
++
++
++def test_release_changes_during_evaluation_block_promotion(case, monkeypatch):
++    env, account, ds, _ = case
++    version = stage(case); decide(case)
++    original = lifecycle.evaluate
++    def changed(*args, **kwargs):
++        result = original(*args, **kwargs)
++        lifecycle.rollback(env['admin'], account['user'], ds, 1, 'chart', 0, 0)
++        return result
++    monkeypatch.setattr(lifecycle, 'evaluate', changed)
++    with pytest.raises(ValueError):
++        promote(case, version)
++    assert decide(case) is None
++
++
++def test_audit_failure_rolls_back_activation(case, monkeypatch):
++    env, account, ds, _ = case
++    version = stage(case); decide(case)
++    def broken(*args, **kwargs):
++        raise RuntimeError('Synthetic audit failure')
++    monkeypatch.setattr(store, 'event', broken)
++    with pytest.raises(RuntimeError):
++        promote(case, version)
++    with env['admin']() as db:
++        current = lifecycle.access(db, account['user'], ds, 1)
++        assert store.active(db, current.tenant_id, 'chart') == 0
++
++
++def test_payload_tampering_and_changed_manifest_are_rejected(case):
++    env, account, ds, value = case
++    version = activate(case)
++    with env['admin']() as db, db.begin():
++        current = lifecycle.access(db, account['user'], ds, 1)
++        payload = deepcopy(store.read(db, current.tenant_id, 'chart', version))
++        payload['model'][0][0] += 1
++        db.execute(store.weights.update().where(store.condition(current.tenant_id, 'chart')).values(weights=payload))
++    assert decide(case) is None
++    value['cases'][0]['group'] += '-changed'
++    with pytest.raises(ValueError):
++        lifecycle.stage(env['admin'], account['user'], ds, 1, 'chart', value, '0' * 64)
+diff --git a/scripts/perceptron_selection.py b/scripts/perceptron_selection.py
+new file mode 100644
+--- /dev/null
++++ b/scripts/perceptron_selection.py
+@@ -0,0 +1,80 @@
++"""Operator-only selection policy training, evaluation, promotion and rollback."""
++import argparse
++import json
++from pathlib import Path
++import sys
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT))
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument('command', choices=('stage', 'evaluate', 'promote', 'rollback', 'status'))
++    parser.add_argument('--kind', choices=('chart', 'provider'), required=True)
++    parser.add_argument('--reviewer-id', required=True)
++    parser.add_argument('--dataset-id', required=True)
++    parser.add_argument('--dataset-version', required=True, type=int)
++    parser.add_argument('--version', type=int)
++    parser.add_argument('--expected-version', type=int)
++    parser.add_argument('--manifest', type=Path)
++    parser.add_argument('--manifest-sha256')
++    parser.add_argument('--reviewed', action='store_true')
++    args = parser.parse_args()
++    if args.command in ('stage', 'evaluate', 'promote') and not (args.manifest and args.manifest_sha256 and args.reviewed):
++        parser.error('Reviewed manifest and its canonical SHA-256 are required')
++    if args.command in ('evaluate', 'promote', 'rollback') and args.version is None:
++        parser.error('Version required')
++    if args.command in ('promote', 'rollback') and args.expected_version is None:
++        parser.error('Expected active version required (0 means baseline)')
++    engine = None
++    try:
++        from sqlalchemy import create_engine, select
++        from sqlalchemy.orm import sessionmaker
++        from sqlalchemy.pool import NullPool
++        from backend.app.core.config import get_settings
++        from backend.app.core.database_target import bind_database_schema
++        from backend.app.learning import selection_lifecycle as lifecycle, selection_store as store
++        from backend.app.learning.selection_contract import evaluate
++
++        settings = get_settings()
++        engine = create_engine(settings.postgres_dsn, poolclass=NullPool, hide_parameters=True, connect_args={'connect_timeout': 2})
++        bind_database_schema(engine, settings.database_schema)
++        factory = sessionmaker(engine)
++        common = (factory, args.reviewer_id, args.dataset_id, args.dataset_version, args.kind)
++        value = None
++        if args.manifest:
++            if args.manifest.stat().st_size > 1_000_000:
++                raise ValueError('Manifest too large')
++            value = lifecycle.reviewed(json.loads(args.manifest.read_bytes()), args.manifest_sha256, args.kind)
++        if args.command == 'stage':
++            result = lifecycle.stage(*common, value, args.manifest_sha256)
++        elif args.command == 'promote':
++            result = lifecycle.promote(*common, args.version, args.expected_version, value, args.manifest_sha256)
++        elif args.command == 'rollback':
++            result = lifecycle.rollback(*common, args.version, args.expected_version)
++        else:
++            with factory() as db, db.begin():
++                current = lifecycle.access(db, args.reviewer_id, args.dataset_id, args.dataset_version)
++                if args.command == 'status':
++                    result = {'active_version': store.active(db, current.tenant_id, args.kind), 'versions': [dict(row) for row in db.execute(
++                        select(store.weights.c.version, store.weights.c.is_active).where(store.condition(current.tenant_id, args.kind))
++                        .order_by(store.weights.c.version)).mappings()]}
++                else:
++                    payload = store.read(db, current.tenant_id, args.kind, args.version)
++                    if payload['scope'] != store.scope_dict(current) or payload['manifest_digest'] != args.manifest_sha256:
++                        raise ValueError('Scope/manifest mismatch')
++            if args.command == 'evaluate':
++                result = evaluate(value, payload['model'])
++        print(json.dumps(result, allow_nan=False))
++        return 1 if result.get('promoted') is False or result.get('passed') is False else 0
++    except Exception:
++        print('Selection command refused: check authorization, reviewed splits, schema, version and shadow evidence.', file=sys.stderr)
++        return 2
++    finally:
++        if engine is not None:
++            engine.dispose()
++
++
++if __name__ == '__main__':
++    raise SystemExit(main())
+diff --git a/scripts/verify_selection_migration.py b/scripts/verify_selection_migration.py
+new file mode 100644
+--- /dev/null
++++ b/scripts/verify_selection_migration.py
+@@ -0,0 +1,58 @@
++"""Verify Phase 7 upgrade/downgrade/upgrade in the isolated database only."""
++from pathlib import Path
++import os
++import sys
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT))
++
++
++def main():
++    from sqlalchemy import create_engine, inspect, text
++    from sqlalchemy.engine import make_url
++    from alembic import command
++    from alembic.config import Config
++    from backend.app.core.config import Settings, get_settings
++    Settings.model_config = {**Settings.model_config, "env_file": None}
++    get_settings.cache_clear()
++    target = make_url(os.environ["DATABASE_URL"])
++    if (target.database != "analyst_setup_test" or target.username != "setup"
++            or target.host != "postgres" or os.environ.get("ENVIRONMENT") != "test"):
++        raise SystemExit("Refusing migration roundtrip outside isolated setup database")
++    engine = create_engine(target)
++    config = Config(str(ROOT / "alembic.ini"))
++    config.set_main_option("script_location", str(ROOT / "migrations"))
++
++    def snapshot():
++        with engine.connect() as db:
++            inspector = inspect(db)
++            result = {}
++            for name in inspector.get_table_names():
++                if name in {"selection_events", "alembic_version"}:
++                    continue
++                quoted = engine.dialect.identifier_preparer.quote(name)
++                result[name] = {
++                    "columns": [(col["name"], str(col["type"]), col["nullable"]) for col in inspector.get_columns(name)],
++                    "pk": inspector.get_pk_constraint(name), "fk": inspector.get_foreign_keys(name),
++                    "indexes": inspector.get_indexes(name),
++                    "count": db.scalar(text(f"SELECT count(*) FROM {quoted}")),
++                    "policies": db.execute(text("SELECT policyname, cmd, qual, with_check FROM pg_policies WHERE schemaname=current_schema() AND tablename=:name ORDER BY policyname"), {"name": name}).all(),
++                }
++            return result
++
++    before = snapshot()
++    command.upgrade(config, "018_selection_policies")
++    assert "selection_events" in inspect(engine).get_table_names()
++    assert snapshot() == before
++    command.downgrade(config, "017_column_resolver")
++    assert "selection_events" not in inspect(engine).get_table_names()
++    assert snapshot() == before
++    command.upgrade(config, "018_selection_policies")
++    assert "selection_events" in inspect(engine).get_table_names()
++    assert snapshot() == before
++    engine.dispose()
++    print(f"PASS: upgrade / downgrade / upgrade; {len(before)} existing tables unchanged, including policies and row counts")
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/scripts/verify_selection_persistence.py b/scripts/verify_selection_persistence.py
+new file mode 100644
+--- /dev/null
++++ b/scripts/verify_selection_persistence.py
+@@ -0,0 +1,50 @@
++"""Synthetic chart/provider approvals survive isolated PostgreSQL restart."""
++import json
++import os
++from pathlib import Path
++import sys
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT))
++
++
++def main():
++    from sqlalchemy import create_engine, update
++    from sqlalchemy.engine import make_url
++    from sqlalchemy.orm import sessionmaker
++    target = make_url(os.environ['DATABASE_URL'])
++    assert target.database == 'analyst_setup_test' and target.username == 'setup' and target.host == 'postgres'
++    assert os.environ.get('ENVIRONMENT') == 'test'
++    from backend.app.core.config import Settings, get_settings
++    Settings.model_config = {**Settings.model_config, 'env_file': None}
++    get_settings.cache_clear(); get_settings().learning_enabled = True
++    from backend.app.models import DatasetVersion
++    from backend.tests.test_verified_learning_integration import identity, dataset
++    from backend.tests.test_perceptron_selection import SCHEMA, MODELS, reviewed_cases, stage, decide, promote
++    engine = create_engine(target)
++    env = {'admin': sessionmaker(engine, expire_on_commit=False), 'actors': set()}
++    state_path = Path('/verification/phase7-persistence.json')
++    if sys.argv[1] == 'seed':
++        account = identity(env)
++        ds = dataset(env, account, Path('/verification'), 'date,amount\n2025-01-01,10\n2025-02-01,-5\n2025-04-01,20\n')
++        with env['admin']() as db, db.begin():
++            db.execute(update(DatasetVersion).where(DatasetVersion.dataset_id == ds).values(metadata_snapshot=SCHEMA))
++        for kind in ('chart', 'provider'):
++            case = env, account, ds, reviewed_cases(kind)
++            version = stage(case)
++            assert decide(case) is None
++            assert promote(case, version)['promoted']
++        state_path.write_text(json.dumps({'actor': str(account['user']), 'dataset': ds}))
++    else:
++        assert sys.argv[1] == 'check'
++    state = json.loads(state_path.read_text())
++    for kind in ('chart', 'provider'):
++        case = env, {'user': state['actor']}, state['dataset'], reviewed_cases(kind)
++        chosen = decide(case)
++        assert chosen and chosen['choice'] in (['line'] if kind == 'chart' else MODELS)
++    engine.dispose()
++    print('PASS: both synthetic policies and approvals survived in a fresh process (' + sys.argv[1] + '); no external provider calls')
++
++
++if __name__ == '__main__':
++    main()
+diff --git a/frontend/src/components/analytics/VerifiedTrendChart.tsx b/frontend/src/components/analytics/VerifiedTrendChart.tsx
+new file mode 100644
+--- /dev/null
++++ b/frontend/src/components/analytics/VerifiedTrendChart.tsx
+@@ -0,0 +1,43 @@
++import type { ChartSpec } from '../../types/analysis';
++
++/** Display the server's exact ordered points; no resampling or interpolation. */
++export default function VerifiedTrendChart({ chart }: { chart: ChartSpec }) {
++  const points = chart.points;
++  if (points.length < 2 || points.length > 50 || points.some(p => !Number.isFinite(p.value))) return null;
++  if (points.some(p => !/^\d{4}-(0[1-9]|1[0-2])$/.test(p.label))) return null;
++  const months = points.map(p => Number(p.label.slice(0, 4)) * 12 + Number(p.label.slice(5, 7)) - 1);
++  if (months.some((month, index) => index > 0 && month <= months[index - 1])) return null;
++  const low = Math.min(0, ...points.map(p => p.value));
++  const high = Math.max(0, ...points.map(p => p.value));
++  const span = high - low || 1;
++  const x = (index: number) => 64 + (months[index] - months[0]) / (months[months.length - 1] - months[0]) * 496;
++  const y = (value: number) => 214 - (value - low) / span * 178;
++  const path = points.map((point, index) => `${index ? 'L' : 'M'} ${x(index)} ${y(point.value)}`).join(' ');
++  const label = chart.chart_label || `${chart.y_field} by ${chart.x_field}`;
++  return (
++    <figure style={{ margin: 0, padding: 20, borderRadius: 12, background: 'var(--surface-raised)', border: '1px solid var(--border)' }}>
++      <figcaption style={{ fontWeight: 600, color: 'var(--text-h)' }}>{label}</figcaption>
++      <svg viewBox="0 0 600 255" role="img" aria-label={label} style={{ width: '100%', color: 'var(--text-muted)' }}>
++        <title>{`${label}. Exact values are listed below.`}</title>
++        <line x1="64" x2="560" y1={y(0)} y2={y(0)} stroke="currentColor" opacity="0.3" />
++        <text x="56" y="40" textAnchor="end" fontSize="10" fill="currentColor">{high.toLocaleString()}</text>
++        <text x="56" y="218" textAnchor="end" fontSize="10" fill="currentColor">{low.toLocaleString()}</text>
++        <path d={path} fill="none" stroke="var(--brand-lime)" strokeWidth="2" />
++        {points.map((point, index) => (
++          <circle key={index} cx={x(index)} cy={y(point.value)} r="3" fill="var(--brand-lime)">
++            <title>{`${point.label}: ${String(point.value)}`}</title>
++          </circle>
++        ))}
++        <text x="64" y="243" fontSize="11" fill="currentColor">{points[0].label}</text>
++        <text x="560" y="243" textAnchor="end" fontSize="11" fill="currentColor">{points[points.length - 1].label}</text>
++      </svg>
++      <details style={{ color: 'var(--text)', fontSize: 12 }}>
++        <summary>View exact values</summary>
++        <table style={{ width: '100%', textAlign: 'left' }}>
++          <thead><tr><th scope="col">{chart.x_field}</th><th scope="col">{chart.y_field}</th></tr></thead>
++          <tbody>{points.map((point, index) => <tr key={index}><th scope="row">{point.label}</th><td>{String(point.value)}</td></tr>)}</tbody>
++        </table>
++      </details>
++    </figure>
++  );
++}
+diff --git a/frontend/scripts/verify-trend-chart.cjs b/frontend/scripts/verify-trend-chart.cjs
+new file mode 100644
+--- /dev/null
++++ b/frontend/scripts/verify-trend-chart.cjs
+@@ -0,0 +1,33 @@
++// Render the actual TSX component with React; verify data-preserving SVG output.
++const assert = require('node:assert/strict');
++const fs = require('node:fs');
++const ts = require('typescript');
++const React = require('react');
++const { renderToStaticMarkup } = require('react-dom/server');
++const errors = [];
++console.error = (...args) => errors.push(args.join(' '));
++const source = fs.readFileSync('src/components/analytics/VerifiedTrendChart.tsx', 'utf8');
++const compiled = ts.transpileModule(source, { compilerOptions: { jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS } }).outputText;
++const exported = {};
++new Function('require', 'exports', compiled)(require, exported);
++const chart = { chart_type: 'line', x_field: 'month', y_field: 'amount', chart_label: 'Monthly amount', points: [
++  { label: '2025-01', value: -10 }, { label: '2025-02', value: 0 }, { label: '2025-04', value: 30 }
++] };
++const original = JSON.stringify(chart);
++const markup = renderToStaticMarkup(React.createElement(exported.default, { chart }));
++assert.equal(JSON.stringify(chart), original);
++assert.match(markup, /role="img"/);
++assert.match(markup, /<td>-10<\/td>/);
++assert.match(markup, /<td>0<\/td>/);
++assert.match(markup, /<td>30<\/td>/);
++const xs = Array.from(markup.matchAll(/<circle[^>]*cx="([^"]+)"/g), match => Number(match[1]));
++assert.equal(xs.length, 3);
++assert.ok(Math.abs((xs[1] - xs[0]) * 2 - (xs[2] - xs[1])) < 1e-9, 'Missing March must retain its time-axis gap');
++for (const points of [[{ label: '2025-01', value: NaN }, chart.points[1]], [chart.points[1], chart.points[0]],
++  [{ label: '2025-13', value: 1 }, chart.points[1]], [chart.points[0], chart.points[0]]]) {
++  assert.equal(renderToStaticMarkup(React.createElement(exported.default, { chart: { ...chart, points } })), '');
++}
++const flat = renderToStaticMarkup(React.createElement(exported.default, { chart: { ...chart, points: chart.points.map(p => ({ ...p, value: 0 })) } }));
++assert.ok(!/NaN|Infinity/.test(flat));
++assert.deepEqual(errors, [], 'React rendered without warnings');
++console.log('PASS: actual React trend renderer preserves values, negative/zero series, time gaps and accessible labels; invalid series rejected');

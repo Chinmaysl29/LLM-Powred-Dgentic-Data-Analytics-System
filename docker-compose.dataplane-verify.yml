@@ -1,0 +1,11 @@
+services:
+  runner:
+    image: dataanalyst-backend:dataplane-verify
+    environment:
+      DATAPLANE_ENABLED: "false"
+      DATAPLANE_ROOT: /verification/dataplane
+  api:
+    image: dataanalyst-backend:dataplane-verify
+    environment:
+      DATAPLANE_ENABLED: "true"
+      DATAPLANE_ROOT: /verification/dataplane

@@ -67,7 +67,8 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
         handleClose();
       }, 1500);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Unable to update password. Please try again.';
+      const msg =
+        err instanceof Error ? err.message : 'Unable to update password. Please try again.';
       setError(msg);
     } finally {
       setIsSubmitting(false);
@@ -199,11 +200,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
               >
                 Cancel
               </button>
-              <button
-                type="submit"
-                className="profile-btn-primary"
-                disabled={isSubmitting}
-              >
+              <button type="submit" className="profile-btn-primary" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
                     <Loader2 size={15} className="profile-spinner" />

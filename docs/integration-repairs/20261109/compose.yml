@@ -1,0 +1,9 @@
+services:
+  runner:
+    image: ${AUDIT_REPAIR_IMAGE:-dataanalyst-backend:integration-audit}
+    environment:
+      BACKGROUND_WORKER_ENABLED: 'false'
+      PYTHONDONTWRITEBYTECODE: '1'
+      DATAPLANE_TEST_CA: /tmp/test-ca.crt
+    volumes:
+      - C:/Users/chinm/.codex/backups/integration-audit-20261108/test-ca.crt:/tmp/test-ca.crt:ro

@@ -1,0 +1,17 @@
+[
+  {
+    "order_id": 101,
+    "product": "Widget A",
+    "price": 19.99
+  },
+  {
+    "order_id": 102,
+    "product": "Widget B",
+    "price": 45.5
+  },
+  {
+    "order_id": 103,
+    "product": "Widget C",
+    "price": 99.0
+  }
+]

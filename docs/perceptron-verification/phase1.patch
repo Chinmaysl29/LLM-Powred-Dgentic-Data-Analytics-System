@@ -1,0 +1,975 @@
+--- a/backend/app/core/config.py
++++ b/backend/app/core/config.py
+@@ -22,6 +22,7 @@
+     environment: str = "development"
+     debug: bool = False
+     log_level: str = "INFO"
++    learning_enabled: bool = False
+ 
+     # ------------------------------------------------------------------
+     # CORS
+--- a/.env.example
++++ b/.env.example
+@@ -13,6 +13,8 @@
+ BACKGROUND_WORKER_CONCURRENCY=1
+ # Disable on the API when running python -m backend.jobs.job_worker separately.
+ BACKGROUND_WORKER_ENABLED=true
++# Optional hard-failure evidence only; no routing or training changes.
++LEARNING_ENABLED=false
+ 
+ # ==========================================================
+ # LLM PROVIDERS
+--- a/backend/app/models/__init__.py
++++ b/backend/app/models/__init__.py
+@@ -73,3 +73,4 @@
+ from backend.app.models.analysis_run import AnalysisRun, AnalysisStage, AnalysisArtifact, AnalysisEvent
+ from backend.app.models.learning import TABLES as LEARNING_TABLES
+ from backend.app.models.adaptive import TABLES as ADAPTIVE_TABLES
++from backend.app.learning.tables import learner_weights, feedback_events, mistakes
+--- a/backend/app/api/v1/routes/chat.py
++++ b/backend/app/api/v1/routes/chat.py
+@@ -23,6 +23,7 @@
+ from backend.app.services.orchestrator_service import OrchestratorService
+ from backend.app.services.storage_service import StorageService, get_storage_service
+ from backend.monitoring.prometheus_metrics import platform_metrics
++from backend.app.learning.evidence import observe_chat
+ 
+ router = APIRouter(prefix="/chat", tags=["Natural Language Analytics"])
+ 
+@@ -102,53 +103,57 @@
+     analytics = NaturalLanguageAnalyticsService(data_retrieval)
+     citations: list[dict[str, Any]] = []
+ 
+-    # Check if dataset is an indexed document (PDF, TXT, MD)
+-    is_doc = False
+-    if db is not None and payload.dataset_id and data_retrieval:
+-        try:
+-            _, version, _, file_type, _ = data_retrieval.discover(payload.dataset_id, payload.dataset_version)
+-            if file_type in ("pdf", "txt", "md"):
+-                is_doc = True
+-                doc_svc = DocumentIndexingService(sessionmaker(bind=db.get_bind(), expire_on_commit=False))
+-                rag_out = doc_svc.query(payload.dataset_id, current_user.id, version.version_number, payload.message)
+-                citations = rag_out.get("sources", [])
++    async with observe_chat(actor_id=str(current_user.id), dataset_id=payload.dataset_id,
++                            question=payload.message, version_number=payload.dataset_version) as observation:
++        # Check if dataset is an indexed document (PDF, TXT, MD)
++        is_doc = False
++        if db is not None and payload.dataset_id and data_retrieval:
++            try:
++                _, version, _, file_type, _ = data_retrieval.discover(payload.dataset_id, payload.dataset_version)
++                if file_type in ("pdf", "txt", "md"):
++                    is_doc = True
++                    doc_svc = DocumentIndexingService(sessionmaker(bind=db.get_bind(), expire_on_commit=False))
++                    rag_out = doc_svc.query(payload.dataset_id, current_user.id, version.version_number, payload.message)
++                    citations = rag_out.get("sources", [])
++                    result = {
++                        "answer": rag_out.get("summary") or "Retrieved relevant evidence from document.",
++                        "data": [],
++                        "explanation": f"Retrieved {len(citations)} source citations from document index.",
++                        "actionable": [],
++                        "status": "complete",
++                        "citations": citations,
++                    }
++                    intent = "rag_search"
++                    confidence = 0.95
++            except Exception:
++                is_doc = False
++
++        if not is_doc:
++            if analytics.is_analytics_query(payload.message) and payload.dataset_id:
++                result = await analytics.analyze(
++                    payload.message,
++                    dataset_id=payload.dataset_id,
++                    dataset_version=payload.dataset_version,
++                    context=context,
++                )
++                intent = "analytics"
++                confidence = 0.0 if result.get("status") == "clarification_required" else 1.0
++            elif analytics.is_analytics_query(payload.message):
++                result = await analytics.analyze(payload.message, context=context)
++                intent, confidence = "analytics", 0.0
++            else:
++                classification = await intent_service.classify(payload.message, dataset_id=payload.dataset_id)
++                orchestrator = OrchestratorService(intent_classifier=intent_service, db=db, owner_id=str(current_user.id))
++                outcome = await orchestrator.execute(payload.message, dataset_id=payload.dataset_id)
+                 result = {
+-                    "answer": rag_out.get("summary") or "Retrieved relevant evidence from document.",
++                    "answer": outcome.summary,
+                     "data": [],
+-                    "explanation": f"Retrieved {len(citations)} source citations from document index.",
++                    "explanation": "Processed through the configured analytics workflow.",
+                     "actionable": [],
+-                    "status": "complete",
+-                    "citations": citations,
+                 }
+-                intent = "rag_search"
+-                confidence = 0.95
+-        except Exception:
+-            is_doc = False
++                intent, confidence = outcome.intent, classification.confidence
+ 
+-    if not is_doc:
+-        if analytics.is_analytics_query(payload.message) and payload.dataset_id:
+-            result = await analytics.analyze(
+-                payload.message,
+-                dataset_id=payload.dataset_id,
+-                dataset_version=payload.dataset_version,
+-                context=context,
+-            )
+-            intent = "analytics"
+-            confidence = 0.0 if result.get("status") == "clarification_required" else 1.0
+-        elif analytics.is_analytics_query(payload.message):
+-            result = await analytics.analyze(payload.message, context=context)
+-            intent, confidence = "analytics", 0.0
+-        else:
+-            classification = await intent_service.classify(payload.message, dataset_id=payload.dataset_id)
+-            orchestrator = OrchestratorService(intent_classifier=intent_service, db=db, owner_id=str(current_user.id))
+-            outcome = await orchestrator.execute(payload.message, dataset_id=payload.dataset_id)
+-            result = {
+-                "answer": outcome.summary,
+-                "data": [],
+-                "explanation": "Processed through the configured analytics workflow.",
+-                "actionable": [],
+-            }
+-            intent, confidence = outcome.intent, classification.confidence
++        observation.result = result
+ 
+     if citations and "citations" not in result:
+         result["citations"] = citations
+--- a/backend/app/services/analysis_run_service.py
++++ b/backend/app/services/analysis_run_service.py
+@@ -13,6 +13,7 @@
+ from backend.app.services.storage_service import StorageService
+ from backend.app.core.config import get_settings
+ from backend.jobs.persistence import LostLeaseError
++from backend.app.learning.evidence import record_job_failure
+ 
+ STAGES = ['Problem formulation', 'Data collection', 'Data preparation', 'Exploratory analysis', 'Data modeling', 'Visualization and reporting', 'Recommendations']
+ 
+@@ -161,10 +162,12 @@
+         try:
+             blocked = await asyncio.to_thread(_execute_stage, store, job, number)
+             if blocked:
++                await asyncio.to_thread(record_job_failure, store, job, number, exception=False)
+                 return {'run_id': run_id, 'status': 'BLOCKED'}
+         except LostLeaseError:
+             raise
+         except Exception as exc:
++            await asyncio.to_thread(record_job_failure, store, job, number, exception=True)
+             from fastapi import HTTPException
+             try:
+                 with store.sessions() as db, db.begin():
+--- a/backend/tests/test_application_and_eda_recovery.py
++++ b/backend/tests/test_application_and_eda_recovery.py
+@@ -10,11 +10,14 @@
+ """
+ 
+ from pathlib import Path
++from io import BytesIO
+ from uuid import UUID, uuid4
++import pandas as pd
+ import pytest
+ from fastapi.testclient import TestClient
+ from sqlalchemy import text
+ from sqlalchemy.orm import Session
++from sqlalchemy.engine import make_url
+ 
+ from backend.app.core.config import get_settings
+ from backend.app.core.exceptions import StorageFileNotFoundError
+@@ -118,9 +121,11 @@
+ # 1. PATH RESOLUTION & RECOVERY (ERROR 2 ROOT CAUSE)
+ # =============================================================================
+ 
+-def test_windows_path_resolution(settings):
++def test_windows_path_resolution(settings, tmp_path):
+     """StorageService must seamlessly resolve Windows absolute paths into container storage."""
+-    storage = StorageService(settings)
++    storage = StorageService(settings.model_copy(update={"upload_dir": str(tmp_path / "storage")}))
++    fixture = storage.raw_excel_dir / "38003018-eeb7-4842-afad-78844a3bbec8_prosandcons.xlsx"
++    pd.DataFrame({"item": ["synthetic"], "value": [1]}).to_excel(fixture, index=False)
+     win_path = r"C:\data analyst\ai-data-analyst-os\storage\raw\excel\38003018-eeb7-4842-afad-78844a3bbec8_prosandcons.xlsx"
+     resolved = storage.retrieve_file(win_path)
+     assert resolved.exists()
+@@ -137,9 +142,23 @@
+         storage.retrieve_file(r"C:\some\nonexistent\fake_file_12345.csv")
+ 
+ 
+-def test_prosandcons_excel_recovery_and_eda(db_session, settings):
++@pytest.fixture
++def excel_dataset(client, db_session):
++    user, token = make_user_token(db_session, "excel_fixture")
++    buffer = BytesIO()
++    pd.DataFrame({"item": [f"item-{i}" for i in range(17)],
++                  "category": ["A" if i % 2 else "B" for i in range(17)],
++                  "revenue": list(range(100, 117)), "cost": list(range(20, 37))}).to_excel(buffer, index=False)
++    response = client.post("/api/v1/datasets/upload",
++        files={"file": ("synthetic_recovery.xlsx", buffer.getvalue(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
++        headers={"Authorization": f"Bearer {token}"})
++    assert response.status_code == 201, response.text
++    return response.json()["dataset_id"], str(user.id), token
++
++
++def test_prosandcons_excel_recovery_and_eda(db_session, settings, excel_dataset):
+     """prosandcons.xlsx must load into DataRetrievalService and complete full automated EDA."""
+-    ds_id = "38003018-eeb7-4842-afad-78844a3bbec8"
++    ds_id, owner_id, _ = excel_dataset
+     row = db_session.execute(
+         text("SELECT owner_id FROM datasets WHERE dataset_id = :id"),
+         {"id": ds_id},
+@@ -167,11 +186,9 @@
+ # 2. DATASET PREVIEW & VISUALIZATION CONTRACT (ERROR 3 ROOT CAUSE)
+ # =============================================================================
+ 
+-def test_dataset_preview_tabular_success(client, db_session):
++def test_dataset_preview_tabular_success(client, db_session, excel_dataset):
+     """Tabular preview on prosandcons must return exact rows and columns for authorized owner."""
+-    owner_id = "a9573a0b-8a48-4883-a54f-46650627ecdf"
+-    token = create_access_token({"sub": owner_id, "email": "rabs.chinmay@gmail.com"})
+-    ds_id = "38003018-eeb7-4842-afad-78844a3bbec8"
++    ds_id, _, token = excel_dataset
+ 
+     response = client.get(
+         f"/api/v1/datasets/{ds_id}/preview?limit=10",
+@@ -247,15 +264,16 @@
+     assert "disallowed" in body["message"].lower()
+ 
+     # Real connection test against PostgreSQL service
++    database_url = make_url(settings.postgres_dsn)
+     test_res = client.post(
+         "/api/v1/connections/test",
+         json={
+             "connector_type": "postgresql",
+-            "host": settings.postgres_host,
+-            "port": settings.postgres_port,
+-            "database": "ai_analyst",
+-            "username": "postgres",
+-            "password": "postgres",
++            "host": database_url.host,
++            "port": database_url.port or 5432,
++            "database": database_url.database,
++            "username": database_url.username,
++            "password": database_url.password,
+             "schema_name": "public",
+         },
+         headers={"Authorization": f"Bearer {token}"},
+--- a/backend/tests/test_visualization_analytics_recovery.py
++++ b/backend/tests/test_visualization_analytics_recovery.py
+@@ -184,11 +184,35 @@
+     assert is_identifier_column("sales_amount") is False
+ 
+ 
+-def test_smart_header_detection_bluestock_cashflow():
+-    """Verify that Bluestock cashflow dataset correctly skips the banner title row."""
+-    file_path = Path("/app/storage/raw/excel/6ac6f755-9978-4ce0-b3dc-928b70c2eeff_cashflow.xlsx")
+-    if not file_path.exists():
+-        pytest.skip(f"Test file not found at {file_path}")
++def synthetic_cashflow():
++    return pd.DataFrame({
++        "id": range(1, 1188), "company_id": [i % 10 for i in range(1187)],
++        "year": [2020 + i % 5 for i in range(1187)],
++        "operating_activity": [float(i + 10) for i in range(1187)],
++        "investing_activity": [float(-i) for i in range(1187)],
++        "financing_activity": [float(i % 20) if i < 1185 else None for i in range(1187)],
++        "net_cash_flow": [1.0 if i < 100 else 10.0 if i < 1185 else None for i in range(1187)],
++    })
++
++
++def upload_cashflow(client, token, workspace):
++    response = client.post("/api/v1/datasets/upload",
++        files={"file": ("synthetic_cashflow.csv", synthetic_cashflow().to_csv(index=False).encode(), "text/csv")},
++        headers={"Authorization": f"Bearer {token}"})
++    assert response.status_code == 201, response.text
++    dataset_id = response.json()["dataset_id"]
++    bound = client.post(f"/api/v1/datasets/{dataset_id}/workspace",
++        json={"workspace_id": str(workspace.id)}, headers={"Authorization": f"Bearer {token}"})
++    assert bound.status_code == 200, bound.text
++    return dataset_id
++
++
++def test_smart_header_detection_bluestock_cashflow(tmp_path):
++    """Generate a banner-row workbook rather than depending on a customer upload."""
++    file_path = tmp_path / "cashflow.xlsx"
++    with pd.ExcelWriter(file_path, engine="openpyxl") as writer:
++        synthetic_cashflow().to_excel(writer, index=False, startrow=1)
++        writer.sheets["Sheet1"].cell(1, 1, "Synthetic cash flow report: 1,187 records")
+ 
+     # Load with smart tabular loader
+     df = load_tabular_dataframe(file_path)
+@@ -266,23 +290,7 @@
+     user, token = make_user_token(db_session, "chart_tester")
+     ws = make_workspace(db_session, user)
+ 
+-    dataset_id = UUID("6ac6f755-9978-4ce0-b3dc-928b70c2eeff")
+-    # Bind dataset to workspace and assign owner_id to test user
+-    db_session.execute(
+-        text("UPDATE datasets SET owner_id = :uid WHERE dataset_id = :did"),
+-        {"uid": str(user.id), "did": str(dataset_id)},
+-    )
+-    db_session.execute(
+-        text("DELETE FROM dataset_workspace_bindings WHERE dataset_id = :did"),
+-        {"did": str(dataset_id)},
+-    )
+-    db_session.execute(
+-        dataset_workspace_bindings.insert().values(
+-            workspace_id=ws.id,
+-            dataset_id=str(dataset_id),
+-        )
+-    )
+-    db_session.commit()
++    dataset_id = upload_cashflow(client, token, ws)
+ 
+     headers = {
+         "Authorization": f"Bearer {token}",
+@@ -316,7 +324,8 @@
+     assert "mean" in metrics
+     assert "min" in metrics
+     assert "max" in metrics
+-    assert metrics["sum"] is not None
++    assert metrics["sum"] == 10950.0
++    assert sum(point["value"] for point in data["points"]) == 10950.0
+ 
+     # 2. Query Scatter chart comparing operating_activity vs investing_activity
+     scatter_payload = {
+@@ -349,29 +358,13 @@
+ 
+ def test_chart_data_multi_tenant_isolation(client, db_session):
+     """Verify that User B in another workspace CANNOT access User A's dataset chart data."""
+-    user_a, _ = make_user_token(db_session, "user_a")
++    user_a, token_a = make_user_token(db_session, "user_a")
+     ws_a = make_workspace(db_session, user_a)
+ 
+     user_b, token_b = make_user_token(db_session, "user_b")
+     ws_b = make_workspace(db_session, user_b)
+ 
+-    dataset_id = UUID("6ac6f755-9978-4ce0-b3dc-928b70c2eeff")
+-    # Bind exclusively to Workspace A and assign owner_id to User A
+-    db_session.execute(
+-        text("UPDATE datasets SET owner_id = :uid WHERE dataset_id = :did"),
+-        {"uid": str(user_a.id), "did": str(dataset_id)},
+-    )
+-    db_session.execute(
+-        text("DELETE FROM dataset_workspace_bindings WHERE dataset_id = :did"),
+-        {"did": str(dataset_id)},
+-    )
+-    db_session.execute(
+-        dataset_workspace_bindings.insert().values(
+-            workspace_id=ws_a.id,
+-            dataset_id=str(dataset_id),
+-        )
+-    )
+-    db_session.commit()
++    dataset_id = upload_cashflow(client, token_a, ws_a)
+ 
+     # User B attempts to query User A's dataset in Workspace B
+     headers_b = {
+@@ -387,10 +380,3 @@
+     resp = client.post(f"/api/v1/datasets/{dataset_id}/chart-data", json=payload, headers=headers_b)
+     # Must be 403 Forbidden or 404 Not Found
+     assert resp.status_code in [403, 404], f"Expected 403/404, got {resp.status_code}: {resp.text}"
+-
+-    # Teardown: Restore owner_id to canonical development user
+-    db_session.execute(
+-        text("UPDATE datasets SET owner_id = :uid WHERE dataset_id = :did"),
+-        {"uid": "a9573a0b-8a48-4883-a54f-46650627ecdf", "did": str(dataset_id)},
+-    )
+-    db_session.commit()
+--- a/tests/test_upload_and_pipeline_recovery.py
++++ b/tests/test_upload_and_pipeline_recovery.py
+@@ -24,7 +24,7 @@
+ from backend.app.core.config import get_settings
+ from backend.app.core.security import create_access_token
+ from backend.app.database.postgres import PostgresDatabase
+-from backend.app.database.schema_contract import inspect_schema
++from backend.app.database.schema_contract import inspect_schema, required_revisions
+ from backend.app.main import create_app
+ from backend.app.models.user import User
+ from backend.app.models.tenant import Tenant
+@@ -122,14 +122,14 @@
+ # ==============================================================================
+ 
+ def test_schema_preflight_compatible(db_engine):
+-    """Verify live database schema matches required head revision 009."""
++    """Verify database schema matches the repository migration head."""
+     with db_engine.connect() as conn:
+         result = inspect_schema(conn)
+     assert result["compatible"] is True, f"Schema preflight failed: {result}"
+     assert result["missing_tables"] == []
+     assert result["missing_columns"] == {}
+     assert result["revision_matches"] is True
+-    assert any(rev in result["actual_revisions"] for rev in ("009_analysis_runs", "010_workspace_authorization_tables"))
++    assert result["actual_revisions"] == list(required_revisions())
+ 
+ 
+ def test_schema_preflight_missing_table_detection(db_engine):
+--- /dev/null
++++ b/backend/app/learning/__init__.py
+@@ -0,0 +1 @@
++"""Optional NumPy-level learning layer; Phase 1 collects evidence only."""
+--- /dev/null
++++ b/backend/app/learning/tables.py
+@@ -0,0 +1,46 @@
++"""Additive persistence contract, separate from existing adaptive learning."""
++from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Index, Integer,
++                        String, Table, Text, Uuid, UniqueConstraint, CheckConstraint, text)
++from sqlalchemy.dialects.postgresql import JSONB
++from backend.app.models.base import Base
++
++
++learner_weights = Table(
++    "learner_weights", Base.metadata,
++    Column("id", Uuid, primary_key=True),
++    Column("tenant_id", Uuid, ForeignKey("tenants.id"), nullable=False),
++    Column("learner", String(80), nullable=False),
++    Column("version", Integer, nullable=False),
++    Column("weights", JSONB, nullable=False),
++    Column("created_at", DateTime(timezone=True), nullable=False, server_default=text("now()")),
++    Column("is_active", Boolean, nullable=False, server_default=text("false")),
++    UniqueConstraint("tenant_id", "learner", "version", name="uq_learner_version"),
++    CheckConstraint("version > 0", name="ck_learner_version_positive"),
++)
++Index("uq_learner_active", learner_weights.c.tenant_id, learner_weights.c.learner,
++      unique=True, postgresql_where=learner_weights.c.is_active.is_(True))
++
++
++def evidence_columns():
++    return [
++        Column("id", Uuid, primary_key=True),
++        Column("tenant_id", Uuid, ForeignKey("tenants.id"), nullable=False),
++        Column("workspace_id", Uuid, ForeignKey("workspaces.id"), nullable=False, index=True),
++        Column("actor_id", Uuid, ForeignKey("users.id"), nullable=False, index=True),
++        Column("dataset_schema_hash", String(64)),
++        # Raw questions are deliberately omitted in Phase 1; only their digest is retained.
++        Column("question", Text),
++        Column("question_hash", String(64), nullable=False),
++        Column("features", JSONB, nullable=False),
++        Column("predicted", String(80)),
++        Column("truth", String(80)),
++        Column("signal_type", String(40), nullable=False),
++        Column("created_at", DateTime(timezone=True), nullable=False, server_default=text("now()")),
++    ]
++
++
++feedback_events = Table("feedback_events", Base.metadata, *evidence_columns())
++mistakes = Table("mistakes", Base.metadata, *evidence_columns(),
++                 Column("error_type", String(80), nullable=False), Column("corrected_plan", JSONB))
++for table in (learner_weights, feedback_events, mistakes):
++    Index(f"ix_{table.name}_tenant_created", table.c.tenant_id, table.c.created_at)
+--- /dev/null
++++ b/backend/app/learning/evidence.py
+@@ -0,0 +1,165 @@
++"""Best-effort, authorized hard-failure evidence; never alters an analytical result.
++
++No exception strings, dataset rows, result values, prompts or credentials are
++persisted. A failure is not a training label: truth remains NULL.
++"""
++from __future__ import annotations
++
++import asyncio
++from contextlib import asynccontextmanager
++from dataclasses import dataclass
++import hashlib
++import json
++from typing import Any, AsyncIterator
++from uuid import UUID, uuid4, uuid5, NAMESPACE_URL
++
++from sqlalchemy import create_engine, select, text
++from sqlalchemy.dialects.postgresql import insert
++from sqlalchemy.orm import Session
++from sqlalchemy.pool import NullPool
++
++from backend.app.core.config import get_settings
++from backend.app.core.database_target import bind_database_schema
++from backend.app.core.workspace_authorization import (
++    authorize_workspace, authorize_bound_dataset, dataset_workspace_bindings,
++)
++from backend.app.models import DatasetVersion
++from backend.app.learning.tables import feedback_events
++
++OPERATIONS = frozenset({"preview", "description", "sum", "average", "count", "min", "max", "top", "bottom", "trend"})
++VALIDATION_ERRORS = frozenset({
++    "The metric contains non-finite values.",
++    "The date field contains missing or invalid dates. Resolve them before trend analysis.",
++    "Exact analytics cannot run on an undeclared sample.",
++})
++ERROR_TYPES = frozenset({"execution_error", "empty_result", "validator_rejection"})
++
++
++def enabled() -> bool:
++    try:
++        return get_settings().learning_enabled
++    except Exception:
++        return False
++
++
++def result_failure(result: dict[str, Any]) -> str | None:
++    plan = result.get("plan") or {}
++    if any(error in VALIDATION_ERRORS for error in plan.get("validation_errors", []) if isinstance(error, str)):
++        return "validator_rejection"
++    if (result.get("status") == "complete" and plan.get("operation") in OPERATIONS
++            and result.get("data") == []):
++        return "empty_result"
++    return None
++
++
++def record_failure(*, actor_id: str, dataset_id: str | None, question: str,
++                   error_type: str, version_number: int | None = None,
++                   predicted: str | None = None, event_id: UUID | None = None,
++                   source: str = "chat") -> bool:
++    """Independent, bounded transaction; failures never poison the caller's session.
++
++Tenant/workspace come from persisted dataset binding and active memberships,
++never from a client-supplied tenant. Only schema names/types are read, then hashed.
++    """
++    if not enabled() or not dataset_id or error_type not in ERROR_TYPES:
++        return False
++    engine = None
++    try:
++        settings = get_settings()
++        engine = create_engine(settings.postgres_dsn, poolclass=NullPool, hide_parameters=True,
++                               connect_args={"connect_timeout": 2})
++        bind_database_schema(engine, settings.database_schema)
++        with Session(engine) as db, db.begin():
++            db.execute(text("SET LOCAL statement_timeout='300ms'"))
++            db.execute(text("SET LOCAL lock_timeout='100ms'"))
++            workspace = db.scalar(select(dataset_workspace_bindings.c.workspace_id).where(
++                dataset_workspace_bindings.c.dataset_id == dataset_id))
++            if workspace is None:
++                return False
++            access = authorize_workspace(db, actor_id, workspace)
++            authorize_bound_dataset(db, access, dataset_id)
++            query = select(DatasetVersion).where(DatasetVersion.dataset_id == dataset_id)
++            if version_number is not None:
++                query = query.where(DatasetVersion.version_number == version_number)
++            else:
++                query = query.where(DatasetVersion.is_active.is_(True))
++            version = db.scalar(query)
++            snapshot = version.metadata_snapshot if version else {}
++            schema = {key: snapshot[key] for key in ("columns", "dtypes") if key in snapshot}
++            schema_hash = hashlib.sha256(json.dumps(schema, sort_keys=True).encode()).hexdigest() if schema else None
++            for key, value in (("actor_id", access.actor_id), ("workspace_id", access.workspace_id), ("tenant_id", access.tenant_id)):
++                db.execute(text("SELECT set_config(:key, :value, true)"), {"key": f"app.{key}", "value": str(value)})
++            values = dict(id=event_id or uuid4(), tenant_id=access.tenant_id,
++                workspace_id=access.workspace_id, actor_id=access.actor_id,
++                dataset_schema_hash=schema_hash, question=None,
++                question_hash=hashlib.sha256(question.encode()).hexdigest(),
++                features={"source": source if source in {"chat", "analysis_job"} else "unknown",
++                          "error_type": error_type, "schema_available": schema_hash is not None},
++                predicted=predicted if predicted in OPERATIONS else None,
++                truth=None, signal_type="hard_failure")
++            db.execute(insert(feedback_events).values(**values).on_conflict_do_nothing(index_elements=["id"]))
++        return True
++    except Exception:
++        # Do not log exception text: SQL/driver errors may contain private data.
++        return False
++    finally:
++        if engine is not None:
++            try:
++                engine.dispose()
++            except Exception:
++                pass
++
++
++@dataclass
++class Observation:
++    result: dict[str, Any] | None = None
++
++
++@asynccontextmanager
++async def observe_chat(*, actor_id: str, dataset_id: str | None, question: str,
++                       version_number: int | None) -> AsyncIterator[Observation]:
++    observation = Observation()
++    if not enabled():
++        yield observation
++        return
++    error_type = None
++    try:
++        yield observation
++    except Exception as exc:
++        # Access denial / missing dataset is not a teacher signal.
++        if getattr(exc, "status_code", None) not in {401, 403, 404}:
++            error_type = "execution_error"
++        raise
++    finally:
++        try:
++            result = observation.result or {}
++            error_type = error_type or result_failure(result)
++            if error_type:
++                plan = result.get("plan") or {}
++                await asyncio.to_thread(record_failure, actor_id=actor_id, dataset_id=dataset_id,
++                    question=question, version_number=plan.get("dataset_version") or version_number,
++                    predicted=plan.get("operation"), error_type=error_type)
++        except Exception:
++            pass
++
++
++def record_job_failure(store: Any, job: dict, number: int, *, exception: bool) -> None:
++    """Use run/stage/attempt identity to deduplicate worker delivery."""
++    if not enabled():
++        return
++    try:
++        from backend.app.services.analysis_run_service import authorize_run
++        from backend.app.models.analysis_run import AnalysisStage
++        from backend.app.models.learning import LearningRun
++        with store.sessions() as db:
++            run = authorize_run(db, job["payload"]["run_id"], job["owner_id"], "write")
++            stage = db.scalar(select(AnalysisStage).where(AnalysisStage.run_id == run.id, AnalysisStage.number == number))
++            learning = db.get(LearningRun, run.id)
++            if not exception and (not learning or learning.error_code != "MANDATORY_VALIDATION_FAILED"):
++                return
++            record_failure(actor_id=str(job["owner_id"]), dataset_id=run.dataset_id,
++                question=run.query, version_number=run.version_number,
++                error_type="execution_error" if exception else "validator_rejection", source="analysis_job",
++                event_id=uuid5(NAMESPACE_URL, f"perceptron:{run.id}:{number}:{stage.attempt if stage else 0}"))
++    except Exception:
++        pass
+--- /dev/null
++++ b/migrations/versions/013_perceptron_foundations.py
+@@ -0,0 +1,71 @@
++"""Optional failure evidence and versioned learner storage; new tables only."""
++from alembic import op
++import sqlalchemy as sa
++from sqlalchemy.dialects.postgresql import JSONB
++
++revision = "013_perceptron_foundations"
++down_revision = "012_adaptive_skills"
++branch_labels = None
++depends_on = None
++
++
++def evidence_columns():
++    return [
++        sa.Column("id", sa.Uuid, primary_key=True),
++        sa.Column("tenant_id", sa.Uuid, sa.ForeignKey("tenants.id"), nullable=False),
++        sa.Column("workspace_id", sa.Uuid, sa.ForeignKey("workspaces.id"), nullable=False),
++        sa.Column("actor_id", sa.Uuid, sa.ForeignKey("users.id"), nullable=False),
++        sa.Column("dataset_schema_hash", sa.String(64)), sa.Column("question", sa.Text),
++        sa.Column("question_hash", sa.String(64), nullable=False),
++        sa.Column("features", JSONB, nullable=False), sa.Column("predicted", sa.String(80)),
++        sa.Column("truth", sa.String(80)), sa.Column("signal_type", sa.String(40), nullable=False),
++        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
++    ]
++
++
++def upgrade():
++    op.create_table("learner_weights",
++        sa.Column("id", sa.Uuid, primary_key=True),
++        sa.Column("tenant_id", sa.Uuid, sa.ForeignKey("tenants.id"), nullable=False),
++        sa.Column("learner", sa.String(80), nullable=False),
++        sa.Column("version", sa.Integer, nullable=False), sa.Column("weights", JSONB, nullable=False),
++        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
++        sa.Column("is_active", sa.Boolean, nullable=False, server_default=sa.text("false")),
++        sa.UniqueConstraint("tenant_id", "learner", "version", name="uq_learner_version"),
++        sa.CheckConstraint("version > 0", name="ck_learner_version_positive"))
++    op.create_index("uq_learner_active", "learner_weights", ["tenant_id", "learner"],
++                    unique=True, postgresql_where=sa.text("is_active IS TRUE"))
++    op.create_table("feedback_events", *evidence_columns())
++    op.create_table("mistakes", *evidence_columns(),
++        sa.Column("error_type", sa.String(80), nullable=False), sa.Column("corrected_plan", JSONB))
++    for name in ("learner_weights", "feedback_events", "mistakes"):
++        op.create_index(f"ix_{name}_tenant_created", name, ["tenant_id", "created_at"])
++        predicate = f"""tenant_id::text=current_setting('app.tenant_id',true) AND EXISTS (
++          SELECT 1 FROM tenant_memberships tm JOIN tenants t ON t.id=tm.tenant_id
++          JOIN users u ON u.id=tm.user_id
++          WHERE tm.tenant_id={name}.tenant_id AND tm.active AND t.tenant_status='active'
++          AND u.is_active AND u.id::text=current_setting('app.actor_id',true)
++          AND tm.role IN ('viewer','analyst','admin','owner'))"""
++        if name != "learner_weights":
++            for column in ("workspace_id", "actor_id"):
++                op.create_index(f"ix_{name}_{column}", name, [column])
++            predicate += f""" AND workspace_id::text=current_setting('app.workspace_id',true)
++              AND EXISTS (SELECT 1 FROM workspaces w
++                JOIN tenant_memberships tm ON tm.tenant_id=w.tenant_id AND tm.active
++                LEFT JOIN workspace_memberships wm ON wm.workspace_id=w.id AND wm.user_id=tm.user_id AND wm.active
++                WHERE w.id={name}.workspace_id AND w.tenant_id={name}.tenant_id AND w.status='active'
++                AND tm.user_id::text=current_setting('app.actor_id',true)
++                AND (tm.role IN ('owner','admin') OR wm.role IN ('viewer','analyst','admin','owner')))"""
++        op.execute(f"ALTER TABLE {name} ENABLE ROW LEVEL SECURITY")
++        op.execute(f"ALTER TABLE {name} FORCE ROW LEVEL SECURITY")
++        op.execute(f"CREATE POLICY perceptron_read ON {name} FOR SELECT USING ({predicate})")
++        if name == "feedback_events":
++            op.execute(f"""CREATE POLICY perceptron_insert ON {name} FOR INSERT WITH CHECK (
++                {predicate} AND actor_id::text=current_setting('app.actor_id',true)
++                AND truth IS NULL AND question IS NULL AND signal_type='hard_failure')""")
++        # Weights/mistakes have no runtime write policy until their later phases.
++
++
++def downgrade():
++    for name in ("mistakes", "feedback_events", "learner_weights"):
++        op.drop_table(name)
+--- /dev/null
++++ b/backend/tests/test_perceptron_foundations.py
+@@ -0,0 +1,213 @@
++"""Phase 1 evidence, privacy, isolation and fail-open regression tests."""
++import asyncio
++from copy import deepcopy
++from uuid import uuid4
++
++import pytest
++from sqlalchemy import select, text, update
++from sqlalchemy.exc import DBAPIError
++
++from backend.app.core.config import Settings, get_settings
++from backend.app.models import DatasetVersion
++from backend.app.learning import evidence
++from backend.app.learning.tables import feedback_events, learner_weights, mistakes
++from backend.tests.test_verified_learning_integration import environment, identity, dataset
++
++
++@pytest.fixture
++def learning_on(monkeypatch):
++    monkeypatch.setattr(get_settings(), "learning_enabled", True)
++
++
++def test_flag_defaults_off_and_reads_environment(monkeypatch):
++    monkeypatch.delenv("LEARNING_ENABLED", raising=False)
++    assert Settings(_env_file=None).learning_enabled is False
++    monkeypatch.setenv("LEARNING_ENABLED", "true")
++    assert Settings(_env_file=None).learning_enabled is True
++
++
++def test_disabled_capture_never_opens_database(monkeypatch):
++    monkeypatch.setattr(get_settings(), "learning_enabled", False)
++    def forbidden(*args, **kwargs):
++        raise AssertionError("Disabled evidence must not connect")
++    monkeypatch.setattr(evidence, "create_engine", forbidden)
++    assert evidence.record_failure(actor_id=str(uuid4()), dataset_id=str(uuid4()),
++        question="sum amount", error_type="execution_error") is False
++
++
++@pytest.mark.parametrize("enabled", [False, True])
++def test_observer_preserves_results_and_original_exception(monkeypatch, enabled):
++    monkeypatch.setattr(get_settings(), "learning_enabled", enabled)
++    def unavailable(**kwargs):
++        raise RuntimeError("Evidence unavailable")
++    monkeypatch.setattr(evidence, "record_failure", unavailable)
++    expected = {"status": "complete", "answer": "Sum amount: 12", "data": [{"amount": 12}],
++                "plan": {"operation": "sum"}, "kpis": {"total": 12}}
++    async def successful():
++        result = deepcopy(expected)
++        async with evidence.observe_chat(actor_id="actor", dataset_id="dataset", question="sum amount", version_number=1) as observed:
++            observed.result = result
++        return result
++    assert asyncio.run(successful()) == expected
++    error = ValueError("Original execution error")
++    async def failing():
++        async with evidence.observe_chat(actor_id="actor", dataset_id="dataset", question="sum amount", version_number=1):
++            raise error
++    with pytest.raises(ValueError) as caught:
++        asyncio.run(failing())
++    assert caught.value is error
++
++
++def test_hard_failures_do_not_turn_ambiguity_or_zero_into_labels():
++    assert evidence.result_failure({"status": "complete", "plan": {"operation": "sum"}, "data": [{"amount": 0}]}) is None
++    assert evidence.result_failure({"status": "clarification_required", "plan": {"validation_errors": ["Choose a metric"]}, "data": []}) is None
++    assert evidence.result_failure({"status": "complete", "plan": {"operation": "sum"}, "data": []}) == "empty_result"
++    assert evidence.result_failure({"status": "clarification_required", "plan": {"validation_errors": ["The metric contains non-finite values."]}}) == "validator_rejection"
++
++
++def test_persistence_privacy_idempotency_and_no_training(environment, tmp_path, learning_on):
++    env = environment
++    account = identity(env)
++    ds = dataset(env, account, tmp_path)
++    with env["admin"]() as db, db.begin():
++        db.execute(update(DatasetVersion).where(DatasetVersion.dataset_id == ds).values(
++            metadata_snapshot={"columns": ["region", "amount"], "dtypes": {"region": "object", "amount": "int64"},
++                               "private_rows": ["DO_NOT_STORE"]}))
++        before_weights = list(db.execute(select(learner_weights)))
++        before_mistakes = list(db.execute(select(mistakes)))
++    event_id = uuid4()
++    args = dict(actor_id=str(account["user"]), dataset_id=ds,
++                question="password=DO_NOT_STORE; sum amount", predicted="sum", error_type="execution_error", event_id=event_id)
++    assert evidence.record_failure(**args)
++    assert evidence.record_failure(**args)
++    with env["admin"]() as db:
++        rows = db.execute(select(feedback_events).where(feedback_events.c.id == event_id)).mappings().all()
++        assert len(rows) == 1
++        row = rows[0]
++        assert row["truth"] is None and row["question"] is None
++        assert row["predicted"] == "sum" and row["signal_type"] == "hard_failure"
++        assert len(row["dataset_schema_hash"]) == 64 and len(row["question_hash"]) == 64
++        assert "DO_NOT_STORE" not in str(dict(row))
++        assert list(db.execute(select(learner_weights))) == before_weights
++        assert list(db.execute(select(mistakes))) == before_mistakes
++
++
++def test_unauthorized_and_revoked_actor_cannot_record(environment, tmp_path, learning_on):
++    env = environment
++    account, outsider = identity(env), identity(env)
++    ds = dataset(env, account, tmp_path)
++    event_id = uuid4()
++    args = dict(actor_id=str(outsider["user"]), dataset_id=ds, question="sum amount",
++                error_type="execution_error", event_id=event_id)
++    assert evidence.record_failure(**args) is False
++    from backend.app.core.workspace_authorization import tenant_memberships
++    with env["admin"]() as db, db.begin():
++        db.execute(tenant_memberships.update().where(tenant_memberships.c.user_id == account["user"]).values(active=False))
++    assert evidence.record_failure(**{**args, "actor_id": str(account["user"])}) is False
++    with env["admin"]() as db:
++        assert db.scalar(select(feedback_events.c.id).where(feedback_events.c.id == event_id)) is None
++
++
++def test_database_failure_is_fail_open(monkeypatch, learning_on):
++    def unavailable(*args, **kwargs):
++        raise RuntimeError("Unavailable, with private driver details")
++    monkeypatch.setattr(evidence, "create_engine", unavailable)
++    assert evidence.record_failure(actor_id=str(uuid4()), dataset_id=str(uuid4()),
++        question="sum amount", error_type="execution_error") is False
++
++
++def test_rls_cross_tenant_and_forged_scope_denied(environment, tmp_path, learning_on):
++    env = environment
++    a, b = identity(env), identity(env)
++    ds = dataset(env, a, tmp_path)
++    event_id = uuid4()
++    assert evidence.record_failure(actor_id=str(a["user"]), dataset_id=ds, question="sum amount",
++        error_type="execution_error", event_id=event_id)
++    with env["admin"]() as db:
++        stored = dict(db.execute(select(feedback_events).where(feedback_events.c.id == event_id)).mappings().one())
++    with env["api"]() as db, db.begin():
++        assert db.scalar(text("SELECT rolsuper OR rolbypassrls FROM pg_roles WHERE rolname=current_user")) is False
++        for key, value in (("actor_id", a["user"]), ("tenant_id", stored["tenant_id"]), ("workspace_id", a["workspace"])):
++            db.execute(text("SELECT set_config(:key,:value,true)"), {"key": f"app.{key}", "value": str(value)})
++        assert db.scalar(select(feedback_events.c.id).where(feedback_events.c.id == event_id)) == event_id
++        db.execute(text("SELECT set_config('app.actor_id',:actor,true)"), {"actor": str(b["user"])})
++        assert db.scalar(select(feedback_events.c.id).where(feedback_events.c.id == event_id)) is None
++        forged = {**stored, "id": uuid4(), "actor_id": b["user"]}
++        with pytest.raises(DBAPIError), db.begin_nested():
++            db.execute(feedback_events.insert().values(**forged))
++
++
++def test_chat_hook_captures_failure_without_changing_exception(environment, tmp_path, learning_on, monkeypatch):
++    from backend.app.api.v1.routes.chat import chat, ChatRequest
++    from backend.app.services.natural_language_analytics import NaturalLanguageAnalyticsService
++    from types import SimpleNamespace
++    env = environment
++    account = identity(env)
++    ds = dataset(env, account, tmp_path)
++    error = ValueError("PRIVATE_DATASET_VALUE")
++    async def fail(*args, **kwargs):
++        raise error
++    monkeypatch.setattr(NaturalLanguageAnalyticsService, "analyze", fail)
++    with pytest.raises(ValueError) as caught:
++        asyncio.run(chat(ChatRequest(message="sum amount", dataset_id=ds), None,
++                         intent_service=None, db=None, storage=None, current_user=SimpleNamespace(id=account["user"])))
++    assert caught.value is error
++    with env["admin"]() as db:
++        rows = db.execute(select(feedback_events).where(feedback_events.c.actor_id == account["user"])).mappings().all()
++        assert len(rows) == 1 and rows[0]["truth"] is None
++        assert "PRIVATE_DATASET_VALUE" not in str(rows)
++
++
++def test_durable_failure_hook_and_delivery_dedup(environment, tmp_path, learning_on, monkeypatch):
++    from backend.app.services import analysis_run_service
++    from backend.tests.test_verified_learning_integration import run
++    from backend.jobs.persistence import PersistentJobStore
++    env = environment
++    account = identity(env)
++    ds = dataset(env, account, tmp_path)
++    created = run(env, account, ds)
++    store = PersistentJobStore(env["worker"])
++    job = {"payload": {"run_id": created["id"]}, "owner_id": str(account["user"])}
++    evidence.record_job_failure(store, job, 1, exception=True)
++    evidence.record_job_failure(store, job, 1, exception=True)
++    with env["admin"]() as db:
++        rows = db.execute(select(feedback_events).where(feedback_events.c.actor_id == account["user"])).mappings().all()
++        assert len(rows) == 1 and rows[0]["features"]["source"] == "analysis_job"
++    # The actual worker exception path must invoke the hook and preserve the error.
++    seen = []
++    original = ValueError("worker failure")
++    def failed_stage(*args):
++        raise original
++    def denied_fence(*args):
++        from fastapi import HTTPException
++        raise HTTPException(404)
++    monkeypatch.setattr(analysis_run_service, "_execute_stage", failed_stage)
++    monkeypatch.setattr(analysis_run_service, "fence", denied_fence)
++    monkeypatch.setattr(analysis_run_service, "record_job_failure", lambda *args, **kwargs: seen.append(kwargs))
++    with pytest.raises(ValueError) as caught:
++        asyncio.run(analysis_run_service.execute_analysis_job(store, job))
++    assert caught.value is original and seen == [{"exception": True}]
++
++
++def test_chat_response_identical_with_flag_off_and_on(environment, tmp_path, monkeypatch):
++    from importlib import import_module
++    from types import SimpleNamespace
++    chat_module = import_module("backend.app.api.v1.routes.chat")
++    env = environment
++    account = identity(env)
++    ds = dataset(env, account, tmp_path)
++    output = {"status": "complete", "answer": "Sum amount: 12", "data": [{"amount": 12}],
++              "plan": {"operation": "sum"}, "kpis": {"total": 12}}
++    async def analyze(*args, **kwargs):
++        return deepcopy(output)
++    monkeypatch.setattr(chat_module.NaturalLanguageAnalyticsService, "analyze", analyze)
++    monkeypatch.setattr(chat_module, "perf_counter", lambda: 1.0)
++    responses = []
++    for flag in (False, True):
++        monkeypatch.setattr(get_settings(), "learning_enabled", flag)
++        response = asyncio.run(chat_module.chat(chat_module.ChatRequest(message="sum amount", dataset_id=ds),
++            None, intent_service=None, db=None, storage=None, current_user=SimpleNamespace(id=account["user"])))
++        responses.append(response.model_dump_json())
++    assert responses[0] == responses[1]
++    with env["admin"]() as db:
++        assert db.scalar(select(feedback_events.c.id).where(feedback_events.c.actor_id == account["user"])) is None
+--- /dev/null
++++ b/scripts/verify_perceptron_migration.py
+@@ -0,0 +1,58 @@
++"""Roundtrip ONLY in the disposable Phase 1 database after taking its backup."""
++from pathlib import Path
++import os
++import sys
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT))
++
++
++def main():
++    from sqlalchemy import create_engine, inspect, text
++    from sqlalchemy.engine import make_url
++    from alembic import command
++    from alembic.config import Config
++    from backend.app.core.config import Settings, get_settings
++    Settings.model_config = {**Settings.model_config, "env_file": None}
++    get_settings.cache_clear()
++    target = make_url(os.environ["DATABASE_URL"])
++    if (target.database != "analyst_setup_test" or target.username != "setup"
++            or target.host != "postgres" or os.environ.get("ENVIRONMENT") != "test"):
++        raise SystemExit("Refusing migration roundtrip outside isolated setup database")
++    engine = create_engine(target)
++    config = Config(str(ROOT / "alembic.ini"))
++    config.set_main_option("script_location", str(ROOT / "migrations"))
++    additions = {"learner_weights", "feedback_events", "mistakes"}
++    def snapshot():
++        with engine.connect() as db:
++            inspector = inspect(db)
++            result = {}
++            for name in inspector.get_table_names():
++                if name in additions or name == "alembic_version":
++                    continue
++                quoted = engine.dialect.identifier_preparer.quote(name)
++                result[name] = {
++                    "columns": [(col["name"], str(col["type"]), col["nullable"]) for col in inspector.get_columns(name)],
++                    "pk": inspector.get_pk_constraint(name), "fk": inspector.get_foreign_keys(name),
++                    "count": db.scalar(text(f"SELECT count(*) FROM {quoted}")),
++                }
++            return result
++    before = snapshot()
++    command.downgrade(config, "012_adaptive_skills")
++    assert not additions.intersection(inspect(engine).get_table_names())
++    assert snapshot() == before
++    command.upgrade(config, "013_perceptron_foundations")
++    command.downgrade(config, "012_adaptive_skills")
++    assert snapshot() == before
++    command.upgrade(config, "013_perceptron_foundations")
++    assert additions.issubset(inspect(engine).get_table_names())
++    assert snapshot() == before
++    from backend.app.database.schema_contract import inspect_schema
++    with engine.connect() as db:
++        assert inspect_schema(db)["compatible"]
++    engine.dispose()
++    print(f"PASS: upgrade / downgrade / upgrade; {len(before)} existing tables unchanged (columns, keys, row counts)")
++
++
++if __name__ == "__main__":
++    main()

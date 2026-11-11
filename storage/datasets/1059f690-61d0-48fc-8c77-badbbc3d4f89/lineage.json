@@ -1,0 +1,1 @@
+{"dataset_id": "1059f690-61d0-48fc-8c77-badbbc3d4f89", "current_version": 1, "lineage": [{"version_id": "fec0a890-d25c-4e8d-a2f9-1d59fa2af65d", "version_number": 1, "parent_version_id": null, "change_type": "initial_upload", "timestamp": "2026-11-11 16:31:17.776734+00:00", "author": "system", "description": "Initial ingestion of synthetic_cash_flow.csv"}]}

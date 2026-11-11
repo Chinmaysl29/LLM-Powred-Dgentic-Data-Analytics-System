@@ -1,7 +1,11 @@
 import { useState, useEffect, useRef, useMemo, useId } from 'react';
 import { motion, useReducedMotion, useInView, animate } from 'motion/react';
 import { useAppearance } from '../hooks/useAppearance';
-function useChartReducedMotion() { const system = useReducedMotion(); const { appearance } = useAppearance(); return system || appearance.reducedMotion; }
+function useChartReducedMotion() {
+  const system = useReducedMotion();
+  const { appearance } = useAppearance();
+  return system || appearance.reducedMotion;
+}
 import { AlertCircle, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import type {
   ChartPoint,
@@ -20,7 +24,16 @@ import type { WorldCountryShape } from '../lib/worldMapData';
 
 export type { ChartPoint, ScatterPoint, HeatmapData, TreemapData, TableData };
 
-const VIZ_PALETTE = ['#b3d779', '#789b48', '#a0b69a', '#52755b', '#c8fd39', '#829b8b', '#d5ddc9', '#42604a'];
+const VIZ_PALETTE = [
+  '#b3d779',
+  '#789b48',
+  '#a0b69a',
+  '#52755b',
+  '#c8fd39',
+  '#829b8b',
+  '#d5ddc9',
+  '#42604a',
+];
 
 function formatCompactNumber(value: number, prefix = ''): string {
   const abs = Math.abs(value);
@@ -103,7 +116,7 @@ export function AnimatedCountUp({
     return () => controls.stop();
   }, [inView, targetValue, duration, prefersReducedMotion, replayKey]);
 
-  const displayValue = prefersReducedMotion ? targetValue : (inView ? animatedValue : 0);
+  const displayValue = prefersReducedMotion ? targetValue : inView ? animatedValue : 0;
 
   const formatted = formatAsCompact
     ? formatCompactNumber(displayValue, prefix) + suffix
@@ -153,7 +166,8 @@ export function SelfFormingLineChart({
   const plotted = data.slice(0, 16);
   const points = useMemo(() => {
     return plotted.map((item, index) => {
-      const x = plotted.length <= 1 ? width / 2 : (index / (plotted.length - 1)) * (width - 40) + 20;
+      const x =
+        plotted.length <= 1 ? width / 2 : (index / (plotted.length - 1)) * (width - 40) + 20;
       const y = height - 34 - (item.value / max) * 128;
       return { ...item, x, y };
     });
@@ -256,7 +270,10 @@ export function SelfFormingLineChart({
           strokeLinecap="round"
           strokeLinejoin="round"
           filter={`url(#lineGlow-${filterId})`}
-          initial={{ pathLength: prefersReducedMotion ? 1 : 0, opacity: prefersReducedMotion ? 0.6 : 0 }}
+          initial={{
+            pathLength: prefersReducedMotion ? 1 : 0,
+            opacity: prefersReducedMotion ? 0.6 : 0,
+          }}
           animate={{ pathLength: 1, opacity: 0.6 }}
           transition={{
             duration: animDuration,
@@ -323,7 +340,10 @@ export function SelfFormingLineChart({
                   stroke="#64f2ff"
                   strokeWidth="1.5"
                   className="viz-peak-halo"
-                  initial={{ scale: prefersReducedMotion ? 1 : 0, opacity: prefersReducedMotion ? 0.6 : 0 }}
+                  initial={{
+                    scale: prefersReducedMotion ? 1 : 0,
+                    opacity: prefersReducedMotion ? 0.6 : 0,
+                  }}
                   animate={{ scale: [0.8, 1.4, 1.1], opacity: [0, 0.9, 0.6] }}
                   transition={{
                     delay: highlightDelay,
@@ -339,7 +359,10 @@ export function SelfFormingLineChart({
                 cy={point.y}
                 r={isPeak ? 5.5 : 4}
                 className={isPeak ? 'viz-chart-point viz-chart-point--peak' : 'viz-chart-point'}
-                initial={{ scale: prefersReducedMotion ? 1 : 0, opacity: prefersReducedMotion ? 1 : 0 }}
+                initial={{
+                  scale: prefersReducedMotion ? 1 : 0,
+                  opacity: prefersReducedMotion ? 1 : 0,
+                }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{
                   delay: pointDelay,
@@ -358,7 +381,10 @@ export function SelfFormingLineChart({
 
               {isPeak && (
                 <motion.g
-                  initial={{ opacity: prefersReducedMotion ? 1 : 0, y: prefersReducedMotion ? 0 : 6 }}
+                  initial={{
+                    opacity: prefersReducedMotion ? 1 : 0,
+                    y: prefersReducedMotion ? 0 : 6,
+                  }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: highlightDelay + 0.1, duration: 0.4 }}
                 >
@@ -450,11 +476,7 @@ interface SelfFormingBarChartProps {
   replayKey?: string | number;
 }
 
-export function SelfFormingBarChart({
-  data,
-  ariaLabel,
-  replayKey,
-}: SelfFormingBarChartProps) {
+export function SelfFormingBarChart({ data, ariaLabel, replayKey }: SelfFormingBarChartProps) {
   const prefersReducedMotion = useChartReducedMotion();
   const containerRef = useRef<HTMLDivElement>(null);
   useInView(containerRef, { once: true, amount: 0.05 });
@@ -507,7 +529,10 @@ export function SelfFormingBarChart({
             </motion.b>
 
             {/* Rising Bar */}
-            <div className="viz-bar-track" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'flex-end' }}>
+            <div
+              className="viz-bar-track"
+              style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'flex-end' }}
+            >
               <motion.span
                 className="viz-bar-fill"
                 initial={{ height: prefersReducedMotion ? `${heightPercent}%` : '0%' }}
@@ -558,7 +583,11 @@ export function SelfFormingBarChart({
               }}
             >
               {item.label}
-              {item.group && <span style={{ display: 'block', fontSize: '8.5px', color: '#9b5cff' }}>{item.group}</span>}
+              {item.group && (
+                <span style={{ display: 'block', fontSize: '8.5px', color: '#9b5cff' }}>
+                  {item.group}
+                </span>
+              )}
             </motion.em>
           </div>
         );
@@ -586,7 +615,9 @@ export function SelfFormingDonutChart({
 }: SelfFormingDonutChartProps) {
   const prefersReducedMotion = useChartReducedMotion();
   const validData = Array.isArray(data)
-    ? data.filter((d) => d && typeof d.label === 'string' && Number.isFinite(d.value) && d.value >= 0)
+    ? data.filter(
+        (d) => d && typeof d.label === 'string' && Number.isFinite(d.value) && d.value >= 0,
+      )
     : [];
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -611,7 +642,7 @@ export function SelfFormingDonutChart({
         offset: nextOffset,
       };
     },
-    { stops: [], offset: 0 }
+    { stops: [], offset: 0 },
   ).stops;
 
   return (
@@ -776,16 +807,28 @@ export function SelfFormingScatterChart({
 
         {/* Y Axis ticks */}
         <g className="viz-axis-labels">
-          <text x="32" y="34" textAnchor="end">{formatCompactNumber(maxY)}</text>
-          <text x="32" y="94" textAnchor="end">{formatCompactNumber(minY + rangeY * 0.5)}</text>
-          <text x="32" y="154" textAnchor="end">{formatCompactNumber(minY)}</text>
+          <text x="32" y="34" textAnchor="end">
+            {formatCompactNumber(maxY)}
+          </text>
+          <text x="32" y="94" textAnchor="end">
+            {formatCompactNumber(minY + rangeY * 0.5)}
+          </text>
+          <text x="32" y="154" textAnchor="end">
+            {formatCompactNumber(minY)}
+          </text>
         </g>
 
         {/* X Axis ticks */}
         <g className="viz-axis-labels">
-          <text x="40" y="174" textAnchor="middle">{Math.round(minX).toLocaleString()}</text>
-          <text x="280" y="174" textAnchor="middle">{Math.round(minX + rangeX * 0.5).toLocaleString()}</text>
-          <text x="520" y="174" textAnchor="middle">{Math.round(maxX).toLocaleString()}</text>
+          <text x="40" y="174" textAnchor="middle">
+            {Math.round(minX).toLocaleString()}
+          </text>
+          <text x="280" y="174" textAnchor="middle">
+            {Math.round(minX + rangeX * 0.5).toLocaleString()}
+          </text>
+          <text x="520" y="174" textAnchor="middle">
+            {Math.round(maxX).toLocaleString()}
+          </text>
         </g>
 
         {/* Plotted Scatter Points */}
@@ -800,7 +843,10 @@ export function SelfFormingScatterChart({
               fill="#64f2ff"
               stroke="#13233c"
               strokeWidth="2"
-              initial={{ scale: prefersReducedMotion ? 1 : 0, opacity: prefersReducedMotion ? 0.95 : 0 }}
+              initial={{
+                scale: prefersReducedMotion ? 1 : 0,
+                opacity: prefersReducedMotion ? 0.95 : 0,
+              }}
               animate={{ scale: 1, opacity: 0.95 }}
               transition={{ delay, duration: 0.35, type: 'spring', stiffness: 350 }}
               whileHover={{ scale: 1.8, fill: '#ffffff' }}
@@ -855,11 +901,7 @@ interface SelfFormingHeatmapProps {
   replayKey?: string | number;
 }
 
-export function SelfFormingHeatmap({
-  heatmapData,
-  ariaLabel,
-  replayKey,
-}: SelfFormingHeatmapProps) {
+export function SelfFormingHeatmap({ heatmapData, ariaLabel, replayKey }: SelfFormingHeatmapProps) {
   const prefersReducedMotion = useChartReducedMotion();
   const containerRef = useRef<HTMLDivElement>(null);
   useInView(containerRef, { once: true, amount: 0.05 });
@@ -929,7 +971,10 @@ export function SelfFormingHeatmap({
                   key={`${rowName}-${colName}`}
                   className="viz-heatmap-cell"
                   style={{ background: bg }}
-                  initial={{ opacity: prefersReducedMotion ? 1 : 0, scale: prefersReducedMotion ? 1 : 0.85 }}
+                  initial={{
+                    opacity: prefersReducedMotion ? 1 : 0,
+                    scale: prefersReducedMotion ? 1 : 0.85,
+                  }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay, duration: 0.35 }}
                   onMouseEnter={(e) => {
@@ -971,9 +1016,7 @@ export function SelfFormingHeatmap({
             <span className="viz-tooltip-label">
               {activeCell.row} × {activeCell.col}
             </span>
-            <strong className="viz-tooltip-val">
-              {formatCompactNumber(activeCell.value)}
-            </strong>
+            <strong className="viz-tooltip-val">{formatCompactNumber(activeCell.value)}</strong>
           </div>
         </div>
       )}
@@ -991,11 +1034,7 @@ interface SelfFormingTreemapProps {
   replayKey?: string | number;
 }
 
-export function SelfFormingTreemap({
-  treemapData,
-  ariaLabel,
-  replayKey,
-}: SelfFormingTreemapProps) {
+export function SelfFormingTreemap({ treemapData, ariaLabel, replayKey }: SelfFormingTreemapProps) {
   const prefersReducedMotion = useChartReducedMotion();
   const containerRef = useRef<HTMLDivElement>(null);
   useInView(containerRef, { once: true, amount: 0.05 });
@@ -1030,7 +1069,10 @@ export function SelfFormingTreemap({
               background: `linear-gradient(145deg, ${color}22, ${color}55)`,
               borderColor: `${color}88`,
             }}
-            initial={{ opacity: prefersReducedMotion ? 1 : 0, scale: prefersReducedMotion ? 1 : 0.88 }}
+            initial={{
+              opacity: prefersReducedMotion ? 1 : 0,
+              scale: prefersReducedMotion ? 1 : 0.88,
+            }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay, duration: 0.4 }}
           >
@@ -1038,9 +1080,7 @@ export function SelfFormingTreemap({
               <span className="viz-treemap-tile-label">{node.label}</span>
               <span className="viz-treemap-tile-share">{Math.round(node.percent)}%</span>
             </div>
-            <strong className="viz-treemap-tile-val">
-              {formatCompactNumber(node.value)}
-            </strong>
+            <strong className="viz-treemap-tile-val">{formatCompactNumber(node.value)}</strong>
           </motion.div>
         );
       })}
@@ -1058,11 +1098,7 @@ interface SelfFormingTableProps {
   replayKey?: string | number;
 }
 
-export function SelfFormingTable({
-  tableData,
-  ariaLabel,
-  replayKey,
-}: SelfFormingTableProps) {
+export function SelfFormingTable({ tableData, ariaLabel, replayKey }: SelfFormingTableProps) {
   const prefersReducedMotion = useChartReducedMotion();
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
@@ -1104,9 +1140,17 @@ export function SelfFormingTable({
                   const formatted =
                     col.type === 'number'
                       ? typeof val === 'number'
-                        ? col.key.toLowerCase().includes('rate') || col.key.toLowerCase().includes('discount')
+                        ? col.key.toLowerCase().includes('rate') ||
+                          col.key.toLowerCase().includes('discount')
                           ? `${val}%`
-                          : formatCompactNumber(val, col.key.toLowerCase().includes('price') || col.key.toLowerCase().includes('revenue') || col.key.toLowerCase().includes('profit') ? '$' : '')
+                          : formatCompactNumber(
+                              val,
+                              col.key.toLowerCase().includes('price') ||
+                                col.key.toLowerCase().includes('revenue') ||
+                                col.key.toLowerCase().includes('profit')
+                                ? '$'
+                                : '',
+                            )
                         : '-'
                       : String(val ?? '-');
 
@@ -1214,11 +1258,7 @@ export interface SelfFormingRegionMapProps {
   replayKey?: string | number;
 }
 
-export function SelfFormingRegionMap({
-  data,
-  filteredRows,
-  replayKey,
-}: SelfFormingRegionMapProps) {
+export function SelfFormingRegionMap({ data, filteredRows, replayKey }: SelfFormingRegionMapProps) {
   const prefersReducedMotion = useChartReducedMotion();
   const containerRef = useRef<HTMLDivElement>(null);
   useInView(containerRef, { once: true, amount: 0.05 });
@@ -1257,7 +1297,12 @@ export function SelfFormingRegionMap({
       }
     }
 
-    if (Array.isArray(filteredRows) && filteredRows.length > 0 && cMap.size === 0 && rMap.size === 0) {
+    if (
+      Array.isArray(filteredRows) &&
+      filteredRows.length > 0 &&
+      cMap.size === 0 &&
+      rMap.size === 0
+    ) {
       const sample = filteredRows[0];
       const keys = Object.keys(sample);
       const geoCol = keys.find((k) => /^(country|region|nation|territory|geo)$/i.test(k));
@@ -1521,7 +1566,9 @@ export function CustomerSegmentChart({
 }) {
   const prefersReducedMotion = useChartReducedMotion();
   const validData = Array.isArray(data)
-    ? data.filter((d) => d && typeof d.label === 'string' && Number.isFinite(d.value) && d.value >= 0)
+    ? data.filter(
+        (d) => d && typeof d.label === 'string' && Number.isFinite(d.value) && d.value >= 0,
+      )
     : [];
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -1613,7 +1660,9 @@ export function CustomerSegmentChart({
                 }}
               >
                 <div style={{ fontWeight: 600, color: '#64f2ff' }}>{item.label}</div>
-                <div>{formatCompactNumber(item.value)} ({percent}%)</div>
+                <div>
+                  {formatCompactNumber(item.value)} ({percent}%)
+                </div>
               </div>
             )}
             {/* Value Label + Share badge */}
@@ -1632,7 +1681,10 @@ export function CustomerSegmentChart({
             </motion.div>
 
             {/* Rising Bar */}
-            <div className="viz-bar-track" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'flex-end' }}>
+            <div
+              className="viz-bar-track"
+              style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'flex-end' }}
+            >
               <motion.span
                 className="viz-bar-fill"
                 initial={{ height: prefersReducedMotion ? `${heightPercent}%` : '0%' }}

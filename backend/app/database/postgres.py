@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from backend.app.core.config import Settings
 from backend.app.core.exceptions import DatabaseConnectionError
+from backend.app.core.database_target import bind_database_schema
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ class PostgresDatabase:
                 max_overflow=self._settings.database_max_overflow,
                 pool_recycle=1800,
             )
+            bind_database_schema(self._engine, self._settings.database_schema)
             self._session_factory = sessionmaker(bind=self._engine, autoflush=False, autocommit=False)
         try:
             with self._engine.connect() as connection:

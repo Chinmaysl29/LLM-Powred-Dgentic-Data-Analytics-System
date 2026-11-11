@@ -35,6 +35,8 @@ export interface KpiMetrics {
 }
 
 export interface RagCitation {
+  evidence_id?: string;
+  workspace_id?: string;
   title?: string;
   doc_id?: string;
   chunk_id?: string;

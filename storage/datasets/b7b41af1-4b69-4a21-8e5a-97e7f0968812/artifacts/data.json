@@ -1,0 +1,22 @@
+{
+  "dataset_id": "b7b41af1-4b69-4a21-8e5a-97e7f0968812",
+  "dataset_name": "metrics",
+  "columns": [
+    "x",
+    "y"
+  ],
+  "records": [
+    {
+      "x": 1,
+      "y": 10
+    },
+    {
+      "x": 2,
+      "y": 20
+    },
+    {
+      "x": 3,
+      "y": 30
+    }
+  ]
+}

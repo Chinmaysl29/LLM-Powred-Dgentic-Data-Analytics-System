@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.debugpy",
+    "charliermarsh.ruff",
+    "esbenp.prettier-vscode",
+    "ms-azuretools.vscode-containers",
+    "dbaeumer.vscode-eslint",
+    "redhat.vscode-yaml"
+  ]
+}

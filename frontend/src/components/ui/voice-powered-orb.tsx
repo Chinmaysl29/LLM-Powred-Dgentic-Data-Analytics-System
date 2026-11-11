@@ -195,7 +195,11 @@ export function VoicePoweredOrb({
       renderer.setSize(width * dpr, height * dpr);
       gl.canvas.style.width = `${width}px`;
       gl.canvas.style.height = `${height}px`;
-      program.uniforms.iResolution.value.set(gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height);
+      program.uniforms.iResolution.value.set(
+        gl.canvas.width,
+        gl.canvas.height,
+        gl.canvas.width / gl.canvas.height,
+      );
     };
 
     const resizeObserver = new ResizeObserver(resize);
@@ -226,5 +230,7 @@ export function VoicePoweredOrb({
     };
   }, [enableVoiceControl, hue]);
 
-  return <div ref={containerRef} className={cn('voice-powered-orb', className)} aria-hidden="true" />;
+  return (
+    <div ref={containerRef} className={cn('voice-powered-orb', className)} aria-hidden="true" />
+  );
 }

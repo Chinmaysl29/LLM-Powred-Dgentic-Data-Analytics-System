@@ -1,0 +1,35 @@
+{
+  "dataset_id": "3d3c2a93-c154-48ae-94b2-731837ab0506",
+  "duplicate_rows": 0,
+  "duplicate_percentage": 0.0,
+  "missing_data_profile": {
+    "null_count": 0,
+    "null_percentage": 0.0,
+    "columns_with_missing": []
+  },
+  "cardinality_profile": {
+    "high_cardinality_columns": [],
+    "low_cardinality_columns": [
+      "date",
+      "region",
+      "category",
+      "revenue"
+    ]
+  },
+  "numeric_columns_profile": {
+    "revenue": {
+      "mean": 241.66666666666666,
+      "median": 250.0,
+      "mode": -50.0,
+      "min": -50.0,
+      "max": 500.0,
+      "std": 201.03896803024696,
+      "variance": 40416.666666666664,
+      "p25": 125.0,
+      "p50": 250.0,
+      "p75": 375.0,
+      "skewness": -0.23332400158255825,
+      "kurtosis": -0.7921351897119786
+    }
+  }
+}

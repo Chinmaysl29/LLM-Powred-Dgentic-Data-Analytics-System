@@ -1,0 +1,8 @@
+{
+  "pytest_exit_code": 0,
+  "baseline_before_changes": "47 passed in 26.32s; existing local/test suite",
+  "scope": "Deterministic synthetic fixtures, API integration, PostgreSQL non-superuser application/worker roles",
+  "production_accuracy_gain": "not measured",
+  "numeric_calibration": "unavailable",
+  "weight_training": "not performed"
+}

@@ -1,0 +1,49 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Environment: doctor (Windows)", "type": "process",
+      "command": "powershell.exe", "args": ["-NoProfile", "-ExecutionPolicy", "RemoteSigned", "-File", "${workspaceFolder}/scripts/dev-environment.ps1", "-Action", "Doctor"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Environment: infrastructure (Windows)", "type": "process",
+      "command": "powershell.exe", "args": ["-NoProfile", "-ExecutionPolicy", "RemoteSigned", "-File", "${workspaceFolder}/scripts/dev-environment.ps1", "-Action", "Infra"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Environment: backend (Windows)", "type": "process",
+      "command": "powershell.exe", "args": ["-NoProfile", "-ExecutionPolicy", "RemoteSigned", "-File", "${workspaceFolder}/scripts/dev-environment.ps1", "-Action", "Backend"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Environment: frontend (Windows)", "type": "process",
+      "command": "powershell.exe", "args": ["-NoProfile", "-ExecutionPolicy", "RemoteSigned", "-File", "${workspaceFolder}/scripts/dev-environment.ps1", "-Action", "Frontend"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Environment: isolated tests (Windows)", "type": "process",
+      "command": "powershell.exe", "args": ["-NoProfile", "-ExecutionPolicy", "RemoteSigned", "-File", "${workspaceFolder}/scripts/dev-environment.ps1", "-Action", "Test"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Environment: lint and types (Windows)", "type": "process",
+      "command": "powershell.exe", "args": ["-NoProfile", "-ExecutionPolicy", "RemoteSigned", "-File", "${workspaceFolder}/scripts/dev-environment.ps1", "-Action", "Lint"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Environment: debug server (Windows)", "type": "process",
+      "command": "powershell.exe", "args": ["-NoProfile", "-ExecutionPolicy", "RemoteSigned", "-File", "${workspaceFolder}/scripts/dev-environment.ps1", "-Action", "Debug"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Frontend: build (Dev Container)", "type": "process",
+      "command": "npm", "args": ["run", "build"], "options": { "cwd": "${workspaceFolder}/frontend" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Python: lint (Dev Container)", "type": "process",
+      "command": "ruff", "args": ["check", "backend", "scripts"], "problemMatcher": []
+    }
+  ]
+}

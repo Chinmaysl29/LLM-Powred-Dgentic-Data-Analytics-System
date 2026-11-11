@@ -105,13 +105,22 @@ def authorize_workspace(db, actor_id, workspace_id, permission='read') -> Worksp
     return WorkspaceAccess(actor, workspace, tenant, role)
 
 
-def authorize_bound_dataset(db, access: WorkspaceAccess, dataset_id: str):
+def authorized_bound_dataset_ids(db, access: WorkspaceAccess, dataset_ids):
+    """Resolve a bounded page's dataset grants afresh within this request."""
+    identities = set(dataset_ids)
+    if not identities:
+        return set()
     # Account ownership remains required; membership alone never widens dataset access.
     records = rows(db, select(Dataset.dataset_id).join(dataset_workspace_bindings,
         dataset_workspace_bindings.c.dataset_id == Dataset.dataset_id).where(
-        Dataset.dataset_id == dataset_id, Dataset.owner_id == str(access.actor_id),
+        Dataset.dataset_id.in_(identities), Dataset.owner_id == str(access.actor_id),
+        Dataset.status.not_in(['deleted', 'archived', 'purged']),
         dataset_workspace_bindings.c.workspace_id == access.workspace_id))
-    if not records:
+    return {record[0] for record in records}
+
+
+def authorize_bound_dataset(db, access: WorkspaceAccess, dataset_id: str):
+    if dataset_id not in authorized_bound_dataset_ids(db, access, [dataset_id]):
         raise HTTPException(404, 'Resource not found')
 
 

@@ -129,11 +129,23 @@ export interface EDAResponse {
   eda_results: EDAResults;
 }
 export interface ChartManifest {
-  chart_id: string; chart_type: 'histogram' | 'scatter' | 'time_series' | 'grouped_bar';
-  dataset_id: string | null; version: number | null; source_checksum: string | null;
-  source_data_reference: string | null; analysis_run_id: string | null;
-  metric: string; dimension: string; aggregation: string; applied_filters: Record<string, unknown>;
-  total_source_rows: number; rendered_rows: number; sampling_method: string;
-  coordinate_data: Record<string, string | number>[]; units: string; null_handling: string;
-  computation_metadata: Record<string, unknown>; warnings: string[];
+  chart_id: string;
+  chart_type: 'histogram' | 'scatter' | 'time_series' | 'grouped_bar';
+  dataset_id: string | null;
+  version: number | null;
+  source_checksum: string | null;
+  source_data_reference: string | null;
+  analysis_run_id: string | null;
+  metric: string;
+  dimension: string;
+  aggregation: string;
+  applied_filters: Record<string, unknown>;
+  total_source_rows: number;
+  rendered_rows: number;
+  sampling_method: string;
+  coordinate_data: Record<string, string | number>[];
+  units: string;
+  null_handling: string;
+  computation_metadata: Record<string, unknown>;
+  warnings: string[];
 }

@@ -18,10 +18,7 @@ import { STATUS_LABELS } from '../datasetUtils';
 export function StatusBadge({ status }: { status: DatasetStatus }) {
   const label = STATUS_LABELS[status] || status || 'Unknown';
   return (
-    <span
-      className={`status-badge status-badge--${status}`}
-      aria-label={`Status: ${label}`}
-    >
+    <span className={`status-badge status-badge--${status}`} aria-label={`Status: ${label}`}>
       {label}
     </span>
   );

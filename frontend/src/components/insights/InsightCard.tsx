@@ -1,18 +1,18 @@
 import React from 'react';
-import { 
-  TrendingUp, 
-  Workflow, 
-  AlertTriangle, 
-  Sliders, 
-  RefreshCw, 
-  GitFork, 
-  Eye, 
-  BarChart2, 
+import {
+  TrendingUp,
+  Workflow,
+  AlertTriangle,
+  Sliders,
+  RefreshCw,
+  GitFork,
+  Eye,
+  BarChart2,
   MessageSquare,
   Sparkles,
   ArrowUpRight,
   ArrowDownRight,
-  Minus
+  Minus,
 } from 'lucide-react';
 import type { Insight, InsightType } from '../../types/insights';
 
@@ -23,7 +23,10 @@ interface InsightCardProps {
   onAskAI?: (insight: Insight) => void;
 }
 
-const TYPE_CONFIG: Record<InsightType, { label: string; icon: React.ReactNode; badgeClass: string }> = {
+const TYPE_CONFIG: Record<
+  InsightType,
+  { label: string; icon: React.ReactNode; badgeClass: string }
+> = {
   trend: {
     label: 'Trend',
     icon: <TrendingUp size={13} />,
@@ -80,9 +83,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({
             </span>
           )}
         </div>
-        {insight.timePeriod && (
-          <span className="insights-card-period">{insight.timePeriod}</span>
-        )}
+        {insight.timePeriod && <span className="insights-card-period">{insight.timePeriod}</span>}
       </div>
 
       {/* Main Title & Executive Summary */}
@@ -117,7 +118,9 @@ export const InsightCard: React.FC<InsightCardProps> = ({
         </div>
         <ul className="insights-evidence-list">
           {insight.observedEvidence.map((point, idx) => (
-            <li key={idx} className="insights-evidence-item">{point}</li>
+            <li key={idx} className="insights-evidence-item">
+              {point}
+            </li>
           ))}
         </ul>
       </div>
@@ -127,9 +130,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({
           <Sparkles size={13} className="insights-box-icon purple" />
           <span>Derived Interpretation</span>
         </div>
-        <p className="insights-interpretation-text">
-          {insight.derivedInterpretation}
-        </p>
+        <p className="insights-interpretation-text">{insight.derivedInterpretation}</p>
       </div>
 
       {/* Card Action Footer */}

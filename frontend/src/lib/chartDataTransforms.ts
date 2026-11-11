@@ -1,4 +1,5 @@
-export type ChartType = 'Line' | 'Bar' | 'Pie' | 'Area' | 'Scatter' | 'Table' | 'Heatmap' | 'Treemap' | 'Histogram';
+export type ChartType =
+  'Line' | 'Bar' | 'Pie' | 'Area' | 'Scatter' | 'Table' | 'Heatmap' | 'Treemap' | 'Histogram';
 export type FieldType = 'date' | 'category' | 'number' | 'boolean';
 
 export type CellValue = string | number | boolean | null;
@@ -117,7 +118,14 @@ export function parseNumeric(value: unknown): number | null {
   }
   if (typeof value === 'string') {
     let str = value.trim();
-    if (!str || str === '-' || str === '--' || str.toLowerCase() === 'n/a' || str.toLowerCase() === 'null') return null;
+    if (
+      !str ||
+      str === '-' ||
+      str === '--' ||
+      str.toLowerCase() === 'n/a' ||
+      str.toLowerCase() === 'null'
+    )
+      return null;
 
     let isNegative = false;
     if (str.startsWith('(') && str.endsWith(')')) {
@@ -131,9 +139,10 @@ export function parseNumeric(value: unknown): number | null {
     }
 
     // Strip currency symbols ($, ₹, €, £, Rs., INR, USD, EUR, GBP) and commas
-    str = str.replace(/[$,₹€£\s]/g, '')
-             .replace(/^(?:rs\.?|inr|usd|eur|gbp)\s*/i, '')
-             .replace(/\s*(?:inr|usd|eur|gbp)$/i, '');
+    str = str
+      .replace(/[$,₹€£\s]/g, '')
+      .replace(/^(?:rs\.?|inr|usd|eur|gbp)\s*/i, '')
+      .replace(/\s*(?:inr|usd|eur|gbp)$/i, '');
 
     // Handle percentage: 25% -> 25
     if (str.endsWith('%')) {
@@ -157,7 +166,8 @@ export function computeHistogram(
     return {
       type: 'Histogram',
       isValid: false,
-      validationMessage: 'No numerical field is available for a distribution chart in this dataset.',
+      validationMessage:
+        'No numerical field is available for a distribution chart in this dataset.',
     };
   }
 
@@ -353,7 +363,7 @@ export function formatFieldLabel(field: string): string {
 
 export function validateChartConfig(
   columns: Record<string, FieldType>,
-  config: VisualizationConfig
+  config: VisualizationConfig,
 ): { isValid: boolean; message?: string } {
   const xType = columns[config.xAxis];
   const yType = columns[config.yAxis];
@@ -445,7 +455,8 @@ export function validateChartConfig(
       if (!histMetric || histType !== 'number') {
         return {
           isValid: false,
-          message: 'Histogram distribution requires a numeric measure. Please select a numeric field.',
+          message:
+            'Histogram distribution requires a numeric measure. Please select a numeric field.',
         };
       }
       return { isValid: true };
@@ -470,7 +481,7 @@ export interface SensibleChartFields {
 export function getSensibleDefaults(
   targetChartType: ChartType,
   columns: Record<string, FieldType>,
-  current?: Partial<VisualizationConfig>
+  current?: Partial<VisualizationConfig>,
 ): SensibleChartFields {
   const numericFields = Object.keys(columns).filter((col) => columns[col] === 'number');
   const categoricalFields = Object.keys(columns).filter((col) => columns[col] === 'category');
@@ -500,7 +511,11 @@ export function getSensibleDefaults(
       if (!nextX || (columns[nextX] !== 'category' && columns[nextX] !== 'date')) {
         nextX = categoricalFields[0] ?? (dateFields[0] || allFields[0] || '');
       }
-      if (!nextGroup || (columns[nextGroup] !== 'category' && columns[nextGroup] !== 'date') || nextGroup === nextX) {
+      if (
+        !nextGroup ||
+        (columns[nextGroup] !== 'category' && columns[nextGroup] !== 'date') ||
+        nextGroup === nextX
+      ) {
         const availableGroup = categoricalFields.filter((f) => f !== nextX);
         nextGroup = availableGroup[0] ?? '';
       }
@@ -523,7 +538,8 @@ export function getSensibleDefaults(
         nextY = numericFields[0] ?? '';
       }
       if (!nextX || columns[nextX] === 'number') {
-        nextX = dateFields[0] ?? (categoricalFields[0] || allFields.filter((f) => f !== nextY)[0] || '');
+        nextX =
+          dateFields[0] ?? (categoricalFields[0] || allFields.filter((f) => f !== nextY)[0] || '');
       }
       break;
     }
@@ -533,7 +549,8 @@ export function getSensibleDefaults(
         nextY = numericFields[0] ?? '';
       }
       if (!nextX || (columns[nextX] === 'number' && categoricalFields.length > 0)) {
-        nextX = categoricalFields[0] ?? (dateFields[0] || allFields.filter((f) => f !== nextY)[0] || '');
+        nextX =
+          categoricalFields[0] ?? (dateFields[0] || allFields.filter((f) => f !== nextY)[0] || '');
       }
       break;
     }
@@ -553,7 +570,9 @@ export function getSensibleDefaults(
 
     case 'Histogram': {
       if (!nextY || columns[nextY] !== 'number') {
-        const nonId = numericFields.filter(f => !/(?:^|_)(?:id|code|key|index|zip|postal)(?:$|_)/i.test(f));
+        const nonId = numericFields.filter(
+          (f) => !/(?:^|_)(?:id|code|key|index|zip|postal)(?:$|_)/i.test(f),
+        );
         nextY = nonId[0] ?? numericFields[0] ?? '';
       }
       nextX = nextY;
@@ -581,7 +600,7 @@ export function getSensibleDefaults(
 export function transformChartData(
   rows: DataRow[],
   columns: Record<string, FieldType>,
-  config: VisualizationConfig
+  config: VisualizationConfig,
 ): TransformedChartData {
   const validation = validateChartConfig(columns, config);
   if (!validation.isValid) {
@@ -627,37 +646,66 @@ export function transformChartData(
       // Preserve all four extrema, then spread selections across spatial cells.
       // This is a view of loaded records, not a statistical sample of the dataset.
       const selected = new Set<ScatterPoint>();
-      if (validPoints.length <= 36) validPoints.forEach(p => selected.add(p));
+      if (validPoints.length <= 36) validPoints.forEach((p) => selected.add(p));
       else {
         for (const predicate of [
-          (p: ScatterPoint) => p.x === minX, (p: ScatterPoint) => p.x === maxX,
-          (p: ScatterPoint) => p.y === minY, (p: ScatterPoint) => p.y === maxY,
-        ]) selected.add(validPoints.find(predicate)!);
+          (p: ScatterPoint) => p.x === minX,
+          (p: ScatterPoint) => p.x === maxX,
+          (p: ScatterPoint) => p.y === minY,
+          (p: ScatterPoint) => p.y === maxY,
+        ])
+          selected.add(validPoints.find(predicate)!);
         const cells = new Map<string, ScatterPoint[]>();
         for (const point of validPoints) {
-          const key = `${Math.min(5, Math.floor((point.x - minX) / (maxX - minX || 1) * 6))}:${Math.min(5, Math.floor((point.y - minY) / (maxY - minY || 1) * 6))}`;
+          const key = `${Math.min(5, Math.floor(((point.x - minX) / (maxX - minX || 1)) * 6))}:${Math.min(5, Math.floor(((point.y - minY) / (maxY - minY || 1)) * 6))}`;
           const bucket = cells.get(key) ?? [];
-          bucket.push(point); cells.set(key, bucket);
+          bucket.push(point);
+          cells.set(key, bucket);
         }
-        const buckets = [...cells.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([, items]) => items.sort((a, b) => a.x - b.x || a.y - b.y || (a.sourceIndex! - b.sourceIndex!)));
+        const buckets = [...cells.entries()]
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([, items]) =>
+            items.sort((a, b) => a.x - b.x || a.y - b.y || a.sourceIndex! - b.sourceIndex!),
+          );
         // Round-robin occupied cells so dense leading rows do not dominate.
         for (let depth = 0; selected.size < 36; depth++) {
           let available = false;
           for (const bucket of buckets) {
             const point = bucket[depth];
-            if (point) { available = true; selected.add(point); }
+            if (point) {
+              available = true;
+              selected.add(point);
+            }
             if (selected.size === 36) break;
           }
           if (!available) break;
         }
       }
-      if (!validPoints.length) { minX = 0; maxX = 1; minY = 0; maxY = 1; }
-      if (minX === maxX) { minX -= .5; maxX += .5; }
-      if (minY === maxY) { minY -= .5; maxY += .5; }
+      if (!validPoints.length) {
+        minX = 0;
+        maxX = 1;
+        minY = 0;
+        maxY = 1;
+      }
+      if (minX === maxX) {
+        minX -= 0.5;
+        maxX += 0.5;
+      }
+      if (minY === maxY) {
+        minY -= 0.5;
+        maxY += 0.5;
+      }
       return {
-        type: 'Scatter', isValid: true,
-        scatterPoints: [...selected], scatterBounds: { minX, maxX, minY, maxY },
-        scatterSampling: { method: 'deterministic spatial cells with extrema', totalValid: validPoints.length, displayed: selected.size, domain: 'loaded-record domain; extrema retained; constant axes padded' },
+        type: 'Scatter',
+        isValid: true,
+        scatterPoints: [...selected],
+        scatterBounds: { minX, maxX, minY, maxY },
+        scatterSampling: {
+          method: 'deterministic spatial cells with extrema',
+          totalValid: validPoints.length,
+          displayed: selected.size,
+          domain: 'loaded-record domain; extrema retained; constant axes padded',
+        },
       };
     }
 
@@ -862,7 +910,10 @@ export function transformChartData(
     case 'Bar':
     default: {
       const isDate = columns[xAxis] === 'date' || rows.some((r) => parseDate(r[xAxis]) !== null);
-      const buckets = new Map<string, { label: string; date?: Date; group?: string; value: number }>();
+      const buckets = new Map<
+        string,
+        { label: string; date?: Date; group?: string; value: number }
+      >();
 
       rows.forEach((row) => {
         const v = parseNumeric(row[yAxis]) ?? 0;

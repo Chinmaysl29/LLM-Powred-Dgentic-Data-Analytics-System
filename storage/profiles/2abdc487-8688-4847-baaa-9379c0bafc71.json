@@ -1,0 +1,33 @@
+{
+  "dataset_id": "2abdc487-8688-4847-baaa-9379c0bafc71",
+  "duplicate_rows": 0,
+  "duplicate_percentage": 0.0,
+  "missing_data_profile": {
+    "null_count": 0,
+    "null_percentage": 0.0,
+    "columns_with_missing": []
+  },
+  "cardinality_profile": {
+    "high_cardinality_columns": [],
+    "low_cardinality_columns": [
+      "region",
+      "amount"
+    ]
+  },
+  "numeric_columns_profile": {
+    "amount": {
+      "mean": 17.5,
+      "median": 17.5,
+      "mode": 10.0,
+      "min": 10.0,
+      "max": 25.0,
+      "std": 10.606601717798213,
+      "variance": 112.5,
+      "p25": 13.75,
+      "p50": 17.5,
+      "p75": 21.25,
+      "skewness": 0.0,
+      "kurtosis": 0.0
+    }
+  }
+}

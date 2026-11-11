@@ -153,7 +153,8 @@ export default function SignupPage() {
           />
           <h2 className="cinematic-card-title">Check your email</h2>
           <p className="cinematic-card-subtitle" style={{ marginBottom: '1.75rem' }}>
-            We sent a verification link to <strong>{email}</strong>. Please confirm your email address to activate your analytical workspace.
+            We sent a verification link to <strong>{email}</strong>. Please confirm your email
+            address to activate your analytical workspace.
           </p>
           <Link
             to="/login"
@@ -290,7 +291,9 @@ export default function SignupPage() {
                 touched.password && errors.password ? 'cinematic-input--error' : ''
               }`}
               aria-invalid={Boolean(touched.password && errors.password)}
-              aria-describedby={touched.password && errors.password ? 'signup-password-error' : undefined}
+              aria-describedby={
+                touched.password && errors.password ? 'signup-password-error' : undefined
+              }
               disabled={isSubmitting}
             />
             <Lock className="cinematic-input-icon" />
@@ -327,8 +330,7 @@ export default function SignupPage() {
                 if (touched.confirmPassword) {
                   setErrors((prev) => ({
                     ...prev,
-                    confirmPassword:
-                      validateConfirmPassword(password, e.target.value) ?? undefined,
+                    confirmPassword: validateConfirmPassword(password, e.target.value) ?? undefined,
                   }));
                 }
               }}

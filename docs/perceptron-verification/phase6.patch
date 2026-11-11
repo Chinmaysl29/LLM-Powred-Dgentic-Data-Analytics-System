@@ -1,0 +1,1168 @@
+diff --git a/backend/app/services/natural_language_analytics.py b/backend/app/services/natural_language_analytics.py
+--- a/backend/app/services/natural_language_analytics.py
++++ b/backend/app/services/natural_language_analytics.py
+@@ -30,8 +30,9 @@
+ 
+ 
+ class NaturalLanguageAnalyticsService:
+-    def __init__(self, data_retrieval: DataRetrievalService | None = None) -> None:
++    def __init__(self, data_retrieval: DataRetrievalService | None = None, *, resolver=None) -> None:
+         self._data_retrieval = data_retrieval
++        self._resolver = resolver
+ 
+     @staticmethod
+     def is_analytics_query(message: str) -> bool:
+@@ -247,6 +248,12 @@
+         dates = [c for c in dataframe if pd.api.types.is_datetime64_any_dtype(dataframe[c]) or re.search(r'(^|[_ -])(date|month|time|year)([_ -]|$)', c, re.I)]
+         plan = self.parse(message, list(dataframe.columns), numeric, dates, context)
+         plan = AnalyticsRequest(**{**asdict(plan), 'dataset_id': dataset_id, 'dataset_version': dataset_version})
++        if self._resolver is not None:
++            try:
++                schema = {'columns': list(dataframe.columns), 'dtypes': {c: str(t) for c, t in dataframe.dtypes.items()}}
++                plan = self._resolver(message, schema, plan, context)
++            except Exception:
++                pass  # Resolver failures preserve the original validated plan.
+         if plan.clarification_required:
+             return self._clarify(plan)
+ 
+diff --git a/backend/app/api/v1/routes/chat.py b/backend/app/api/v1/routes/chat.py
+--- a/backend/app/api/v1/routes/chat.py
++++ b/backend/app/api/v1/routes/chat.py
+@@ -25,6 +25,7 @@
+ from backend.monitoring.prometheus_metrics import platform_metrics
+ from backend.app.learning.evidence import observe_chat
+ from backend.app.learning.routing import scoped_router
++from backend.app.learning.column_runtime import scoped_resolver
+ 
+ router = APIRouter(prefix="/chat", tags=["Natural Language Analytics"])
+ 
+@@ -101,7 +102,7 @@
+ 
+     # 3. Execute analytical query or RAG
+     data_retrieval = DataRetrievalService(db, storage, owner_id=str(current_user.id)) if db is not None else None
+-    analytics = NaturalLanguageAnalyticsService(data_retrieval)
++    analytics = NaturalLanguageAnalyticsService(data_retrieval, resolver=scoped_resolver(str(current_user.id)))
+     citations: list[dict[str, Any]] = []
+ 
+     async with observe_chat(actor_id=str(current_user.id), dataset_id=payload.dataset_id,
+diff --git a/backend/app/models/__init__.py b/backend/app/models/__init__.py
+--- a/backend/app/models/__init__.py
++++ b/backend/app/models/__init__.py
+@@ -77,3 +77,4 @@
+ from backend.app.learning.shadow_table import shadow_predictions
+ from backend.app.learning.release_table import router_releases
+ from backend.app.learning.memory_table import failure_memory_links
++from backend.app.learning.column_table import resolver_events
+diff --git a/backend/app/learning/column_ranker.py b/backend/app/learning/column_ranker.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/learning/column_ranker.py
+@@ -0,0 +1,106 @@
++"""Averaged NumPy perceptron over variable column candidates, including abstention.
++
++Only schema and question features enter this module; never dataset values.
++"""
++from __future__ import annotations
++
++import hashlib
++import re
++import numpy as np
++
++SIZE = 512
++FEATURE_VERSION = 'column-ranker-v2-512-vocabulary'
++MIN_MARGIN = 0.5
++GRAMMAR = frozenset('please show me the a an of by per and total sum average avg mean minimum min maximum max top bottom highest lowest monthly trend over time'.split())
++
++
++def tokens(value: str) -> list[str]:
++    return re.findall(r'[^\W_]+', value.casefold())[:64]
++
++
++def question_hash(question: str) -> str:
++    return hashlib.sha256(' '.join(tokens(question)).encode()).hexdigest()
++
++
++def features(question: str, column: str | None, dtype: str = '') -> np.ndarray:
++    if not isinstance(question, str) or not 1 <= len(question) <= 2000:
++        raise ValueError('Invalid resolver question')
++    if len(re.findall(r'[^\W_]+', question)) > 64:
++        raise ValueError('Resolver questions must not be partially interpreted')
++    if column is not None and (not isinstance(column, str) or not 1 <= len(column) <= 256):
++        raise ValueError('Invalid resolver column')
++    q = tokens(question)
++    c = tokens(column) if column is not None else []
++    vector = np.zeros(SIZE)
++    vector[0 if column is None else 1] = 1
++    vector[2] = len(set(q) & set(c)) / max(1, len(set(c)))
++    vector[3] = float(bool(c) and (' ' + ' '.join(c) + ' ') in (' ' + ' '.join(q) + ' '))
++    candidate = 'column:' + column if column is not None else 'abstain'
++    terms = q + [' '.join(q[i:i+2]) for i in range(len(q)-1)]
++    for term in terms:
++        for value in (candidate + ':' + term, 'dtype:' + dtype + ':' + term):
++            slot = 8 + int.from_bytes(hashlib.sha256(value.encode()).digest()[:8], 'big') % (SIZE - 8)
++            vector[slot] = 1
++    return vector
++
++
++class ColumnRanker:
++    def __init__(self, weights=None, vocabulary=None):
++        if weights is None:
++            weights = [0.0] * SIZE
++            weights[0], weights[2], weights[3] = 1.0, 1.0, 2.0
++        if (not isinstance(weights, list) or len(weights) != SIZE
++                or any(type(v) not in (int, float) for v in weights)):
++            raise ValueError('Invalid resolver weights')
++        self.weights = np.array(weights, dtype=np.float64)
++        if not np.isfinite(self.weights).all() or np.any(np.abs(self.weights) > 1000):
++            raise ValueError('Invalid resolver weight range')
++        self.total = np.zeros(SIZE)
++        self.steps = 0
++        vocabulary = [] if vocabulary is None else vocabulary
++        if (not isinstance(vocabulary, list) or len(vocabulary) > 512
++                or any(not isinstance(v, str) or not re.fullmatch('[0-9a-f]{64}', v) for v in vocabulary)
++                or len(set(vocabulary)) != len(vocabulary)):
++            raise ValueError('Invalid resolver vocabulary')
++        self.vocabulary = set(vocabulary)
++
++    def matrix(self, question: str, candidates: list[str], dtypes: dict):
++        if (not isinstance(candidates, list) or not 1 <= len(candidates) <= 200
++                or len(set(candidates)) != len(candidates)):
++            raise ValueError('Invalid candidates')
++        choices = [None, *sorted(candidates)]
++        return choices, np.stack([features(question, c, str(dtypes.get(c, ''))) for c in choices])
++
++    def predict(self, question: str, candidates: list[str], dtypes: dict) -> tuple[str | None, float]:
++        choices, matrix = self.matrix(question, candidates, dtypes)
++        # A large score on familiar aggregation words is not evidence for a new
++        # business term. Novel content words must first receive reviewed labels.
++        schema_words = {word for name in dtypes for word in tokens(name)}
++        content = set(tokens(question)) - GRAMMAR - schema_words
++        if any(hashlib.sha256(word.encode()).hexdigest() not in self.vocabulary for word in content):
++            return None, 0.0
++        weights = self.total / self.steps if self.steps else self.weights
++        scores = matrix @ weights
++        winner = int(np.argmax(scores))
++        margin = float(scores[winner] - np.max(np.delete(scores, winner)))
++        return (choices[winner] if margin > MIN_MARGIN else None), margin
++
++    def update(self, question: str, candidates: list[str], dtypes: dict, truth: str | None):
++        choices, matrix = self.matrix(question, candidates, dtypes)
++        if truth not in choices:
++            raise ValueError('Reviewed choice is not a candidate')
++        self.vocabulary.update(hashlib.sha256(word.encode()).hexdigest() for word in set(tokens(question)) - GRAMMAR)
++        if len(self.vocabulary) > 512:
++            raise ValueError('Reviewed vocabulary exceeds bound')
++        winner = int(np.argmax(matrix @ self.weights))
++        self.weights *= 0.999
++        target = choices.index(truth)
++        if winner != target:
++            self.weights += matrix[target] - matrix[winner]
++        if not np.isfinite(self.weights).all() or np.any(np.abs(self.weights) > 1000):
++            raise ValueError('Resolver weight bound exceeded')
++        self.total += self.weights
++        self.steps += 1
++
++    def snapshot(self) -> list[float]:
++        return (self.total / self.steps if self.steps else self.weights).tolist()
+diff --git a/backend/app/learning/column_contract.py b/backend/app/learning/column_contract.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/learning/column_contract.py
+@@ -0,0 +1,107 @@
++"""Schema-only candidate constraints and reviewed, disjoint evaluation cases."""
++from dataclasses import replace
++import re
++import pandas as pd
++
++from backend.app.learning.column_ranker import ColumnRanker, question_hash
++from backend.app.learning.memory_contract import digest
++
++MISSING = 'Name exactly one numeric measure from the available fields; no default metric is selected.'
++OPERATIONS = {'sum', 'average', 'min', 'max', 'top', 'bottom', 'trend'}
++
++
++def schema_fields(schema: dict):
++    if not isinstance(schema, dict) or set(schema) != {'columns', 'dtypes'}:
++        raise ValueError('Invalid resolver schema')
++    columns, dtypes = schema['columns'], schema['dtypes']
++    if (not isinstance(columns, list) or not 1 <= len(columns) <= 200
++            or any(not isinstance(c, str) or not 1 <= len(c) <= 256 for c in columns)
++            or len(set(columns)) != len(columns) or set(dtypes) != set(columns)
++            or any(not isinstance(t, str) or len(t) > 100 for t in dtypes.values())):
++        raise ValueError('Invalid resolver schema fields')
++    numeric = [c for c in columns if pd.api.types.is_numeric_dtype(dtypes[c]) and not pd.api.types.is_bool_dtype(dtypes[c])]
++    dates = [c for c in columns if pd.api.types.is_datetime64_any_dtype(dtypes[c]) or re.search(r'(^|[_ -])(date|month|time|year)([_ -]|$)', c, re.I)]
++    candidates = [c for c in numeric if c not in dates and not re.search(r'(^|[_ -])(id|code|zip|phone|account)([_ -]|$)', c, re.I)]
++    return columns, numeric, dates, candidates
++
++
++def eligible(question, schema, plan, context=None) -> bool:
++    from backend.app.services.natural_language_analytics import NaturalLanguageAnalyticsService
++    _, numeric, _, candidates = schema_fields(schema)
++    return bool(candidates and not context and plan.operation in OPERATIONS and plan.metric is None
++        and plan.clarification_required and plan.validation_errors == [MISSING]
++        and not any(NaturalLanguageAnalyticsService._mentions(question.lower(), c) for c in numeric))
++
++
++def apply_choice(plan, choice, candidates):
++    if choice is None:
++        return plan
++    if choice not in candidates or plan.metric is not None or plan.validation_errors != [MISSING]:
++        raise ValueError('Unsafe resolver choice')
++    return replace(plan, metric=choice, clarification_required=False, validation_errors=[])
++
++
++def manifest(value: dict) -> dict:
++    if not isinstance(value, dict) or set(value) != {'format', 'schema', 'cases'} or type(value['format']) is not int or value['format'] != 1:
++        raise ValueError('Invalid reviewed manifest')
++    _, _, _, candidates = schema_fields(value['schema'])
++    cases = value['cases']
++    if not isinstance(cases, list) or not 40 <= len(cases) <= 500:
++        raise ValueError('Require at least 10 training and 30 held-out cases')
++    questions, groups = set(), {'train': set(), 'golden': set()}
++    counts = {'train': 0, 'golden': 0}
++    for row in cases:
++        if (not isinstance(row, dict) or set(row) != {'question', 'expected', 'split', 'group'}
++                or row['split'] not in counts or not isinstance(row['question'], str)
++                or not 1 <= len(row['question']) <= 2000 or not isinstance(row['group'], str)
++                or not 1 <= len(row['group']) <= 100 or row['expected'] not in [None, *candidates]):
++            raise ValueError('Invalid reviewed example')
++        hashed = question_hash(row['question'])
++        if hashed in questions:
++            raise ValueError('Duplicate/leaked question')
++        questions.add(hashed)
++        groups[row['split']].add(row['group'])
++        counts[row['split']] += 1
++    if counts['train'] < 10 or counts['golden'] < 30 or groups['train'] & groups['golden']:
++        raise ValueError('Insufficient or overlapping splits')
++    if sum(row['expected'] is None for row in cases if row['split'] == 'golden') < 5:
++        raise ValueError('Held-out evaluation requires five abstention cases')
++    return value
++
++
++def train(value: dict) -> ColumnRanker:
++    value = manifest(value)
++    _, _, _, candidates = schema_fields(value['schema'])
++    model = ColumnRanker()
++    for _ in range(20):
++        for row in value['cases']:
++            if row['split'] == 'train':
++                model.update(row['question'], candidates, value['schema']['dtypes'], row['expected'])
++    return ColumnRanker(model.snapshot(), sorted(model.vocabulary))
++
++
++def evaluate(value: dict, model: ColumnRanker, current: ColumnRanker | None = None) -> dict:
++    from backend.app.services.natural_language_analytics import NaturalLanguageAnalyticsService
++    value = manifest(value)
++    schema = value['schema']
++    columns, numeric, dates, candidates = schema_fields(schema)
++    parser = NaturalLanguageAnalyticsService()
++    results = []
++    for row in value['cases']:
++        if row['split'] != 'golden':
++            continue
++        plan = parser.parse(row['question'], columns, numeric, dates)
++        baseline = None if plan.clarification_required else plan.metric
++        candidate, live = baseline, baseline
++        if eligible(row['question'], schema, plan):
++            candidate = model.predict(row['question'], candidates, schema['dtypes'])[0]
++            if current:
++                live = current.predict(row['question'], candidates, schema['dtypes'])[0]
++        results.append({'question_hash': question_hash(row['question']), 'correct': candidate == row['expected'],
++            'baseline_correct': baseline == row['expected'], 'live_correct': live == row['expected']})
++    correct = sum(r['correct'] for r in results)
++    baseline = sum(r['baseline_correct'] for r in results)
++    live = sum(r['live_correct'] for r in results)
++    return {'manifest_digest': digest(value), 'cases': len(results), 'correct': correct,
++        'baseline_correct': baseline, 'live_correct': live,
++        'passed': correct == len(results) and correct > max(baseline, live), 'results': results}
+diff --git a/backend/app/learning/column_table.py b/backend/app/learning/column_table.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/learning/column_table.py
+@@ -0,0 +1,24 @@
++"""Append-only resolver shadow observations and privileged lifecycle audit."""
++from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Identity, Index, Integer, String, Table, Uuid, CheckConstraint, text
++from sqlalchemy.dialects.postgresql import JSONB
++from backend.app.models.base import Base
++
++resolver_events = Table('resolver_events', Base.metadata,
++    Column('id', BigInteger, Identity(), primary_key=True),
++    Column('tenant_id', Uuid, ForeignKey('tenants.id'), nullable=False),
++    Column('workspace_id', Uuid, ForeignKey('workspaces.id'), nullable=False, index=True),
++    Column('actor_id', Uuid, ForeignKey('users.id'), nullable=False, index=True),
++    Column('reviewer_id', Uuid, ForeignKey('users.id'), index=True),
++    Column('dataset_id', String(36), ForeignKey('datasets.dataset_id'), nullable=False, index=True),
++    Column('dataset_version', Integer, nullable=False),
++    Column('schema_hash', String(64), nullable=False),
++    Column('action', String(20), nullable=False),
++    Column('version', Integer, nullable=False),
++    Column('previous_version', Integer, nullable=False),
++    Column('model_digest', String(64)),
++    Column('runtime_digest', String(64), nullable=False),
++    Column('detail', JSONB, nullable=False),
++    Column('created_at', DateTime(timezone=True), server_default=text('now()'), nullable=False),
++    CheckConstraint('version >= 0 AND previous_version >= 0 AND dataset_version > 0', name='ck_resolver_versions'),
++    CheckConstraint("action IN ('stage','shadow','promote','rollback','disable')", name='ck_resolver_action'))
++Index('ix_resolver_events_tenant_version', resolver_events.c.tenant_id, resolver_events.c.version, resolver_events.c.action)
+diff --git a/backend/app/learning/column_store.py b/backend/app/learning/column_store.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/learning/column_store.py
+@@ -0,0 +1,64 @@
++"""Scoped resolver snapshots and release attestations; existing weights table reused."""
++from dataclasses import asdict
++from pathlib import Path
++import hashlib
++from uuid import UUID
++from sqlalchemy import select, func, cast, Text
++
++from backend.app.learning.column_ranker import ColumnRanker, FEATURE_VERSION
++from backend.app.learning.column_table import resolver_events as events
++from backend.app.learning.memory_contract import digest
++from backend.app.learning.tables import learner_weights as weights
++
++LEARNER = 'column_metric_resolver'
++
++
++def fingerprint():
++    directory = Path(__file__).parent
++    paths = [directory / name for name in ('column_ranker.py', 'column_contract.py', 'column_store.py',
++        'column_runtime.py', 'column_lifecycle.py', 'failure_memory.py')]
++    paths += [directory.parent / 'services/natural_language_analytics.py', directory.parent / 'api/v1/routes/chat.py']
++    return hashlib.sha256(b''.join(path.read_bytes() for path in paths)).hexdigest()
++
++
++def scope_dict(scope):
++    return {key: str(value) if isinstance(value, UUID) else value for key, value in asdict(scope).items()}
++
++
++def validate(payload):
++    if (not isinstance(payload, dict) or set(payload) != {'format', 'feature_version', 'scope', 'manifest_digest', 'weights', 'vocabulary'}
++            or type(payload['format']) is not int or payload['format'] != 1 or payload['feature_version'] != FEATURE_VERSION
++            or not isinstance(payload['scope'], dict) or set(payload['scope']) != {'tenant_id', 'workspace_id', 'actor_id', 'dataset_id', 'dataset_version', 'schema_hash'}
++            or not isinstance(payload['manifest_digest'], str) or len(payload['manifest_digest']) != 64):
++        raise ValueError('Invalid resolver snapshot')
++    ColumnRanker(payload['weights'], payload['vocabulary'])
++    return payload
++
++
++def condition(tenant):
++    return (weights.c.tenant_id == tenant) & (weights.c.learner == LEARNER)
++
++
++def read(db, tenant, version):
++    where = condition(tenant) & (weights.c.version == version)
++    size = db.scalar(select(func.octet_length(cast(weights.c.weights, Text))).where(where))
++    if size is None or size > 100_000:
++        raise ValueError('Missing/oversized resolver snapshot')
++    return validate(db.scalar(select(weights.c.weights).where(where)))
++
++
++def active(db, tenant):
++    return db.scalar(select(weights.c.version).where(condition(tenant), weights.c.is_active.is_(True))) or 0
++
++
++def attested(db, current, version, payload, action):
++    return db.scalar(select(events.c.id).where(events.c.tenant_id == current.tenant_id,
++        events.c.workspace_id == current.workspace_id, events.c.actor_id == current.actor_id,
++        events.c.dataset_id == current.dataset_id, events.c.dataset_version == current.dataset_version,
++        events.c.schema_hash == current.schema_hash, events.c.version == version, events.c.action == action,
++        events.c.model_digest == digest(payload), events.c.runtime_digest == fingerprint()).limit(1)) is not None
++
++
++def event(db, current, action, version, previous=0, payload=None, reviewer=None, detail=None):
++    db.execute(events.insert().values(**asdict(current), action=action, version=version, previous_version=previous,
++        model_digest=digest(payload) if payload else None, runtime_digest=fingerprint(), reviewer_id=reviewer, detail=detail or {}))
+diff --git a/backend/app/learning/column_lifecycle.py b/backend/app/learning/column_lifecycle.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/learning/column_lifecycle.py
+@@ -0,0 +1,121 @@
++"""Reviewed training, shadow prerequisites, held-out promotion and atomic rollback."""
++import copy
++import hashlib
++from uuid import UUID, uuid4
++
++from sqlalchemy import select, func, text
++from backend.app.models import Dataset
++from backend.app.learning.failure_memory import scope
++from backend.app.learning.lifecycle import operator
++from backend.app.learning.column_ranker import ColumnRanker, FEATURE_VERSION
++from backend.app.learning.column_contract import manifest, train, evaluate
++from backend.app.learning.column_store import (weights, events, LEARNER, condition, read, active,
++    attested, event, fingerprint, scope_dict)
++from backend.app.learning.memory_contract import digest
++
++
++def access(db, reviewer, dataset_id, dataset_version):
++    owner = db.scalar(select(Dataset.owner_id).where(Dataset.dataset_id == dataset_id))
++    if owner is None:
++        raise ValueError('Dataset unavailable')
++    current = scope(db, owner, dataset_id, dataset_version)
++    operator(db, reviewer, current.tenant_id)
++    return current
++
++
++def lock(db, tenant):
++    db.execute(text("SET LOCAL lock_timeout='2s'"))
++    db.execute(text("SET LOCAL statement_timeout='5s'"))
++    key = int.from_bytes(hashlib.sha256(f'{tenant}:{LEARNER}'.encode()).digest()[:8], 'big', signed=True)
++    db.execute(text('SELECT pg_advisory_xact_lock(:key)'), {'key': key})
++    db.execute(select(weights.c.id).where(condition(tenant)).with_for_update()).all()
++
++
++def state(db, tenant):
++    return active(db, tenant), db.scalar(select(func.max(events.c.id)).where(
++        events.c.tenant_id == tenant, events.c.action != 'shadow')) or 0
++
++
++def checked_manifest(value, expected_digest):
++    value = copy.deepcopy(manifest(value))
++    if digest(value) != expected_digest:
++        raise ValueError('Reviewed manifest changed')
++    return value
++
++
++def stage(factory, reviewer, dataset_id, dataset_version, value, expected_digest):
++    value = checked_manifest(value, expected_digest)
++    with factory() as db, db.begin():
++        current = access(db, reviewer, dataset_id, dataset_version)
++        if current.schema_hash != digest(value['schema']):
++            raise ValueError('Reviewed schema differs from dataset version')
++    source = fingerprint()
++    model = train(value)  # No DB transaction or lock during fitting.
++    payload = {'format': 1, 'feature_version': FEATURE_VERSION, 'scope': scope_dict(current),
++        'manifest_digest': expected_digest, 'weights': model.snapshot(), 'vocabulary': sorted(model.vocabulary)}
++    with factory() as db, db.begin():
++        if access(db, reviewer, dataset_id, dataset_version) != current or fingerprint() != source:
++            raise ValueError('Scope/code changed while training')
++        lock(db, current.tenant_id)
++        version = (db.scalar(select(func.max(weights.c.version)).where(condition(current.tenant_id))) or 0) + 1
++        db.execute(weights.insert().values(id=uuid4(), tenant_id=current.tenant_id, learner=LEARNER,
++            version=version, weights=payload, is_active=False))
++        event(db, current, 'stage', version, active(db, current.tenant_id), payload, UUID(str(reviewer)),
++            {'manifest_digest': expected_digest, 'training_cases': sum(r['split'] == 'train' for r in value['cases'])})
++    return {'version': version, 'active': False, 'model_digest': digest(payload)}
++
++
++def promote(factory, reviewer, dataset_id, dataset_version, version, expected_version, value, expected_digest):
++    value = checked_manifest(value, expected_digest)
++    source = fingerprint()
++    with factory() as db, db.begin():
++        current = access(db, reviewer, dataset_id, dataset_version)
++        before = state(db, current.tenant_id)
++        if before[0] != expected_version or version == expected_version:
++            raise ValueError('Active resolver changed or already selected')
++        payload = read(db, current.tenant_id, version)
++        if (payload['scope'] != scope_dict(current) or payload['manifest_digest'] != expected_digest
++                or current.schema_hash != digest(value['schema'])
++                or not attested(db, current, version, payload, 'stage')
++                or not attested(db, current, version, payload, 'shadow')):
++            raise ValueError('Missing compatible review/shadow evidence')
++        live = read(db, current.tenant_id, before[0]) if before[0] else None
++        if live is not None and (live['scope'] != scope_dict(current) or not attested(db, current, before[0], live, 'promote')):
++            raise ValueError('Disable incompatible active resolver first')
++    report = evaluate(value, ColumnRanker(payload['weights'], payload['vocabulary']),
++        ColumnRanker(live['weights'], live['vocabulary']) if live else None)
++    if not report['passed']:
++        return {'promoted': False, 'version': version, 'evaluation': report}
++    with factory() as db, db.begin():
++        if access(db, reviewer, dataset_id, dataset_version) != current:
++            raise ValueError('Authorization/schema changed during evaluation')
++        lock(db, current.tenant_id)
++        if (state(db, current.tenant_id) != before or fingerprint() != source
++                or read(db, current.tenant_id, version) != payload
++                or (live is not None and read(db, current.tenant_id, before[0]) != live)
++                or not attested(db, current, version, payload, 'stage')
++                or not attested(db, current, version, payload, 'shadow')):
++            raise ValueError('Resolver changed during evaluation')
++        db.execute(weights.update().where(condition(current.tenant_id)).values(is_active=False))
++        db.execute(weights.update().where(condition(current.tenant_id), weights.c.version == version).values(is_active=True))
++        event(db, current, 'promote', version, before[0], payload, UUID(str(reviewer)), report)
++    return {'promoted': True, 'version': version, 'evaluation': report}
++
++
++def rollback(factory, reviewer, dataset_id, dataset_version, version, expected_version):
++    if type(version) is not int or version < 0:
++        raise ValueError('Invalid resolver rollback version')
++    with factory() as db, db.begin():
++        current = access(db, reviewer, dataset_id, dataset_version)
++        lock(db, current.tenant_id)
++        previous = active(db, current.tenant_id)
++        if previous != expected_version:
++            raise ValueError('Active resolver changed')
++        payload = read(db, current.tenant_id, version) if version else None
++        if payload and (payload['scope'] != scope_dict(current) or not attested(db, current, version, payload, 'promote')):
++            raise ValueError('Rollback requires a previously approved compatible version')
++        db.execute(weights.update().where(condition(current.tenant_id)).values(is_active=False))
++        if version:
++            db.execute(weights.update().where(condition(current.tenant_id), weights.c.version == version).values(is_active=True))
++        event(db, current, 'rollback' if version else 'disable', version, previous, payload, UUID(str(reviewer)))
++    return {'version': version, 'previous_version': previous, 'rolled_back': True}
+diff --git a/backend/app/learning/column_runtime.py b/backend/app/learning/column_runtime.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/learning/column_runtime.py
+@@ -0,0 +1,70 @@
++"""Bounded schema-only resolver, shadow first and fail-open to original parsing."""
++from threading import BoundedSemaphore
++from sqlalchemy import create_engine, select, func, text
++from sqlalchemy.orm import Session
++from sqlalchemy.pool import NullPool
++
++from backend.app.core.config import get_settings
++from backend.app.core.database_target import bind_database_schema
++from backend.app.learning.evidence import enabled
++from backend.app.learning.failure_memory import scope
++from backend.app.learning.column_ranker import ColumnRanker, question_hash
++from backend.app.learning.column_contract import schema_fields, eligible, apply_choice
++from backend.app.learning.column_store import weights, condition, read, active, attested, event, scope_dict
++from backend.app.learning.memory_contract import digest
++
++_slots = BoundedSemaphore(2)
++
++
++def resolve(actor_id, question, schema, plan, context=None):
++    if not enabled() or not actor_id or not plan.dataset_id or not plan.dataset_version:
++        return plan
++    engine = None
++    acquired = False
++    try:
++        if not eligible(question, schema, plan, context):
++            return plan
++        acquired = _slots.acquire(blocking=False)
++        if not acquired:
++            return plan
++        _, _, _, candidates = schema_fields(schema)
++        settings = get_settings()
++        engine = create_engine(settings.postgres_dsn, poolclass=NullPool, hide_parameters=True,
++            connect_args={'connect_timeout': 2})
++        bind_database_schema(engine, settings.database_schema)
++        with Session(engine) as db, db.begin():
++            db.execute(text("SET LOCAL statement_timeout='300ms'"))
++            db.execute(text("SET LOCAL lock_timeout='100ms'"))
++            current = scope(db, actor_id, plan.dataset_id, plan.dataset_version)
++            if current.schema_hash != digest(schema):
++                return plan
++            live_version = active(db, current.tenant_id)
++            staged = db.scalar(select(func.max(weights.c.version)).where(condition(current.tenant_id), weights.c.is_active.is_(False)))
++            chosen = None
++            for version in dict.fromkeys(v for v in (staged, live_version) if v):
++                payload = read(db, current.tenant_id, version)
++                if payload['scope'] != scope_dict(current) or not attested(db, current, version, payload, 'stage'):
++                    continue
++                prediction, margin = ColumnRanker(payload['weights'], payload['vocabulary']).predict(question, candidates, schema['dtypes'])
++                event(db, current, 'shadow', version, live_version, payload, detail={
++                    'question_hash': question_hash(question), 'choice_hash': digest(prediction) if prediction else None,
++                    'margin': margin, 'abstained': prediction is None})
++                if version == live_version and attested(db, current, version, payload, 'promote'):
++                    chosen = prediction
++            return apply_choice(plan, chosen, candidates)
++    except Exception:
++        return plan
++    finally:
++        if engine is not None:
++            try:
++                engine.dispose()
++            except Exception:
++                pass
++        if acquired:
++            _slots.release()
++
++
++def scoped_resolver(actor_id):
++    if not enabled() or not actor_id:
++        return None
++    return lambda question, schema, plan, context: resolve(actor_id, question, schema, plan, context)
+diff --git a/migrations/versions/017_column_resolver.py b/migrations/versions/017_column_resolver.py
+new file mode 100644
+--- /dev/null
++++ b/migrations/versions/017_column_resolver.py
+@@ -0,0 +1,57 @@
++"""Add resolver audit only; existing tables and policies remain unchanged."""
++from alembic import op
++import sqlalchemy as sa
++from sqlalchemy.dialects.postgresql import JSONB
++
++revision = '017_column_resolver'
++down_revision = '016_failure_memory'
++branch_labels = None
++depends_on = None
++
++
++def upgrade():
++    op.create_table('resolver_events',
++        sa.Column('id', sa.BigInteger, sa.Identity(), primary_key=True),
++        sa.Column('tenant_id', sa.Uuid, sa.ForeignKey('tenants.id'), nullable=False),
++        sa.Column('workspace_id', sa.Uuid, sa.ForeignKey('workspaces.id'), nullable=False),
++        sa.Column('actor_id', sa.Uuid, sa.ForeignKey('users.id'), nullable=False),
++        sa.Column('reviewer_id', sa.Uuid, sa.ForeignKey('users.id')),
++        sa.Column('dataset_id', sa.String(36), sa.ForeignKey('datasets.dataset_id'), nullable=False),
++        sa.Column('dataset_version', sa.Integer, nullable=False),
++        sa.Column('schema_hash', sa.String(64), nullable=False),
++        sa.Column('action', sa.String(20), nullable=False),
++        sa.Column('version', sa.Integer, nullable=False),
++        sa.Column('previous_version', sa.Integer, nullable=False),
++        sa.Column('model_digest', sa.String(64)),
++        sa.Column('runtime_digest', sa.String(64), nullable=False),
++        sa.Column('detail', JSONB, nullable=False),
++        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
++        sa.CheckConstraint('version >= 0 AND previous_version >= 0 AND dataset_version > 0', name='ck_resolver_versions'),
++        sa.CheckConstraint("action IN ('stage','shadow','promote','rollback','disable')", name='ck_resolver_action'))
++    for column in ('workspace_id', 'actor_id', 'reviewer_id', 'dataset_id'):
++        op.create_index(f'ix_resolver_events_{column}', 'resolver_events', [column])
++    op.create_index('ix_resolver_events_tenant_version', 'resolver_events', ['tenant_id', 'version', 'action'])
++    op.execute('ALTER TABLE resolver_events ENABLE ROW LEVEL SECURITY')
++    op.execute('ALTER TABLE resolver_events FORCE ROW LEVEL SECURITY')
++    predicate = """tenant_id::text=current_setting('app.tenant_id',true)
++        AND workspace_id::text=current_setting('app.workspace_id',true)
++        AND actor_id::text=current_setting('app.actor_id',true)
++        AND EXISTS (
++          SELECT 1 FROM workspaces w JOIN tenants t ON t.id=w.tenant_id AND t.tenant_status='active'
++          JOIN tenant_memberships tm ON tm.tenant_id=t.id AND tm.active
++          JOIN users u ON u.id=tm.user_id AND u.is_active
++          JOIN workspace_memberships wm ON wm.workspace_id=w.id AND wm.user_id=u.id AND wm.active
++          WHERE w.id=resolver_events.workspace_id AND w.tenant_id=resolver_events.tenant_id
++          AND w.status='active' AND u.id=resolver_events.actor_id
++          AND tm.role IN ('viewer','analyst','admin','owner')
++          AND (tm.role IN ('owner','admin') OR wm.role IN ('viewer','analyst','admin','owner')))
++        AND EXISTS (
++          SELECT 1 FROM datasets d JOIN dataset_workspace_bindings b ON b.dataset_id=d.dataset_id
++          WHERE d.dataset_id=resolver_events.dataset_id AND b.workspace_id=resolver_events.workspace_id
++          AND d.owner_id=current_setting('app.actor_id',true) AND d.status NOT IN ('deleted','archived','purged'))"""
++    op.execute(f'CREATE POLICY resolver_read ON resolver_events FOR SELECT USING ({predicate})')
++    op.execute(f"CREATE POLICY resolver_shadow_insert ON resolver_events FOR INSERT WITH CHECK ({predicate} AND action='shadow' AND reviewer_id IS NULL)")
++
++
++def downgrade():
++    op.drop_table('resolver_events')
+diff --git a/backend/tests/test_perceptron_columns.py b/backend/tests/test_perceptron_columns.py
+new file mode 100644
+--- /dev/null
++++ b/backend/tests/test_perceptron_columns.py
+@@ -0,0 +1,323 @@
++"""Schema-only learning with real isolated PostgreSQL and deterministic execution."""
++import asyncio
++from copy import deepcopy
++from dataclasses import replace
++import json
++from pathlib import Path
++import subprocess
++import sys
++from uuid import uuid4
++
++import numpy as np
++import pytest
++from sqlalchemy import select, update, text
++
++from backend.tests.test_verified_learning_integration import environment, identity, dataset
++from backend.app.core.config import get_settings
++from backend.app.models import DatasetVersion
++from backend.app.learning import column_lifecycle as lifecycle, column_runtime as runtime, column_store as store
++from backend.app.learning.column_ranker import ColumnRanker, features
++from backend.app.learning.column_contract import manifest, train, evaluate, schema_fields, eligible
++from backend.app.learning.memory_contract import digest
++from backend.app.services.natural_language_analytics import NaturalLanguageAnalyticsService
++
++SCHEMA = {'columns': ['region', 'amount', 'cost'], 'dtypes': {'region': 'object', 'amount': 'int64', 'cost': 'int64'}}
++QUESTION = 'total receipts by region'
++
++
++def reviewed_cases():
++    cases = []
++    def add(question, expected, split, group):
++        cases.append(dict(question=question, expected=expected, split=split, group=group))
++    operations = ['total', 'sum', 'average', 'minimum', 'maximum']
++    for alias, target in [('receipts', 'amount'), ('expenses', 'cost')]:
++        for operation in operations:
++            add(f'{operation} {alias}', target, 'train', 'training-' + alias)
++            add(f'{operation} {alias} by region', target, 'golden', 'grouped-' + alias)
++            add(f'{operation} {target} by region', target, 'golden', 'explicit-' + alias)
++    for i, operation in enumerate(operations):
++        add(f'{operation} mystery', None, 'train', 'training-unknown')
++        add(f'{operation} vapor', None, 'golden', 'unknown')
++        add(f'{operation} receipts where region is west', None, 'golden', 'unsupported-filter')
++    return {'format': 1, 'schema': deepcopy(SCHEMA), 'cases': cases}
++
++
++@pytest.fixture
++def case(environment, tmp_path, monkeypatch):
++    monkeypatch.setattr(get_settings(), 'learning_enabled', True)
++    account = identity(environment)
++    ds = dataset(environment, account, tmp_path, 'region,amount,cost\na,100,10\na,1000,100\na,-20,2\na,100,10\n')
++    with environment['admin']() as db, db.begin():
++        db.execute(update(DatasetVersion).where(DatasetVersion.dataset_id == ds).values(metadata_snapshot=SCHEMA))
++    return environment, account, ds, reviewed_cases()
++
++
++def stage(case):
++    env, account, ds, value = case
++    return lifecycle.stage(env['admin'], account['user'], ds, 1, value, digest(value))['version']
++
++
++def plan(case, question=QUESTION):
++    _, _, ds, _ = case
++    columns, numeric, dates, _ = schema_fields(SCHEMA)
++    return replace(NaturalLanguageAnalyticsService().parse(question, columns, numeric, dates), dataset_id=ds, dataset_version=1)
++
++
++def resolve(case, question=QUESTION, **kwargs):
++    return runtime.resolve(case[1]['user'], question, SCHEMA, plan(case, question), **kwargs)
++
++
++def promote(case, version, expected=0):
++    env, account, ds, value = case
++    return lifecycle.promote(env['admin'], account['user'], ds, 1, version, expected, value, digest(value))
++
++
++def activate(case):
++    version = stage(case)
++    assert resolve(case).clarification_required  # Shadow must not apply the prediction.
++    result = promote(case, version)
++    assert result['promoted'], result
++    return version
++
++
++def test_numpy_training_and_disjoint_real_evaluator():
++    value = reviewed_cases()
++    model = train(value)
++    assert np.isfinite(model.weights).all()
++    assert model.predict(QUESTION, ['amount', 'cost'], SCHEMA['dtypes'])[0] == 'amount'
++    assert model.predict(QUESTION, ['cost', 'amount'], SCHEMA['dtypes']) == model.predict(QUESTION, ['amount', 'cost'], SCHEMA['dtypes'])
++    report = evaluate(value, model)
++    assert report['passed'], report
++    assert report['correct'] == report['cases'] == 30
++    assert not evaluate(value, model, model)['passed']  # Ties cannot promote.
++    assert ColumnRanker(model.snapshot(), sorted(model.vocabulary)).predict(QUESTION, ['amount', 'cost'], SCHEMA['dtypes'])[0] == 'amount'
++    assert model.predict('total neverreviewed by region', ['amount', 'cost'], SCHEMA['dtypes'])[0] is None
++
++
++@pytest.mark.parametrize('change', ['duplicate', 'group_overlap', 'invalid_target', 'no_abstention', 'too_small'])
++def test_manifest_rejects_leakage_and_unreviewed_choices(change):
++    value = reviewed_cases()
++    if change == 'duplicate':
++        value['cases'][-1]['question'] = value['cases'][0]['question']
++    elif change == 'group_overlap':
++        value['cases'][-1]['group'] = value['cases'][0]['group']
++    elif change == 'invalid_target':
++        value['cases'][-1]['expected'] = 'arbitrary formula'
++    elif change == 'no_abstention':
++        for row in value['cases']:
++            row['expected'] = 'amount'
++    else:
++        value['cases'] = value['cases'][:10]
++    with pytest.raises(ValueError):
++        manifest(value)
++
++
++def test_invalid_models_and_vectors():
++    for weights in ([float('nan')] * 512, [1001] * 512, [False] * 512, [0] * 513):
++        with pytest.raises(ValueError):
++            ColumnRanker(weights)
++    with pytest.raises(ValueError):
++        features('x' * 2001, 'amount')
++    with pytest.raises(ValueError):
++        features('total receipts ' + 'please ' * 64 + 'unreviewed', 'amount')
++    with pytest.raises(ValueError):
++        ColumnRanker().update('total x', ['amount'], SCHEMA['dtypes'], 'forged')
++
++
++def test_guard_preserves_explicit_ambiguous_filtered_and_context_requests(case):
++    activate(case)
++    for question in ('total amount by region', 'sum amount and cost', 'total receipts where region is west',
++                     'average order value', 'total profit', 'monthly receipts', 'count records by region'):
++        original = plan(case, question)
++        assert runtime.resolve(case[1]['user'], question, SCHEMA, original) == original
++    assert resolve(case, context=[{'content': 'total cost'}]) == plan(case)
++    schema = {'columns': ['region', 'customer_id', 'event_date', 'flag', 'amount'],
++        'dtypes': {'region': 'object', 'customer_id': 'int64', 'event_date': 'int64', 'flag': 'bool', 'amount': 'float64'}}
++    assert schema_fields(schema)[3] == ['amount']
++
++
++def test_shadow_promotion_rollback_and_private_evidence(case):
++    env, account, ds, value = case
++    version = stage(case)
++    with pytest.raises(ValueError):
++        promote(case, version)  # Cannot skip shadow.
++    assert resolve(case) == plan(case)
++    assert promote(case, version)['promoted']
++    assert resolve(case).metric == 'amount'
++    with env['admin']() as db:
++        payload = store.read(db, lifecycle.access(db, account['user'], ds, 1).tenant_id, version)
++        serialized = json.dumps(payload)
++        assert QUESTION not in serialized and 'receipts' not in serialized and 'expenses' not in serialized
++        rows = db.execute(select(store.events).where(store.events.c.dataset_id == ds)).mappings().all()
++        assert {'stage', 'shadow', 'promote'} <= {r['action'] for r in rows}
++        assert 'receipts' not in json.dumps([dict(r['detail']) for r in rows])
++    lifecycle.rollback(env['admin'], account['user'], ds, 1, 0, version)
++    assert resolve(case) == plan(case)
++    lifecycle.rollback(env['admin'], account['user'], ds, 1, version, 0)
++    assert resolve(case).metric == 'amount'
++
++
++def test_flag_off_and_db_outage_return_original(case, monkeypatch):
++    activate(case)
++    monkeypatch.setattr(get_settings(), 'learning_enabled', False)
++    monkeypatch.setattr(runtime, 'create_engine', lambda *a, **k: pytest.fail('Disabled resolver touched DB'))
++    assert runtime.scoped_resolver(case[1]['user']) is None
++    assert resolve(case) == plan(case)
++    monkeypatch.setattr(get_settings(), 'learning_enabled', True)
++    monkeypatch.setattr(runtime, 'create_engine', lambda *a, **k: (_ for _ in ()).throw(OSError('offline')))
++    assert resolve(case) == plan(case)
++
++
++def test_scope_version_schema_and_access_revocation(case, tmp_path):
++    from backend.app.core.workspace_authorization import workspace_memberships
++    env, account, ds, _ = case
++    activate(case)
++    outsider = identity(env)
++    assert runtime.resolve(outsider['user'], QUESTION, SCHEMA, plan(case)) == plan(case)
++    other = dataset(env, account, tmp_path)
++    original = replace(plan(case), dataset_id=other)
++    assert runtime.resolve(account['user'], QUESTION, SCHEMA, original) == original
++    original = replace(plan(case), dataset_version=99)
++    assert runtime.resolve(account['user'], QUESTION, SCHEMA, original) == original
++    changed = deepcopy(SCHEMA); changed['dtypes']['amount'] = 'float64'
++    assert runtime.resolve(account['user'], QUESTION, changed, plan(case)) == plan(case)
++    with env['admin']() as db, db.begin():
++        db.execute(workspace_memberships.update().where(workspace_memberships.c.user_id == account['user']).values(active=False))
++    assert resolve(case) == plan(case)
++
++
++def test_tampered_model_and_changed_source_fail_open(case, monkeypatch):
++    env, account, ds, _ = case
++    version = activate(case)
++    with monkeypatch.context() as patch:
++        patch.setattr(store, 'fingerprint', lambda: '0' * 64)
++        assert resolve(case) == plan(case)
++    with env['admin']() as db, db.begin():
++        current = lifecycle.access(db, account['user'], ds, 1)
++        payload = deepcopy(store.read(db, current.tenant_id, version))
++        payload['weights'][0] += 1
++        db.execute(store.weights.update().where(store.condition(current.tenant_id), store.weights.c.version == version).values(weights=payload))
++    assert resolve(case) == plan(case)
++
++
++def test_reviewer_and_runtime_role_cannot_forge_release(case):
++    env, account, ds, value = case
++    outsider = identity(env)
++    for reviewer, factory in ((outsider['user'], env['admin']), (account['user'], env['api'])):
++        with pytest.raises(Exception):
++            lifecycle.stage(factory, reviewer, ds, 1, value, digest(value))
++    version = stage(case)
++    with env['api']() as db, db.begin():
++        current = store.scope_dict(runtime.scope(db, account['user'], ds, 1))
++        assert db.execute(store.events.update().where(store.events.c.dataset_id == ds).values(action='promote')).rowcount == 0
++        assert db.execute(store.events.delete().where(store.events.c.dataset_id == ds)).rowcount == 0
++    with pytest.raises(Exception):
++        with env['api']() as db, db.begin():
++            current = runtime.scope(db, account['user'], ds, 1)
++            store.event(db, current, 'promote', version, reviewer=account['user'])
++
++
++def test_manifest_changed_and_stale_version_refused(case):
++    env, account, ds, value = case
++    version = stage(case)
++    resolve(case)
++    changed = deepcopy(value); changed['cases'][-1]['question'] += ' please'
++    with pytest.raises(ValueError):
++        lifecycle.promote(env['admin'], account['user'], ds, 1, version, 0, changed, digest(changed))
++    with pytest.raises(ValueError):
++        promote(case, version, expected=99)
++    with pytest.raises(ValueError):
++        lifecycle.rollback(env['admin'], account['user'], ds, 1, version, 0)
++
++
++def test_actual_chat_uses_deterministic_arithmetic_without_training(case, monkeypatch):
++    env, account, ds, _ = case
++    activate(case)
++    monkeypatch.setattr(ColumnRanker, 'update', lambda *a, **k: pytest.fail('Request trained model'))
++    response = env['client'].post('/api/v1/chat', headers=account['headers'], json={
++        'message': QUESTION, 'dataset_id': ds, 'workspace_id': str(account['workspace'])})
++    assert response.status_code == 200, response.text
++    assert response.json()['plan']['metric'] == 'amount'
++    assert response.json()['data'] == [{'region': 'a', 'amount': 1180}]
++    assert response.json()['kpis']['total'] == 1180
++    assert response.json()['chart']['points'] == [{'label': 'a', 'value': 1180.0}]
++
++
++def test_cli_status_and_disable(case):
++    _, account, ds, _ = case
++    version = activate(case)
++    script = Path(__file__).resolve().parents[2] / 'scripts/perceptron_columns.py'
++    common = ['--reviewer-id', str(account['user']), '--dataset-id', ds, '--dataset-version', '1']
++    result = subprocess.run([sys.executable, str(script), 'status', *common], capture_output=True, text=True)
++    assert result.returncode == 0, result.stderr
++    assert json.loads(result.stdout)['active_version'] == version
++    result = subprocess.run([sys.executable, str(script), 'rollback', *common, '--version', '0', '--expected-version', str(version)], capture_output=True, text=True)
++    assert result.returncode == 0, result.stderr
++    assert resolve(case) == plan(case)
++
++
++def test_failed_evaluation_never_activates(case):
++    env, account, ds, value = case
++    value['cases'][1]['expected'] = 'cost'  # Deliberately conflicting reviewed golden label.
++    version = stage(case)
++    resolve(case)
++    result = promote(case, version)
++    assert not result['promoted'] and result['evaluation']['correct'] < result['evaluation']['cases']
++    with env['admin']() as db:
++        current = lifecycle.access(db, account['user'], ds, 1)
++        assert store.active(db, current.tenant_id) == 0
++
++
++def test_concurrent_staging_allocates_distinct_versions(case):
++    from concurrent.futures import ThreadPoolExecutor
++    with ThreadPoolExecutor(max_workers=2) as executor:
++        versions = list(executor.map(lambda _: stage(case), range(2)))
++    assert sorted(versions) == [1, 2]
++
++
++@pytest.mark.parametrize('change', ['release', 'revocation'])
++def test_changes_during_evaluation_block_activation(case, monkeypatch, change):
++    from backend.app.core.workspace_authorization import workspace_memberships
++    env, account, ds, _ = case
++    version = stage(case); resolve(case)
++    original = lifecycle.evaluate
++    def changed(*args, **kwargs):
++        report = original(*args, **kwargs)
++        if change == 'release':
++            lifecycle.rollback(env['admin'], account['user'], ds, 1, 0, 0)
++        else:
++            with env['admin']() as db, db.begin():
++                db.execute(workspace_memberships.update().where(workspace_memberships.c.user_id == account['user']).values(active=False))
++        return report
++    monkeypatch.setattr(lifecycle, 'evaluate', changed)
++    with pytest.raises(Exception):
++        promote(case, version)
++    with env['admin']() as db:
++        assert not db.scalar(select(store.weights.c.is_active).where(store.weights.c.learner == store.LEARNER,
++            store.weights.c.weights['scope']['dataset_id'].astext == ds))
++
++
++def test_audit_failure_rolls_back_activation(case, monkeypatch):
++    env, account, ds, _ = case
++    version = stage(case); resolve(case)
++    def broken(*args, **kwargs):
++        raise RuntimeError('Synthetic audit storage failure')
++    monkeypatch.setattr(lifecycle, 'event', broken)
++    with pytest.raises(RuntimeError):
++        promote(case, version)
++    with env['admin']() as db:
++        current = lifecycle.access(db, account['user'], ds, 1)
++        assert store.active(db, current.tenant_id) == 0
++
++
++def test_bounded_capacity_and_schema_mismatch_skip_selection(case):
++    assert runtime._slots.acquire(blocking=False)
++    assert runtime._slots.acquire(blocking=False)
++    try:
++        assert resolve(case) == plan(case)
++    finally:
++        runtime._slots.release(); runtime._slots.release()
++    env, account, ds, value = case
++    value['schema']['dtypes']['amount'] = 'float64'
++    with pytest.raises(ValueError):
++        lifecycle.stage(env['admin'], account['user'], ds, 1, value, digest(value))
+diff --git a/scripts/perceptron_columns.py b/scripts/perceptron_columns.py
+new file mode 100644
+--- /dev/null
++++ b/scripts/perceptron_columns.py
+@@ -0,0 +1,79 @@
++"""Operator-only column resolver training, evaluation, promotion and rollback."""
++import argparse
++import json
++from pathlib import Path
++import sys
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT))
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument('command', choices=('stage', 'evaluate', 'promote', 'rollback', 'status'))
++    parser.add_argument('--reviewer-id', required=True)
++    parser.add_argument('--dataset-id', required=True)
++    parser.add_argument('--dataset-version', required=True, type=int)
++    parser.add_argument('--version', type=int)
++    parser.add_argument('--expected-version', type=int)
++    parser.add_argument('--manifest', type=Path)
++    parser.add_argument('--manifest-sha256')
++    parser.add_argument('--reviewed', action='store_true')
++    args = parser.parse_args()
++    if args.command in ('stage', 'evaluate', 'promote') and not (args.manifest and args.manifest_sha256 and args.reviewed):
++        parser.error('Reviewed manifest and its canonical SHA-256 are required')
++    if args.command in ('evaluate', 'promote', 'rollback') and args.version is None:
++        parser.error('Version required')
++    if args.command in ('promote', 'rollback') and args.expected_version is None:
++        parser.error('Expected active version required (0 means baseline)')
++    engine = None
++    try:
++        from sqlalchemy import create_engine, select
++        from sqlalchemy.orm import sessionmaker
++        from sqlalchemy.pool import NullPool
++        from backend.app.core.config import get_settings
++        from backend.app.core.database_target import bind_database_schema
++        from backend.app.learning import column_lifecycle as lifecycle, column_store as store
++        from backend.app.learning.column_contract import evaluate
++        from backend.app.learning.column_ranker import ColumnRanker
++        settings = get_settings()
++        engine = create_engine(settings.postgres_dsn, poolclass=NullPool, hide_parameters=True, connect_args={'connect_timeout': 2})
++        bind_database_schema(engine, settings.database_schema)
++        factory = sessionmaker(engine)
++        common = (factory, args.reviewer_id, args.dataset_id, args.dataset_version)
++        value = None
++        if args.manifest:
++            if args.manifest.stat().st_size > 1_000_000:
++                raise ValueError('Manifest too large')
++            value = lifecycle.checked_manifest(json.loads(args.manifest.read_bytes()), args.manifest_sha256)
++        if args.command == 'stage':
++            result = lifecycle.stage(*common, value, args.manifest_sha256)
++        elif args.command == 'promote':
++            result = lifecycle.promote(*common, args.version, args.expected_version, value, args.manifest_sha256)
++        elif args.command == 'rollback':
++            result = lifecycle.rollback(*common, args.version, args.expected_version)
++        else:
++            with factory() as db, db.begin():
++                current = lifecycle.access(db, args.reviewer_id, args.dataset_id, args.dataset_version)
++                if args.command == 'status':
++                    result = {'active_version': store.active(db, current.tenant_id), 'versions': [dict(row) for row in db.execute(
++                        select(store.weights.c.version, store.weights.c.is_active).where(store.condition(current.tenant_id))
++                        .order_by(store.weights.c.version)).mappings()]}
++                else:
++                    payload = store.read(db, current.tenant_id, args.version)
++                    if payload['scope'] != store.scope_dict(current) or payload['manifest_digest'] != args.manifest_sha256:
++                        raise ValueError('Scope/manifest mismatch')
++            if args.command == 'evaluate':
++                result = evaluate(value, ColumnRanker(payload['weights'], payload['vocabulary']))
++        print(json.dumps(result, allow_nan=False))
++        return 1 if result.get('promoted') is False or result.get('passed') is False else 0
++    except Exception:
++        print('Resolver command refused: check authorization, reviewed splits, schema, version and shadow evidence.', file=sys.stderr)
++        return 2
++    finally:
++        if engine is not None:
++            engine.dispose()
++
++
++if __name__ == '__main__':
++    raise SystemExit(main())
+diff --git a/scripts/verify_column_resolver_migration.py b/scripts/verify_column_resolver_migration.py
+new file mode 100644
+--- /dev/null
++++ b/scripts/verify_column_resolver_migration.py
+@@ -0,0 +1,58 @@
++"""Verify Phase 6 upgrade/downgrade/upgrade in the isolated database only."""
++from pathlib import Path
++import os
++import sys
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT))
++
++
++def main():
++    from sqlalchemy import create_engine, inspect, text
++    from sqlalchemy.engine import make_url
++    from alembic import command
++    from alembic.config import Config
++    from backend.app.core.config import Settings, get_settings
++    Settings.model_config = {**Settings.model_config, "env_file": None}
++    get_settings.cache_clear()
++    target = make_url(os.environ["DATABASE_URL"])
++    if (target.database != "analyst_setup_test" or target.username != "setup"
++            or target.host != "postgres" or os.environ.get("ENVIRONMENT") != "test"):
++        raise SystemExit("Refusing migration roundtrip outside isolated setup database")
++    engine = create_engine(target)
++    config = Config(str(ROOT / "alembic.ini"))
++    config.set_main_option("script_location", str(ROOT / "migrations"))
++
++    def snapshot():
++        with engine.connect() as db:
++            inspector = inspect(db)
++            result = {}
++            for name in inspector.get_table_names():
++                if name in {"resolver_events", "alembic_version"}:
++                    continue
++                quoted = engine.dialect.identifier_preparer.quote(name)
++                result[name] = {
++                    "columns": [(col["name"], str(col["type"]), col["nullable"]) for col in inspector.get_columns(name)],
++                    "pk": inspector.get_pk_constraint(name), "fk": inspector.get_foreign_keys(name),
++                    "indexes": inspector.get_indexes(name),
++                    "count": db.scalar(text(f"SELECT count(*) FROM {quoted}")),
++                    "policies": db.execute(text("SELECT policyname, cmd, qual, with_check FROM pg_policies WHERE schemaname=current_schema() AND tablename=:name ORDER BY policyname"), {"name": name}).all(),
++                }
++            return result
++
++    before = snapshot()
++    command.upgrade(config, "017_column_resolver")
++    assert "resolver_events" in inspect(engine).get_table_names()
++    assert snapshot() == before
++    command.downgrade(config, "016_failure_memory")
++    assert "resolver_events" not in inspect(engine).get_table_names()
++    assert snapshot() == before
++    command.upgrade(config, "017_column_resolver")
++    assert "resolver_events" in inspect(engine).get_table_names()
++    assert snapshot() == before
++    engine.dispose()
++    print(f"PASS: upgrade / downgrade / upgrade; {len(before)} existing tables unchanged, including policies and row counts")
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/scripts/verify_column_resolver_persistence.py b/scripts/verify_column_resolver_persistence.py
+new file mode 100644
+--- /dev/null
++++ b/scripts/verify_column_resolver_persistence.py
+@@ -0,0 +1,49 @@
++"""Synthetic resolver release survives isolated PostgreSQL restart; no live writes."""
++import json
++import os
++from pathlib import Path
++import sys
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT))
++
++
++def main():
++    from sqlalchemy import create_engine, update
++    from sqlalchemy.engine import make_url
++    from sqlalchemy.orm import sessionmaker
++    target = make_url(os.environ['DATABASE_URL'])
++    assert target.database == 'analyst_setup_test' and target.username == 'setup' and target.host == 'postgres'
++    assert os.environ.get('ENVIRONMENT') == 'test'
++    from backend.app.core.config import Settings, get_settings
++    Settings.model_config = {**Settings.model_config, 'env_file': None}
++    get_settings.cache_clear()
++    get_settings().learning_enabled = True
++    from backend.app.models import DatasetVersion
++    from backend.tests.test_verified_learning_integration import identity, dataset
++    from backend.tests.test_perceptron_columns import SCHEMA, QUESTION, reviewed_cases, stage, resolve, promote
++    engine = create_engine(target)
++    env = {'admin': sessionmaker(engine, expire_on_commit=False), 'actors': set()}
++    state_path = Path('/verification/phase6-persistence.json')
++    if sys.argv[1] == 'seed':
++        account = identity(env)
++        ds = dataset(env, account, Path('/verification'), 'region,amount,cost\na,100,10\na,1000,100\na,-20,2\na,100,10\n')
++        with env['admin']() as db, db.begin():
++            db.execute(update(DatasetVersion).where(DatasetVersion.dataset_id == ds).values(metadata_snapshot=SCHEMA))
++        case = (env, account, ds, reviewed_cases())
++        version = stage(case)
++        assert resolve(case).clarification_required
++        result = promote(case, version)
++        assert result['promoted'], result
++        state_path.write_text(json.dumps({'actor': str(account['user']), 'dataset': ds, 'version': version}))
++    else:
++        assert sys.argv[1] == 'check'
++    state = json.loads(state_path.read_text())
++    case = (env, {'user': state['actor']}, state['dataset'], reviewed_cases())
++    assert resolve(case).metric == 'amount'
++    engine.dispose()
++    print('PASS: approved resolver selected amount in a fresh process (' + sys.argv[1] + ')')
++
++
++if __name__ == '__main__':
++    main()

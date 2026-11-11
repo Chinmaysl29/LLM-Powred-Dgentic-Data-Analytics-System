@@ -43,7 +43,7 @@ class DatasetRepository:
 
     def get(self, dataset_id: str) -> Dataset | None:
         """Retrieve a single Dataset record by its unique dataset_id."""
-        stmt = select(Dataset).where(Dataset.dataset_id == dataset_id)
+        stmt = select(Dataset).where(Dataset.dataset_id == dataset_id, Dataset.status != 'deleted')
         if self.owner_id is not None:
             stmt = stmt.where(Dataset.owner_id == self.owner_id)
         dataset = self.db.scalars(stmt).first()
@@ -57,6 +57,7 @@ class DatasetRepository:
         """List Dataset records with pagination ordered by creation time descending."""
         stmt = (
             select(Dataset)
+            .where(Dataset.status != 'deleted')
             .where(Dataset.owner_id == self.owner_id if self.owner_id is not None else True)
             .order_by(Dataset.created_at.desc())
             .offset(skip)

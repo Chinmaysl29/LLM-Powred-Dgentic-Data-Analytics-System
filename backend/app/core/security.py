@@ -9,6 +9,7 @@ Supports:
 import json
 import logging
 import time
+from uuid import uuid4
 import urllib.error
 import urllib.request
 from datetime import datetime, timedelta, timezone
@@ -107,7 +108,7 @@ def create_access_token(
     expire = datetime.now(timezone.utc) + (
         expires_delta or timedelta(minutes=settings.access_token_expire_minutes)
     )
-    to_encode.update({"exp": expire, "iat": datetime.now(timezone.utc), "token_type": "access"})
+    to_encode.update({"exp": expire, "iat": datetime.now(timezone.utc), "token_type": "access", "jti": str(uuid4())})
     return jwt.encode(
         to_encode,
         settings.jwt_secret_key.get_secret_value(),
@@ -117,6 +118,10 @@ def create_access_token(
 
 def verify_token(token: str, settings: Settings | None = None) -> dict[str, Any]:
     """Decode and validate a JWT token against Supabase JWKS or local HMAC secret."""
+    from backend.security.auth_service import auth_service
+    if auth_service.is_revoked(token):
+        raise HTTPException(status_code=401, detail="Invalid or expired authentication token",
+                            headers={"WWW-Authenticate": "Bearer"})
     if settings is None:
         settings = get_settings()
 
@@ -167,7 +172,7 @@ def verify_token(token: str, settings: Settings | None = None) -> dict[str, Any]
     )
 
 
-async def get_current_user(
+def get_current_user(
     request: Request,
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     db: Session = Depends(get_db_session),
@@ -175,6 +180,8 @@ async def get_current_user(
     """FastAPI dependency that extracts and validates the current user from a JWT.
 
     Returns the User ORM object. Supports automatic provisioning for Supabase accounts.
+    Database and JWKS operations are synchronous, so FastAPI runs this dependency
+    in its bounded thread pool rather than blocking the API event loop.
     """
     from backend.app.models.user import User
 
@@ -186,6 +193,10 @@ async def get_current_user(
         )
 
     payload = verify_token(credentials.credentials)
+    from backend.security.token_revocations import is_revoked
+    if is_revoked(db, credentials.credentials):
+        raise HTTPException(401, 'Invalid or expired authentication token',
+                            headers={"WWW-Authenticate": "Bearer"})
     user_id: str | None = payload.get("sub")
     if user_id is None:
         raise HTTPException(

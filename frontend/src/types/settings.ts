@@ -20,12 +20,7 @@ export type LanguageCode = 'en';
 export type DateFormatOption = 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
 export type NumberFormatOption = '1,234.56' | '1.234,56';
 export type LandingPageOption =
-  | '/dashboard'
-  | '/analysis'
-  | '/datasets'
-  | '/visualizations'
-  | '/insights'
-  | '/reports';
+  '/dashboard' | '/analysis' | '/datasets' | '/visualizations' | '/insights' | '/reports';
 
 export interface GeneralSettings {
   language: LanguageCode;

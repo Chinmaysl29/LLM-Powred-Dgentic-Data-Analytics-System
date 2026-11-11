@@ -1,0 +1,52 @@
+{
+  "suite_version": "final-accuracy-v1",
+  "declared_before_new_implementation": true,
+  "policy": "All mandatory checks must pass; missing or blocked evidence is not a pass. No live model promotion from synthetic data.",
+  "tolerances": {"money_and_integer_fixtures": "exact Decimal/integer equality", "percent_change": "six declared decimal places; zero baseline undefined", "cross_engine_float": {"absolute": 1e-9, "relative": 1e-9}, "security_failures_allowed": 0, "partial_publications_allowed": 0},
+  "mandatory": [
+    {"id": "SEMANTICS", "case": "gross/net ambiguity, immutable definition binding, revocation at execution/publication", "expected": "clarify or reject; historical version retained"},
+    {"id": "JOIN", "case": "orders 100+200; two refunds 10+5 against first order", "expected": {"gross": "300", "refunds": "15", "net": "285", "reject_naive": "385"}},
+    {"id": "COUNTEREXAMPLE", "case": "count refund events with order-level repair available", "expected": 2},
+    {"id": "WEIGHTED", "case": "one row 100, nine rows 0", "expected_mean": "10"},
+    {"id": "PRECISION", "case": "decimal sums, leading-zero/large IDs, all-null/zero/overflow, periods and units", "expected": "declared exact semantics or explicit rejection"},
+    {"id": "INGESTION", "case": "CSV options, XLSX sheet/header/formula cache, JSON absent/null/nesting, Parquet schema", "expected": "bounded parsing; explicit policy; immutable originals"},
+    {"id": "COVERAGE", "case": "duplicate beyond preview; independent health status and report impact", "expected": "full required check detects duplicate; no sampled global-pass claim"},
+    {"id": "RESOURCES", "case": "DuckDB and neural shared admission; disk/memory/time/cancel failure", "expected": "one heavy slot; capacity state; no partial result"},
+    {"id": "REPLAY", "case": "duplicate request, stale lease, interrupted publication, restart", "expected": "one committed artifact; stale attempt cannot publish"},
+    {"id": "CLEANING", "case": "reviewed preview, typed operations, full reconciliation, concurrent undo", "expected": "source unchanged; exact approval binding; conflict on stale pointer"},
+    {"id": "LABELS", "case": "unchosen actions, praise, timeout, revised labels", "expected": "unknown remains unknown; independent stage outcomes; revisions invalidate manifests"},
+    {"id": "LEAKAGE", "case": "cross-split decisions, near-duplicates, future features, reused final set", "expected": "reject contaminated enrollment/evaluation; train-only preprocessing"},
+    {"id": "NEURAL", "case": "real CPU logistic/MLP training, JSON reload and inference", "expected": "nonzero trained parameters, matching preprocessing, executable reload"},
+    {"id": "REPEATED", "case": "fresh compatible batch plus older cases, fresh held-out campaign", "expected": "new immutable candidate, old-category evaluation, no mutation of live weights"},
+    {"id": "PROMOTION", "case": "worse candidate, insufficient evidence, corrupt/incompatible bundle", "expected": "baseline fallback; no false improvement; compatible rollback"},
+    {"id": "AUTHORIZATION", "case": "foreign IDs, revoked grants/recipes, stale cache, hostile SQL/files/feedback", "expected": "deny/ineligible; no private leakage or unsafe execution"},
+    {"id": "NARRATIVE", "case": "wrong sign/unit/percentage/denominator or unsupported numeric claim", "expected": "official publication blocked or deterministically rebuilt"},
+    {"id": "DOWNLOAD", "case": "authenticated fresh session, actual PDF parse/render, API/worker restart", "expected": "authorized artifact opens with expected value and provenance"},
+    {"id": "COMPARISON", "case": "1000 to 800; zero/missing/negative baselines; incompatible definitions", "expected": {"delta": "-200", "percent": "-20", "zero_percent": null, "incompatible": "explicit mismatch"}},
+    {"id": "WORKFLOW", "case": "approved typed steps, manual run, disabled controlled-clock schedule, recovery", "expected": "correct reviewed artifact; no duplicate publication; current permission checks"},
+    {"id": "FORECAST", "case": "time-aware holdout against naive baseline", "expected": "measured error/coverage and limits; no future leakage"},
+    {"id": "CAPACITY", "case": "increasing bounded join/group/sort/window/ingestion/export workloads and spill attempt", "expected": "correct measured outputs or explicit capacity failure; actual RSS/temp disk recorded"},
+    {"id": "REGRESSION", "case": "complete backend, frontend checks, real integration/browser journey", "expected": "zero unresolved mandatory failures; existing core flows retained"}
+  ],
+  "optional_configured_services": [
+    {"id": "HOSTED_LLM", "requires": "configured authorized provider and explicit bounded cost budget", "status": "not_run"},
+    {"id": "HOSTED_SUPABASE", "requires": "authorized hosted test account/project", "status": "not_run"},
+    {"id": "CUSTOMER_POSTGRES", "requires": "authorized read-only TLS source; local synthetic TLS source may verify implementation", "status": "not_run"}
+  ],
+  "observed_results": {
+    "total_tests": 441,
+    "passed": 440,
+    "skipped": 1,
+    "failed": 0,
+    "errors": 0,
+    "optional_skipped_fixture": "CUSTOMER_POSTGRES (test_dataplane_postgres.py::test_postgres_tls_source_with_ca_certificate)",
+    "duckdb_benchmark_1m_rows": {
+      "generate_seconds": 0.199,
+      "query_elapsed_ms": 14.646,
+      "peak_rss_mb": 100.8,
+      "oracle_passed": true
+    },
+    "migration_verification": "passed (upgrade/idempotent/downgrade/guards)",
+    "status": "All mandatory checks passed; zero unresolved failures"
+  }
+}

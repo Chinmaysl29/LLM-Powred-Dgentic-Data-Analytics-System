@@ -1,0 +1,251 @@
+.vl-page {
+  max-width: 1600px;
+}
+.vl-page .page-title,
+.vl-row,
+.vl-toolbar,
+.vl-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.vl-toolbar {
+  padding: 18px 0;
+  border-block: 1px solid var(--border-color, #d9ddd8);
+}
+.vl-status {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.vl-muted,
+.vl-panel > p {
+  color: var(--text-secondary, #61685f);
+  font-size: 13px;
+  line-height: 1.65;
+}
+.vl-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 22px 0;
+  flex-wrap: wrap;
+}
+.vl-page button {
+  cursor: pointer;
+  border: 1px solid var(--border-color, #d9ddd8);
+  border-radius: 7px;
+  padding: 9px 14px;
+  background: var(--surface-color, #fff);
+  color: inherit;
+  font: inherit;
+}
+.vl-tabs button[aria-pressed='true'],
+.vl-page .btn--primary {
+  background: var(--text-primary, #23382c);
+  color: #fff;
+}
+.vl-page button:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+.vl-page :is(button, select, input, textarea, summary):focus-visible {
+  outline: 3px solid #3d8364;
+  outline-offset: 3px;
+}
+.vl-grid {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.8fr) minmax(400px, 1.2fr);
+  gap: 22px;
+  align-items: start;
+}
+.vl-panel {
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid var(--border-color, #d9ddd8);
+  border-radius: 12px;
+  background: var(--surface-color, #fff);
+}
+.vl-panel h2 {
+  margin: 0 0 14px;
+  font-size: 21px;
+}
+.vl-panel h3 {
+  margin: 25px 0 12px;
+}
+.vl-panel h4 {
+  margin: 20px 0 8px;
+}
+.vl-page label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  margin-bottom: 13px;
+}
+.vl-page :is(input, select, textarea) {
+  width: 100%;
+  min-width: 0;
+  padding: 10px;
+  background: var(--surface-color, #fff);
+  color: inherit;
+  border: 1px solid var(--border-color, #cbd2c9);
+  border-radius: 6px;
+  font: inherit;
+}
+.vl-page textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+.vl-toolbar label {
+  min-width: 230px;
+  margin: 0;
+}
+.vl-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 14px;
+}
+.vl-page details {
+  margin: 18px 0;
+  border-top: 1px solid var(--border-color, #d9ddd8);
+  padding-top: 16px;
+}
+.vl-page summary {
+  cursor: pointer;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+.vl-list {
+  list-style: none;
+  padding: 0;
+}
+.vl-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-color, #e4e7e2);
+  font-size: 13px;
+}
+.vl-page .vl-link {
+  text-align: left;
+  border: 0;
+  padding: 2px;
+  text-decoration: underline;
+  background: transparent;
+}
+.vl-progress {
+  padding: 0;
+  list-style-position: inside;
+}
+.vl-progress li {
+  padding: 8px 0;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border-color, #e4e7e2);
+}
+.vl-progress strong {
+  float: right;
+  font-size: 12px;
+}
+.vl-checks {
+  list-style: none;
+  padding: 0;
+  font-size: 13px;
+}
+.vl-checks li {
+  display: flex;
+  align-items: start;
+  gap: 14px;
+  padding: 10px 0;
+}
+.vl-checks strong {
+  flex: 0 0 50px;
+}
+.vl-error,
+.vl-notice {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  margin: 18px 0;
+  border-radius: 8px;
+  background: #fff1e6;
+  color: #723b18;
+}
+.vl-error {
+  background: #fff0ed;
+  color: #8d2d20;
+}
+.vl-scroll {
+  overflow-x: auto;
+}
+.vl-page table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.vl-page :is(td, th) {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color, #d9ddd8);
+}
+.vl-page code,
+.vl-hash {
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.vl-lesson-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.7fr) minmax(300px, 1.3fr);
+  gap: 28px;
+}
+.vl-evaluation {
+  padding-block: 22px;
+  border-top: 1px solid var(--border-color, #d9ddd8);
+  margin-top: 24px;
+}
+.vl-page .vl-check-label {
+  flex-direction: row;
+  align-items: center;
+}
+.vl-check-label input {
+  width: auto;
+}
+.vl-page fieldset {
+  border: 1px solid var(--border-color, #d9ddd8);
+  padding: 18px;
+  margin-top: 20px;
+}
+.vl-chart {
+  margin: 22px 0;
+}
+.vl-chart > div {
+  display: grid;
+  grid-template-columns: minmax(80px, 1fr) 2fr minmax(50px, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 5px 0;
+  font-size: 13px;
+}
+.vl-chart meter {
+  width: 100%;
+  height: 18px;
+}
+@media (max-width: 1000px) {
+  .vl-grid,
+  .vl-lesson-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .vl-fields {
+    grid-template-columns: 1fr;
+  }
+  .vl-panel {
+    padding: 16px;
+  }
+  .vl-error {
+    flex-wrap: wrap;
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "checks": [
+    "An explicit expiring dataset grant allows a separate viewer to approve the submitted definition with self-approval disabled",
+    "Actual calculation drawer and exported comparison agree on independently expected 35 and zero delta",
+    "A separately granted reviewer approves the immutable workflow and output before the owner can download the PDF; schedule stays disabled",
+    "Owner revokes the explicit dataset grant while historical output approval remains retained",
+    "Desktop and mobile render without uncaught browser errors or horizontal page overflow"
+  ]
+}

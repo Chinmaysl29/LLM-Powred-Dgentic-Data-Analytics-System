@@ -12,9 +12,9 @@ const BARS_DATA = [
   { label: 'Jan', value: 42, isHighlight: false },
   { label: 'Feb', value: 68, isHighlight: false },
   { label: 'Mar', value: 54, isHighlight: false },
-  { label: 'Apr', value: 83, isHighlight: true },  // Peak highlight
+  { label: 'Apr', value: 83, isHighlight: true }, // Peak highlight
   { label: 'May', value: 61, isHighlight: false },
-  { label: 'Jun', value: 96, isHighlight: true },  // Highest peak highlight
+  { label: 'Jun', value: 96, isHighlight: true }, // Highest peak highlight
 ];
 
 export const AnimatedBarChart: React.FC<AnimatedBarChartProps> = ({
@@ -82,7 +82,10 @@ export const AnimatedBarChart: React.FC<AnimatedBarChartProps> = ({
       {/* Axis Labels */}
       <div className="bar-axis-row">
         {BARS_DATA.map((bar) => (
-          <span key={bar.label} style={{ flex: 1, textAlign: 'center', fontFamily: 'monospace', fontSize: '0.625rem' }}>
+          <span
+            key={bar.label}
+            style={{ flex: 1, textAlign: 'center', fontFamily: 'monospace', fontSize: '0.625rem' }}
+          >
             {bar.label}
           </span>
         ))}

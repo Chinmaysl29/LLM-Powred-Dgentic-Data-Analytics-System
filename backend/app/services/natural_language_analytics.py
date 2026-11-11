@@ -30,8 +30,9 @@ class AnalyticsRequest:
 
 
 class NaturalLanguageAnalyticsService:
-    def __init__(self, data_retrieval: DataRetrievalService | None = None) -> None:
+    def __init__(self, data_retrieval: DataRetrievalService | None = None, *, resolver=None) -> None:
         self._data_retrieval = data_retrieval
+        self._resolver = resolver
 
     @staticmethod
     def is_analytics_query(message: str) -> bool:
@@ -247,6 +248,12 @@ class NaturalLanguageAnalyticsService:
         dates = [c for c in dataframe if pd.api.types.is_datetime64_any_dtype(dataframe[c]) or re.search(r'(^|[_ -])(date|month|time|year)([_ -]|$)', c, re.I)]
         plan = self.parse(message, list(dataframe.columns), numeric, dates, context)
         plan = AnalyticsRequest(**{**asdict(plan), 'dataset_id': dataset_id, 'dataset_version': dataset_version})
+        if self._resolver is not None:
+            try:
+                schema = {'columns': list(dataframe.columns), 'dtypes': {c: str(t) for c, t in dataframe.dtypes.items()}}
+                plan = self._resolver(message, schema, plan, context)
+            except Exception:
+                pass  # Resolver failures preserve the original validated plan.
         if plan.clarification_required:
             return self._clarify(plan)
 

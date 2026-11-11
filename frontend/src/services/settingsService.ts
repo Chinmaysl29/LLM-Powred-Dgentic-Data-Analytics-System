@@ -61,10 +61,20 @@ const DEFAULT_SETTINGS: AppSettings = {
   },
 };
 
-function unavailable(): never { throw new Error('Settings APIs are unavailable. No changes were saved or applied.'); }
+function unavailable(): never {
+  throw new Error('Settings APIs are unavailable. No changes were saved or applied.');
+}
 export const settingsService = {
- async getSettings(): Promise<AppSettings> { return unavailable(); },
- async updateSettings(_partial: Partial<AppSettings>): Promise<AppSettings> { return unavailable(); },
- async resetSettings(): Promise<AppSettings> { return unavailable(); },
- getDefaultSettings(): AppSettings { return structuredClone(DEFAULT_SETTINGS); },
+  async getSettings(): Promise<AppSettings> {
+    return unavailable();
+  },
+  async updateSettings(_partial: Partial<AppSettings>): Promise<AppSettings> {
+    return unavailable();
+  },
+  async resetSettings(): Promise<AppSettings> {
+    return unavailable();
+  },
+  getDefaultSettings(): AppSettings {
+    return structuredClone(DEFAULT_SETTINGS);
+  },
 };

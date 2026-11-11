@@ -1,0 +1,15 @@
+{
+  "dataset_id": "dac42325-97a7-4667-93b0-49d0134d68f5",
+  "current_version": 1,
+  "lineage": [
+    {
+      "version_id": "29a74900-774c-4ed2-9f6c-e4738a6361db",
+      "version_number": 1,
+      "parent_version_id": null,
+      "change_type": "initial_upload",
+      "timestamp": "2026-11-11 16:38:46.144941+00:00",
+      "author": "system",
+      "description": "Initial ingestion of retail_sample.csv"
+    }
+  ]
+}
