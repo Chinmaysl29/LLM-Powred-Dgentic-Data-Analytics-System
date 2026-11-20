@@ -48,7 +48,7 @@ export interface RagCitation {
 export interface ChatResponse {
   session_id?: string | null;
   run_id?: string | null;
-  status?: 'complete' | 'clarification_required';
+  status?: 'complete' | 'clarification_required' | 'out_of_scope' | 'no_active_data_source' | 'ambiguous_query' | 'queued' | 'failed' | string;
   plan?: {
     operation: string;
     metric_options?: string[];
@@ -95,7 +95,7 @@ export interface AnalysisTurn {
   intent: string;
   confidence: number;
   execution_time: number;
-  status: string;
+  status: 'complete' | 'clarification_required' | 'out_of_scope' | 'no_active_data_source' | 'ambiguous_query' | 'queued' | 'failed' | string;
   data: Array<Record<string, unknown>>;
   explanation?: string | null;
   actionable: string[];

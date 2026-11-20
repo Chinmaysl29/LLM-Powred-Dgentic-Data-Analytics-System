@@ -6,15 +6,16 @@ including tables, views, columns, datatypes, primary keys, foreign keys, and ind
 
 import logging
 from typing import Any
-from sqlalchemy import Engine, inspect
+from sqlalchemy import Connection, Engine, inspect
 from sqlalchemy.orm import Session
+from backend.app.repositories.index_metadata import normalize_index
 
 from backend.app.schemas.schema_reader import (
     ColumnMetadata,
     DatabaseMetadata,
     DatabaseSchema,
     ForeignKeyMetadata,
-    IndexMetadata,
+    UniqueConstraintMetadata,
     RelationshipMetadata,
     TableMetadata,
 )
@@ -25,14 +26,14 @@ logger = logging.getLogger(__name__)
 class SchemaRepository:
     """Repository handling database metadata introspection via SQLAlchemy inspector."""
 
-    def __init__(self, bind: Engine | Session) -> None:
+    def __init__(self, bind: Engine | Connection | Session) -> None:
         if isinstance(bind, Session):
             self._engine = bind.get_bind()
         else:
             self._engine = bind
 
     @property
-    def engine(self) -> Engine:
+    def engine(self) -> Engine | Connection:
         """Access underlying SQLAlchemy Engine."""
         return self._engine
 
@@ -50,8 +51,8 @@ class SchemaRepository:
         if include_views:
             try:
                 available_tables.extend(inspector.get_view_names(schema=schema_name))
-            except Exception as exc:
-                logger.debug("Could not inspect view names: %s", exc)
+            except NotImplementedError:
+                logger.debug("View reflection is not supported by this dialect")
 
         # Filter tables if explicit list provided
         if table_names:
@@ -79,7 +80,7 @@ class SchemaRepository:
                     )
                 )
 
-        database_name = getattr(self._engine.url, "database", None)
+        database_name = self._engine.engine.url.database
         meta = DatabaseMetadata(
             dialect=self._engine.dialect.name,
             database_name=database_name,
@@ -149,24 +150,29 @@ class SchemaRepository:
             )
 
         # Indexes
-        raw_indexes = inspector.get_indexes(table_name, schema=schema_name)
-        indexes: list[IndexMetadata] = []
-        for idx in raw_indexes:
-            indexes.append(
-                IndexMetadata(
-                    name=idx.get("name"),
-                    columns=idx.get("column_names") or [],
-                    unique=bool(idx.get("unique", False)),
-                )
-            )
+        warnings: list[str] = []
+        try:
+            raw_indexes = inspector.get_indexes(table_name, schema=schema_name)
+            indexes = [normalize_index(idx) for idx in raw_indexes]
+        except NotImplementedError:
+            indexes = []
+            warnings.append("Index reflection is not supported by this database driver.")
+        try:
+            unique_constraints = [
+                UniqueConstraintMetadata(name=item.get("name"), columns=item.get("column_names") or [])
+                for item in inspector.get_unique_constraints(table_name, schema=schema_name)
+            ]
+        except NotImplementedError:
+            unique_constraints = []
+            warnings.append("Unique constraint reflection is not supported by this database driver.")
 
         # Table comment
         table_comment = None
         try:
             comment_dict = inspector.get_table_comment(table_name, schema=schema_name)
             table_comment = comment_dict.get("text") if isinstance(comment_dict, dict) else None
-        except Exception:
-            pass
+        except NotImplementedError:
+            warnings.append("Table comments are not supported by this database driver.")
 
         return TableMetadata(
             table_name=table_name,
@@ -176,5 +182,7 @@ class SchemaRepository:
             primary_keys=primary_keys,
             foreign_keys=foreign_keys,
             indexes=indexes,
+            unique_constraints=unique_constraints,
+            warnings=warnings,
             comment=table_comment,
         )

@@ -1,1 +1,1 @@
-"""Infrastructure adapters for PostgreSQL, Redis, and ChromaDB."""
+"""Infrastructure adapters for PostgreSQL, Redis, ChromaDB, and DuckDB."""

@@ -14,6 +14,7 @@ from fastapi import Depends, Request
 from sqlalchemy.orm import Session
 
 from backend.app.database.postgres import get_db_session
+from backend.app.core.exceptions import DatabaseConnectionError
 from backend.app.repositories.schema_repository import SchemaRepository
 from backend.app.schemas.schema_reader import (
     DatabaseMetadata,
@@ -73,15 +74,7 @@ class SchemaReaderService:
                         return data
 
         if self._repository is None:
-            return DatabaseSchema(
-                tables=[],
-                relationships=[],
-                metadata=DatabaseMetadata(
-                    dialect="unknown",
-                    is_cached=False,
-                    ttl_seconds=self._cache_ttl,
-                ),
-            )
+            raise DatabaseConnectionError("Schema repository is unavailable")
 
         schema = self._repository.inspect_schema(
             schema_name=schema_name,
@@ -111,8 +104,6 @@ class SchemaReaderService:
         force_refresh: bool = False,
     ) -> TableMetadata | None:
         """Retrieve schema metadata for a specific table."""
-        if self._repository is None:
-            return None
         schema = self.get_schema(
             force_refresh=force_refresh,
             schema_name=schema_name,

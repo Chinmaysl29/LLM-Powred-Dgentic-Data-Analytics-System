@@ -25,6 +25,10 @@ class IntentType(str, Enum):
     RAG_QUERY = "rag_query"
     DATA_QUALITY = "data_quality"
     UNKNOWN = "unknown"
+    OUT_OF_SCOPE = "out_of_scope"
+    RELEVANT_BUT_UNANSWERABLE = "relevant_but_unanswerable"
+    NO_ACTIVE_DATA_SOURCE = "no_active_data_source"
+    AMBIGUOUS_QUERY = "ambiguous_query"
 
 
 class IntentDefinition(BaseModel):
@@ -57,3 +61,18 @@ class IntentClassificationResponse(BaseModel):
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score between 0.0 and 1.0")
     reasoning: str = Field(..., description="Explanation of why this intent was selected")
     required_agents: list[str] = Field(default_factory=list, description="Specialized agents required to fulfill this intent")
+
+
+class QueryRelevanceResult(BaseModel):
+    """Structured result from the QueryRelevanceRouter."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    intent: IntentType
+    dataset_relevant: bool
+    answerable: bool
+    confidence: float = Field(ge=0.0, le=1.0)
+    reason_code: str
+    target_dataset_id: str | None = None
+    requested_fields: list[str] = Field(default_factory=list)
+    requires_execution: bool = True

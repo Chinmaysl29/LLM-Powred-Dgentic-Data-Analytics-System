@@ -22,13 +22,14 @@ try{
     const settings=await fetch(client.supabaseUrl+'/auth/v1/settings',{headers:{apikey:client.supabaseKey}});
     const auth=await settings.json();
     const probe=await client.from('profiles').select('id').limit(0);
-    return {configured:isSupabaseConfigured(),project:new URL(client.supabaseUrl).hostname,
-      projectScopedStorage:client.auth.storageKey.includes('qjcudbkamhldswcyxypv'),
+    const projectHost = new URL(client.supabaseUrl).hostname;
+    return {configured:isSupabaseConfigured(),project:projectHost,
+      projectScopedStorage:client.auth.storageKey.includes(projectHost.split('.')[0]),
       anonymousSession:session.data.session===null,sessionError:session.error?.name||null,
       authSettingsHttp:settings.status,emailAuthEnabled:auth.external?.email,
       profilesProbe:{http:probe.status,errorCode:probe.error?.code||null},returnedRows:probe.data?.length||0};
   });
-  assert.equal(result.configured,true);assert.equal(result.project,'qjcudbkamhldswcyxypv.supabase.co');
+  assert.equal(result.configured,true);assert.ok(result.project.endsWith('.supabase.co'));
   assert.equal(result.projectScopedStorage,true);assert.equal(result.sessionError,null);
   assert.equal(result.authSettingsHttp,200);assert.equal(result.emailAuthEnabled,true);
   assert.equal(result.returnedRows,0);assert.deepEqual(errors,[]);

@@ -10,7 +10,9 @@ import {
   X,
   Trash2,
   RefreshCw,
+  FolderOpen,
 } from 'lucide-react';
+import { apiClient } from '../../api/client';
 import {
   connectionService,
   type DatabaseConnection,
@@ -20,7 +22,7 @@ import {
 export default function ConnectionsPage() {
   const [activeModal, setActiveModal] = useState<'postgresql' | 'mysql' | null>(null);
   const [connName, setConnName] = useState('');
-  const [host, setHost] = useState('localhost');
+  const [host, setHost] = useState('postgres');
   const [port, setPort] = useState(5432);
   const [database, setDatabase] = useState('');
   const [username, setUsername] = useState('');
@@ -34,20 +36,49 @@ export default function ConnectionsPage() {
   const [savedConnections, setSavedConnections] = useState<DatabaseConnection[]>([]);
   const [loadingList, setLoadingList] = useState(false);
 
-  // Default workspace ID
-  const workspaceId = '00000000-0000-0000-0000-000000000000';
+  // Dynamic workspace resolution
+  const [workspaces, setWorkspaces] = useState<{ id: string; workspace_name: string }[]>([]);
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string>('');
 
   useEffect(() => {
-    loadConnections();
+    void initWorkspacesAndConnections();
   }, []);
 
-  async function loadConnections() {
+  async function initWorkspacesAndConnections() {
     setLoadingList(true);
+    let currentWsId = selectedWorkspaceId;
     try {
-      const list = await connectionService.listConnections(workspaceId);
+      const wsList = await apiClient.get<{ id: string; workspace_name: string }[]>(
+        '/api/v1/workspaces/mine',
+      );
+      if (Array.isArray(wsList) && wsList.length > 0) {
+        setWorkspaces(wsList);
+        if (!currentWsId) {
+          currentWsId = wsList[0].id;
+          setSelectedWorkspaceId(currentWsId);
+        }
+      }
+    } catch {
+      // Ignore if user has no workspaces explicitly listed yet
+    }
+
+    try {
+      const list = await connectionService.listConnections(currentWsId || undefined);
       setSavedConnections(Array.isArray(list) ? list : []);
     } catch {
-      // If workspace does not exist yet or unauthenticated in dev, keep empty list
+      setSavedConnections([]);
+    } finally {
+      setLoadingList(false);
+    }
+  }
+
+  async function loadConnections(wsId?: string) {
+    setLoadingList(true);
+    try {
+      const targetId = wsId ?? selectedWorkspaceId;
+      const list = await connectionService.listConnections(targetId || undefined);
+      setSavedConnections(Array.isArray(list) ? list : []);
+    } catch {
       setSavedConnections([]);
     } finally {
       setLoadingList(false);
@@ -56,11 +87,11 @@ export default function ConnectionsPage() {
 
   function openModal(type: 'postgresql' | 'mysql') {
     setActiveModal(type);
-    setConnName(type === 'postgresql' ? 'Production Postgres' : 'Main MySQL');
-    setHost('localhost');
+    setConnName(type === 'postgresql' ? 'AI Analyst OS - PostgreSQL' : 'AI Analyst OS - MySQL');
+    setHost(type === 'postgresql' ? 'postgres' : 'mysql');
     setPort(type === 'postgresql' ? 5432 : 3306);
-    setDatabase('');
-    setUsername(type === 'postgresql' ? 'postgres' : 'root');
+    setDatabase(type === 'postgresql' ? 'ai_analyst' : 'ai_analyst_external');
+    setUsername(type === 'postgresql' ? 'postgres' : 'analytics_reader');
     setPassword('');
     setSchemaName('public');
     setTestResult(null);
@@ -86,12 +117,12 @@ export default function ConnectionsPage() {
     try {
       const res = await connectionService.testConnection({
         connector_type: activeModal,
-        host,
+        host: host.trim(),
         port: Number(port),
-        database,
-        username,
+        database: database.trim(),
+        username: username.trim(),
         password,
-        schema_name: activeModal === 'postgresql' ? schemaName : undefined,
+        schema_name: activeModal === 'postgresql' ? schemaName.trim() || 'public' : undefined,
       });
       setTestResult(res);
     } catch (err) {
@@ -112,15 +143,15 @@ export default function ConnectionsPage() {
 
     try {
       await connectionService.saveConnection({
-        workspace_id: workspaceId,
+        workspace_id: selectedWorkspaceId || undefined,
         connector_name: connName.trim(),
         connector_type: activeModal,
-        host,
+        host: host.trim(),
         port: Number(port),
-        database,
-        username,
+        database: database.trim(),
+        username: username.trim(),
         password,
-        schema_name: activeModal === 'postgresql' ? schemaName : undefined,
+        schema_name: activeModal === 'postgresql' ? schemaName.trim() || 'public' : undefined,
       });
       closeModal();
       void loadConnections();
@@ -133,7 +164,7 @@ export default function ConnectionsPage() {
 
   async function handleDelete(connId: string) {
     try {
-      await connectionService.deleteConnection(connId, workspaceId);
+      await connectionService.deleteConnection(connId, selectedWorkspaceId || undefined);
       setSavedConnections((prev) => prev.filter((c) => c.id !== connId));
     } catch (err) {
       console.error('Delete connection error:', err);
@@ -149,6 +180,47 @@ export default function ConnectionsPage() {
           Connect directly to your relational databases or upload structured datasets.
         </p>
       </header>
+
+      {/* Workspace Selector Bar (if multiple workspaces exist) */}
+      {workspaces.length > 1 && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            marginBottom: 20,
+            padding: '10px 16px',
+            background: 'var(--surface-raised, #172015)',
+            borderRadius: 8,
+            border: '1px solid var(--border)',
+          }}
+        >
+          <FolderOpen size={16} color="var(--accent, #c8fd39)" />
+          <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Target Workspace:</span>
+          <select
+            value={selectedWorkspaceId}
+            onChange={(e) => {
+              const val = e.target.value;
+              setSelectedWorkspaceId(val);
+              void loadConnections(val);
+            }}
+            style={{
+              padding: '6px 12px',
+              background: '#1c241e',
+              border: '1px solid #334435',
+              borderRadius: 6,
+              color: '#fff',
+              fontSize: 13,
+            }}
+          >
+            {workspaces.map((w) => (
+              <option key={w.id} value={w.id}>
+                {w.workspace_name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="connector-grid">
         <section className="surface-panel">
@@ -216,7 +288,7 @@ export default function ConnectionsPage() {
           </div>
           <button
             className="reports-btn-secondary"
-            onClick={loadConnections}
+            onClick={() => loadConnections()}
             disabled={loadingList}
           >
             <RefreshCw size={14} className={loadingList ? 'spin' : ''} /> Refresh
@@ -358,6 +430,7 @@ export default function ConnectionsPage() {
                   type="text"
                   value={host}
                   onChange={(e) => setHost(e.target.value)}
+                  placeholder={activeModal === 'postgresql' ? 'postgres' : 'mysql'}
                   style={{
                     width: '100%',
                     padding: '10px 12px',
@@ -394,7 +467,7 @@ export default function ConnectionsPage() {
                   type="text"
                   value={database}
                   onChange={(e) => setDatabase(e.target.value)}
-                  placeholder="e.g. analytics_db"
+                  placeholder={activeModal === 'postgresql' ? 'ai_analyst' : 'ai_analyst_external'}
                   style={{
                     width: '100%',
                     padding: '10px 12px',
@@ -412,6 +485,7 @@ export default function ConnectionsPage() {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
+                  placeholder={activeModal === 'postgresql' ? 'postgres' : 'analytics_reader'}
                   style={{
                     width: '100%',
                     padding: '10px 12px',

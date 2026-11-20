@@ -77,5 +77,7 @@ from backend.app.dataplane.company_api import router as company_router
 router.include_router(company_router, dependencies=[Depends(get_current_user)])
 from backend.app.dataplane.reviewer_api import router as reviewer_router
 router.include_router(reviewer_router, dependencies=[Depends(get_current_user)])
+from backend.app.api.v1.routes.duckdb_routes import router as duckdb_router
+router.include_router(duckdb_router, dependencies=[Depends(get_current_user)])
 
 

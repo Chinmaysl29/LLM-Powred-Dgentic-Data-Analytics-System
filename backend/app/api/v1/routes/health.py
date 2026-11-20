@@ -13,7 +13,7 @@ from backend.monitoring.prometheus_metrics import platform_metrics
 
 router = APIRouter(tags=["health"])
 
-PROBE_TIMEOUT_SECONDS = 3.0
+PROBE_TIMEOUT_SECONDS = 10.0
 
 
 @router.get('/health/rag')
@@ -52,6 +52,7 @@ async def readiness_check(request: Request, response: Response) -> ReadinessResp
     redis_ok, redis_message = await _check_component(request.app.state.redis.health_check)
     chroma_ok, chroma_message = await _check_component(request.app.state.chroma.health_check)
     schema_ok, schema_message = await _check_component(request.app.state.postgres.schema_check)
+    duckdb_ok, duckdb_message = await _check_component(request.app.state.duckdb.health_check)
     request.app.state.schema_compatible = schema_ok
 
     critical_healthy = postgres_ok and redis_ok and chroma_ok and schema_ok
@@ -60,11 +61,27 @@ async def readiness_check(request: Request, response: Response) -> ReadinessResp
     platform_metrics.set_dependency_health("redis", redis_ok)
     platform_metrics.set_dependency_health("chromadb", chroma_ok)
 
-    # Optional integrations: External LLM providers
+    # Optional integrations: External LLM providers and Supabase
     settings = getattr(getattr(request.app.state, "postgres", None), "_settings", None)
     groq_configured = bool(getattr(settings, "groq_api_key", None))
     gemini_configured = bool(getattr(settings, "gemini_api_key", None))
     openai_configured = bool(getattr(settings, "openai_api_key", None))
+
+    supabase_url = getattr(settings, "supabase_url", "")
+    supabase_configured = bool(supabase_url and getattr(settings, "supabase_publishable_key", None))
+    supabase_connected = False
+    supabase_message = "Optional provider not configured"
+    if supabase_configured:
+        try:
+            from backend.app.core.security import _get_supabase_jwks
+            keys = _get_supabase_jwks(supabase_url)
+            if keys:
+                supabase_connected = True
+                supabase_message = f"Connected ({supabase_url.split('://')[-1]}) with {len(keys)} active key(s)"
+            else:
+                supabase_message = f"Supabase reached ({supabase_url}) - no keys"
+        except Exception as exc:
+            supabase_message = f"Supabase unreachable: {exc}"
 
     optional_dependencies = {
         "groq_api": DependencyHealth(
@@ -78,6 +95,10 @@ async def readiness_check(request: Request, response: Response) -> ReadinessResp
         "openai_api": DependencyHealth(
             status="healthy" if openai_configured else "unhealthy",
             message="API key configured" if openai_configured else "Optional provider not configured",
+        ),
+        "supabase": DependencyHealth(
+            status="healthy" if supabase_connected else "unhealthy",
+            message=supabase_message,
         ),
     }
 
@@ -97,6 +118,9 @@ async def readiness_check(request: Request, response: Response) -> ReadinessResp
             ),
             "chromadb": DependencyHealth(
                 status="healthy" if chroma_ok else "unhealthy", message=chroma_message
+            ),
+            "duckdb": DependencyHealth(
+                status="healthy" if duckdb_ok else "unhealthy", message=duckdb_message
             ),
         },
         optional_dependencies=optional_dependencies,

@@ -1,0 +1,46 @@
+{
+  "configured": true,
+  "project": "pmmlieqibfgbxtjdkbnl.supabase.co",
+  "projectScopedStorage": true,
+  "anonymousSession": true,
+  "sessionError": null,
+  "authSettingsHttp": 200,
+  "emailAuthEnabled": true,
+  "tableProbes": [
+    {
+      "table": "profiles",
+      "http": 200,
+      "errorCode": null,
+      "returnedRows": 0
+    },
+    {
+      "table": "workspaces",
+      "http": 200,
+      "errorCode": null,
+      "returnedRows": 0
+    },
+    {
+      "table": "datasets",
+      "http": 200,
+      "errorCode": null,
+      "returnedRows": 0
+    },
+    {
+      "table": "saved_visualizations",
+      "http": 200,
+      "errorCode": null,
+      "returnedRows": 0
+    },
+    {
+      "table": "reports",
+      "http": 200,
+      "errorCode": null,
+      "returnedRows": 0
+    }
+  ],
+  "errors": [],
+  "responsesMocked": false,
+  "accountCreated": false,
+  "signedInUserTest": "Not run: a confirmed project account and password were not supplied.",
+  "hostedDatabaseMigration": "Pending PostgreSQL connection credentials; no hosted schema/data writes performed."
+}

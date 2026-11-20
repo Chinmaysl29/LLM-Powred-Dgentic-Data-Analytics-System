@@ -28,6 +28,7 @@ from backend.app.learning.routing import scoped_router
 from backend.app.learning.column_runtime import scoped_resolver
 from backend.app.learning.selection_provider import scoped_classifier
 from backend.app.learning.selection_runtime import select_chart
+from backend.app.services.query_relevance_router import get_query_relevance_router
 
 router = APIRouter(prefix="/chat", tags=["Natural Language Analytics"])
 
@@ -102,8 +103,73 @@ async def chat(
             db, session_uuid, current_user.id, limit_turns=5
         )
 
-    # 3. Execute analytical query or RAG
+    # 2b. Query Relevance Gate — runs before ALL analytics operations
     data_retrieval = DataRetrievalService(db, storage, owner_id=str(current_user.id)) if db is not None else None
+    relevance_router = get_query_relevance_router()
+    # Attempt to get schema columns for better relevance matching
+    schema_columns: list[str] = []
+    if db is not None and payload.dataset_id and data_retrieval:
+        try:
+            _, _version, _, _ftype, _ = data_retrieval.discover(payload.dataset_id, payload.dataset_version)
+            if hasattr(_version, 'column_names') and _version.column_names:
+                schema_columns = _version.column_names
+        except Exception:
+            pass
+
+    relevance = relevance_router.route(
+        message=payload.message,
+        dataset_id=payload.dataset_id,
+        schema_columns=schema_columns if schema_columns else None,
+        conversation_context=context,
+    )
+
+    if not relevance.requires_execution:
+        # Short-circuit: do not invoke any analytics, SQL, or report generation
+        exec_time = round(perf_counter() - started, 4)
+
+        # Persist the turn so it appears in session history
+        run_id_oos: str | None = None
+        if db is not None and session_uuid:
+            oos_result = {
+                "answer": relevance.rejection_message,
+                "status": relevance.intent_category.lower(),
+                "data": [],
+                "explanation": None,
+                "actionable": [],
+                "intent": relevance.intent_category.lower(),
+                "confidence": relevance.confidence,
+                "execution_time": exec_time,
+            }
+            turn_record_oos = AnalysisSessionService.record_turn(
+                db=db,
+                session_id=session_uuid,
+                user_id=current_user.id,
+                question=payload.message,
+                result=oos_result,
+                workspace_id=workspace_uuid,
+                dataset_id=payload.dataset_id,
+                dataset_version=payload.dataset_version,
+            )
+            run_id_oos = turn_record_oos.get("run_id")
+
+        return ChatResponse(
+            session_id=str(session_uuid) if session_uuid else None,
+            run_id=run_id_oos,
+            answer=relevance.rejection_message or "Irrelevant topic.",
+            intent=relevance.intent_category.lower(),
+            confidence=relevance.confidence,
+            execution_time=exec_time,
+            data=[],
+            explanation=None,
+            actionable=[],
+            status=relevance.intent_category.lower(),
+            plan=None,
+            chart=None,
+            kpis=None,
+            citations=[],
+        )
+
+    # 3. Execute analytical query or RAG
     analytics = NaturalLanguageAnalyticsService(data_retrieval, resolver=scoped_resolver(str(current_user.id)))
     citations: list[dict[str, Any]] = []
 
@@ -159,8 +225,8 @@ async def chat(
                 outcome = await orchestrator.execute(payload.message, dataset_id=payload.dataset_id)
                 result = {
                     "answer": outcome.summary,
-                    "data": [],
-                    "explanation": "Processed through the configured analytics workflow.",
+                    "data": outcome.results.get("data_retrieval", {}).get("data", []),
+                    "explanation": None,
                     "actionable": [],
                 }
                 intent, confidence = outcome.intent, classification.confidence

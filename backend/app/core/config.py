@@ -66,6 +66,12 @@ class Settings(BaseSettings):
     chroma_persist_dir: str = "/chroma"
 
     # ------------------------------------------------------------------
+    # DuckDB
+    # ------------------------------------------------------------------
+    duckdb_memory_limit: str = "512MB"
+    duckdb_threads: int = Field(default=4, ge=1, le=16)
+
+    # ------------------------------------------------------------------
     # LLM Providers
     # ------------------------------------------------------------------
     groq_api_key: SecretStr | None = None
