@@ -15,6 +15,7 @@ from backend.app.core.config import get_settings
 from backend.app.core.exceptions import register_exception_handlers
 from backend.app.core.logging import configure_logging
 from backend.app.database.chromadb import ChromaDatabase
+from backend.app.database.duckdb import DuckDBDatabase
 from backend.app.database.postgres import PostgresDatabase
 from backend.app.database.redis import RedisCache
 from backend.app.middleware.request_id import RequestIDMiddleware
@@ -36,6 +37,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.postgres = PostgresDatabase(settings)
     app.state.redis = RedisCache(settings)
     app.state.chroma = ChromaDatabase(settings)
+    app.state.duckdb = DuckDBDatabase(settings)
     app.state.schema_compatible = False
     logger.info("Application startup initiated environment=%s", settings.environment)
 
@@ -43,6 +45,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         ("PostgreSQL", app.state.postgres.connect),
         ("Redis", app.state.redis.connect),
         ("ChromaDB", app.state.chroma.connect),
+        ("DuckDB", app.state.duckdb.connect),
     ):
         try:
             result = connector()
@@ -94,6 +97,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         except asyncio.CancelledError:
             pass
 
+    await app.state.duckdb.close()
     await app.state.redis.close()
     await app.state.chroma.close()
     app.state.postgres.close()

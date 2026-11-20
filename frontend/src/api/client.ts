@@ -230,7 +230,13 @@ async function request<T>(
         errorCode = errorBody.error_code;
       if (typeof errorBody === 'object' && errorBody !== null && 'detail' in errorBody) {
         const detail = (errorBody as { detail: unknown }).detail;
-        message = typeof detail === 'string' ? detail : JSON.stringify(detail);
+        if (typeof detail === 'string') {
+          message = detail;
+        } else if (typeof detail === 'object' && detail !== null && 'message' in detail) {
+          message = String((detail as { message: unknown }).message);
+        } else {
+          message = JSON.stringify(detail);
+        }
       }
     } catch {
       // Body is not JSON â€” use statusText as the message.

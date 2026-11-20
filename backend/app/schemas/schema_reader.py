@@ -5,8 +5,8 @@ datatypes, primary keys, foreign keys, indexes, and prompt-ready context.
 """
 
 from datetime import datetime, timezone
-from typing import Any
-from pydantic import BaseModel, ConfigDict, Field
+from typing import Any, Literal
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_validator
 
 
 class ColumnMetadata(BaseModel):
@@ -23,14 +23,45 @@ class ColumnMetadata(BaseModel):
     comment: str | None = Field(default=None, description="Optional column description or comment")
 
 
+class IndexKey(BaseModel):
+    """One ordered index key; SQL text is metadata and is never executed."""
+
+    position: int = Field(ge=0, description="Zero-based position among index keys")
+    kind: Literal["column", "expression", "unknown"]
+    column_name: str | None = None
+    expression: str | None = None
+    sorting: list[Literal["asc", "desc", "nulls_first", "nulls_last"]] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_kind(self) -> "IndexKey":
+        if self.kind == "column" and (not self.column_name or self.expression is not None):
+            raise ValueError("Column keys require only a column name")
+        if self.kind == "expression" and (not self.expression or self.column_name is not None):
+            raise ValueError("Expression keys require only an expression")
+        if self.kind == "unknown" and (self.column_name is not None or self.expression is not None):
+            raise ValueError("Unknown keys cannot claim a column or expression")
+        return self
+
+
 class IndexMetadata(BaseModel):
     """Metadata for an index on a table."""
 
     model_config = ConfigDict(from_attributes=True)
 
     name: str | None = Field(default=None, description="Index name")
-    columns: list[str] = Field(default_factory=list, description="Indexed column names in order")
+    columns: list[str] = Field(default_factory=list, description="Physical indexed column names in relative order; see keys for all key positions")
     unique: bool = Field(default=False, description="Whether the index enforces uniqueness")
+    keys: list[IndexKey] = Field(default_factory=list)
+    include_columns: list[str] = Field(default_factory=list)
+    predicate: str | None = None
+    dialect_options: dict[str, JsonValue] = Field(default_factory=dict)
+    duplicates_constraint: str | None = None
+    warnings: list[str] = Field(default_factory=list)
+
+
+class UniqueConstraintMetadata(BaseModel):
+    name: str | None = None
+    columns: list[str] = Field(default_factory=list)
 
 
 class ForeignKeyMetadata(BaseModel):
@@ -69,6 +100,8 @@ class TableMetadata(BaseModel):
     primary_keys: list[str] = Field(default_factory=list, description="List of primary key column names")
     foreign_keys: list[ForeignKeyMetadata] = Field(default_factory=list, description="Outbound foreign keys")
     indexes: list[IndexMetadata] = Field(default_factory=list, description="Indexes defined on this table")
+    unique_constraints: list[UniqueConstraintMetadata] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
     row_count_estimate: int | None = Field(default=None, description="Estimated row count if available")
     comment: str | None = Field(default=None, description="Table comment or documentation")
 

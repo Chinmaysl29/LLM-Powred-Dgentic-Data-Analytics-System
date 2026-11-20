@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState } from 'react';
 import { Database, Table2 } from 'lucide-react';
-import { warehouseService } from '../../services/warehouseService';
+import { warehouseErrorMessage, warehouseService } from '../../services/warehouseService';
 import type { WarehouseSchema } from '../../services/warehouseService';
 export default function DataWarehousePage() {
   const [schema, setSchema] = useState<WarehouseSchema | null>(null);
@@ -12,19 +12,21 @@ export default function DataWarehousePage() {
   useEffect(() => {
     const controller = new AbortController();
     warehouseService
-      .schema(controller.signal)
+      .schema(controller.signal, attempt > 0)
       .then((data) => {
         if (!controller.signal.aborted) {
           setSchema(data);
-          setSelected(
-            data.tables.length
-              ? `${data.tables[0].schema_name ?? ''}.${data.tables[0].table_name}`
-              : '',
+          setSelected((previous) =>
+            data.tables.some((t) => `${t.schema_name ?? ''}.${t.table_name}` === previous)
+              ? previous
+              : data.tables.length
+                ? `${data.tables[0].schema_name ?? ''}.${data.tables[0].table_name}`
+                : '',
           );
         }
       })
       .catch((e) => {
-        if (!controller.signal.aborted) setError(e.message);
+        if (!controller.signal.aborted) setError(warehouseErrorMessage(e));
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
@@ -43,6 +45,17 @@ export default function DataWarehousePage() {
           Read-only metadata from the configured database. Table counts are estimates where
           supplied.
         </p>
+        <button
+          className="reports-btn-secondary"
+          disabled={loading}
+          onClick={() => {
+            setError('');
+            setLoading(true);
+            setAttempt((n) => n + 1);
+          }}
+        >
+          Refresh schema
+        </button>
       </header>
       {loading && <p role="status">Loading database schema…</p>}
       {error && (
@@ -127,6 +140,11 @@ export default function DataWarehousePage() {
                 <>
                   <p className="eyebrow">TABLE SCHEMA</p>
                   <h2>{table.table_name}</h2>
+                  {table.warnings?.map((warning, i) => (
+                    <p role="status" key={i}>
+                      {warning}
+                    </p>
+                  ))}
                   <p>
                     {table.columns.length} columns ·{' '}
                     {table.row_count_estimate == null
@@ -156,6 +174,71 @@ export default function DataWarehousePage() {
                       </tbody>
                     </table>
                   </div>
+                  <h3>Indexes</h3>
+                  {table.indexes?.length ? (
+                    <ul>
+                      {table.indexes.map((index, i) => (
+                        <li key={index.name ?? i}>
+                          <strong>{index.name ?? 'Unnamed index'}</strong>
+                          {index.unique ? ' · Unique' : ''}
+                          <ol>
+                            {(index.keys?.length
+                              ? index.keys
+                              : index.columns.map((column_name, position) => ({
+                                  position,
+                                  kind: 'column' as const,
+                                  column_name,
+                                  expression: null,
+                                  sorting: [],
+                                }))
+                            ).map((key) => (
+                              <li key={key.position}>
+                                <code>
+                                  {key.kind === 'column'
+                                    ? key.column_name
+                                    : key.kind === 'expression'
+                                      ? key.expression
+                                      : 'Unknown index key'}
+                                </code>
+                                {key.kind === 'expression' ? ' (expression)' : ''}
+                                {key.sorting.length ? ` · ${key.sorting.join(' ')}` : ''}
+                              </li>
+                            ))}
+                          </ol>
+                          {!!index.include_columns?.length && (
+                            <p>Include: {index.include_columns.join(', ')}</p>
+                          )}
+                          {index.predicate && (
+                            <p>
+                              Where: <code>{index.predicate}</code>
+                            </p>
+                          )}
+                          {typeof index.dialect_options?.postgresql_using === 'string' && (
+                            <p>Method: {index.dialect_options.postgresql_using}</p>
+                          )}
+                          {index.warnings?.map((warning, j) => (
+                            <p role="status" key={j}>
+                              {warning}
+                            </p>
+                          ))}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>No index information returned.</p>
+                  )}
+                  <h3>Unique constraints</h3>
+                  {table.unique_constraints?.length ? (
+                    <ul>
+                      {table.unique_constraints.map((constraint, i) => (
+                        <li key={constraint.name ?? i}>
+                          {constraint.name ?? 'Unnamed constraint'}: {constraint.columns.join(', ')}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>No unique constraints returned.</p>
+                  )}
                   <h3>Relationships</h3>
                   {table.foreign_keys.length ? (
                     <ul>

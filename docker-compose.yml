@@ -21,15 +21,15 @@ services:
       - .env
 
     environment:
-      DATABASE_TARGET: local
-      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/ai_analyst
-      REDIS_URL: redis://redis:6379/0
-      CHROMA_HOST: chromadb
-      CHROMA_PORT: 8000
+      DATABASE_TARGET: ${DATABASE_TARGET:-local}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://postgres:TUX0vjS5mehGl998eiqDLEPoKH5ZBZgo@postgres:5432/ai_analyst}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      CHROMA_HOST: ${CHROMA_HOST:-chromadb}
+      CHROMA_PORT: ${CHROMA_PORT:-8000}
       # Allow the Vite dev server running in the frontend container
-      FRONTEND_URL: http://localhost:5173
-      UPLOAD_DIR: storage
-      ALLOWED_FILE_TYPES: csv,xlsx,xls,json,parquet,pdf
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      UPLOAD_DIR: ${UPLOAD_DIR:-storage}
+      ALLOWED_FILE_TYPES: ${ALLOWED_FILE_TYPES:-csv,xlsx,xls,json,parquet,pdf}
       # Limit numerical-library thread pools on memory-constrained laptops.
       OMP_NUM_THREADS: 1
       OPENBLAS_NUM_THREADS: 1
@@ -38,6 +38,8 @@ services:
       BACKGROUND_WORKER_CONCURRENCY: 1
       DATAPLANE_ENABLED: ${DATAPLANE_ENABLED:-false}
       DATAPLANE_ROOT: /app/storage/dataplane
+      DUCKDB_MEMORY_LIMIT: ${DUCKDB_MEMORY_LIMIT:-512MB}
+      DUCKDB_THREADS: ${DUCKDB_THREADS:-4}
 
     depends_on:
       postgres:
@@ -50,7 +52,7 @@ services:
         condition: service_completed_successfully
 
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/ready', timeout=10)"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=10)"]
       interval: 15s
       timeout: 15s
       retries: 10
@@ -77,7 +79,7 @@ services:
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
     environment:
-      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/ai_analyst
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://postgres:TUX0vjS5mehGl998eiqDLEPoKH5ZBZgo@postgres:5432/ai_analyst}
       DATAPLANE_ENABLED: "true"
       DATAPLANE_ROOT: /app/storage/dataplane
       DATAPLANE_MEMORY_MB: 512
@@ -110,8 +112,8 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_TARGET: local
-      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/ai_analyst
+      DATABASE_TARGET: ${DATABASE_TARGET:-local}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://postgres:TUX0vjS5mehGl998eiqDLEPoKH5ZBZgo@postgres:5432/ai_analyst}
       PYTHONPATH: /app
     volumes:
       - ./backend:/app/backend:ro
@@ -128,9 +130,14 @@ services:
       context: ./frontend
       target: development
 
+    env_file:
+      - .env
+
     environment:
       # The browser runs on Windows and reaches the published API port.
-      VITE_API_BASE_URL: http://localhost:8000
+      VITE_API_BASE_URL: ${BACKEND_URL:-http://localhost:8000}
+      VITE_SUPABASE_URL: ${SUPABASE_URL:-https://pmmlieqibfgbxtjdkbnl.supabase.co}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:-sb_publishable_W2Z4AGuKSMtIcnfn-AendQ_1AE0WBkG}
 
     ports:
       - "5173:5173"
@@ -155,10 +162,13 @@ services:
   postgres:
     image: postgres:16
 
+    env_file:
+      - .env
+
     environment:
-      POSTGRES_DB: ai_analyst
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${POSTGRES_DB:-ai_analyst}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-TUX0vjS5mehGl998eiqDLEPoKH5ZBZgo}
 
     ports:
       - "${POSTGRES_HOST_PORT:-5432}:5432"
@@ -219,6 +229,26 @@ services:
 
     restart: unless-stopped
 
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Required}
+      MYSQL_DATABASE: ${MYSQL_DB:-ai_analyst_external}
+      MYSQL_USER: ${MYSQL_USER:-analytics_reader}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Required}
+    ports:
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "MYSQL_PWD=\"$${MYSQL_ROOT_PASSWORD}\" mysqladmin ping -h 127.0.0.1 -u root --silent"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
 networks:
   default:
     name: ai-analyst-network
@@ -228,3 +258,4 @@ volumes:
   frontend_node_modules:
   chroma_data:
   redis_data:
+  mysql_data:

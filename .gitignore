@@ -51,6 +51,19 @@ logs/*.log
 /storage/model-cache/
 # Private dataset-derived golden answers and evaluation reports stay local.
 /storage/learning/golden/
+# Runtime dataset storage — user uploads, derived artefacts, DuckDB files
+/storage/raw/
+/storage/canonical/
+/storage/processed/
+/storage/profiles/
+/storage/quality/
+/storage/lineage/
+/storage/datasets/
+/storage/duckdb/
+/storage/reports/studio/
+/storage/authorized_workspaces/
+# Temporary test output
+test_output.txt
 
 # Node / frontend
 node_modules/

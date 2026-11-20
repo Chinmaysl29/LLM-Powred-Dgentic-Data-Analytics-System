@@ -802,29 +802,34 @@ function TurnCard({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                padding: '3px 8px',
-                borderRadius: 4,
-                background:
-                  turn.status === 'clarification_required'
-                    ? 'rgba(245, 158, 11, 0.2)'
-                    : 'rgba(16, 185, 129, 0.2)',
-                color: turn.status === 'clarification_required' ? '#f59e0b' : '#10b981',
-              }}
-            >
-              {turn.status === 'clarification_required'
-                ? 'CLARIFICATION NEEDED'
-                : 'CALCULATED & VERIFIED'}
-            </span>
-            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-              Source: <strong>{datasetName}</strong> · Latency: {turn.execution_time.toFixed(2)}s
-            </span>
+            {(() => {
+              const outOfScopeStatuses = ['out_of_scope', 'no_active_data_source', 'ambiguous_query'];
+              const isOutOfScope = outOfScopeStatuses.includes(turn.status);
+              const isClarification = turn.status === 'clarification_required';
+              if (isOutOfScope) return null;
+              return (
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    padding: '3px 8px',
+                    borderRadius: 4,
+                    background: isClarification ? 'rgba(245, 158, 11, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+                    color: isClarification ? '#f59e0b' : '#10b981',
+                  }}
+                >
+                  {isClarification ? 'CLARIFICATION NEEDED' : 'CALCULATED & VERIFIED'}
+                </span>
+              );
+            })()}
+            {!['out_of_scope', 'no_active_data_source', 'ambiguous_query'].includes(turn.status) && (
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                Source: <strong>{datasetName}</strong> · Latency: {turn.execution_time.toFixed(2)}s
+              </span>
+            )}
           </div>
 
-          {turn.run_id && turn.status !== 'clarification_required' && (
+          {turn.run_id && turn.status === 'complete' && (
             <button
               type="button"
               className="btn btn--secondary btn--sm"

@@ -38,7 +38,7 @@ export interface ConnectionTestResult {
 }
 
 export interface SaveConnectionPayload extends ConnectionTestPayload {
-  workspace_id: string;
+  workspace_id?: string;
   connector_name: string;
 }
 
@@ -55,22 +55,24 @@ export const connectionService = {
   ): Promise<DatabaseConnection> {
     return apiClient.post<DatabaseConnection>('/api/v1/connections', payload, { signal });
   },
-  listConnections(workspaceId: string, signal?: AbortSignal): Promise<DatabaseConnection[]> {
+  listConnections(workspaceId?: string, signal?: AbortSignal): Promise<DatabaseConnection[]> {
+    const params = workspaceId ? { workspace_id: workspaceId } : undefined;
     return apiClient.get<DatabaseConnection[]>('/api/v1/connections', {
       signal,
-      params: { workspace_id: workspaceId },
+      params,
     });
   },
   deleteConnection(
     connectionId: string,
-    workspaceId: string,
+    workspaceId?: string,
     signal?: AbortSignal,
   ): Promise<{ success: boolean; message: string }> {
+    const params = workspaceId ? { workspace_id: workspaceId } : undefined;
     return apiClient.delete<{ success: boolean; message: string }>(
       `/api/v1/connections/${encodeURIComponent(connectionId)}`,
       {
         signal,
-        params: { workspace_id: workspaceId },
+        params,
       },
     );
   },
